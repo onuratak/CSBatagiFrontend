@@ -16,7 +16,7 @@
         /* Styles for the table - Light Theme */
         th, td {
             padding: 12px 15px;
-            text-align: left;
+            text-align: left; /* Default alignment */
             border-bottom: 1px solid #e5e7eb; /* Lighter border */
             vertical-align: middle; /* Ensure vertical alignment */
         }
@@ -149,6 +149,7 @@
         .attendance-slider {
             width: 60px; height: 28px; border-radius: 9999px; cursor: pointer;
             position: relative; transition: background-color 0.3s ease-in-out; overflow: hidden;
+            /* Centering is handled by parent TD's flex properties */
         }
         .attendance-slider .dot {
             width: 22px; height: 22px; border-radius: 50%; position: absolute;
@@ -201,7 +202,6 @@
             </nav>
         </header>
 
-
         <div class="text-center mb-6">
              <button id="update-stats-button" class="action-button">
                  Update Stats from Sheet
@@ -224,7 +224,7 @@
                                     <tr>
                                         <th>Player</th>
                                         <th>Status</th>
-                                        <th>Attendance</th>
+                                        <th class="text-center">Attendance</th>
                                     </tr>
                                 </thead>
                                 <tbody id="player-list">
@@ -364,9 +364,10 @@
                 nameCell.textContent = player.name;
                 row.appendChild(nameCell);
 
+                // Player Status Cell
                 const statusCell = document.createElement('td');
                 const statusBadge = document.createElement('span');
-                statusBadge.className = 'px-2 py-1 text-xs font-semibold rounded-full';
+                statusBadge.className = 'px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap';
                 statusBadge.textContent = player.status;
                 statusBadge.classList.add(
                     player.status === 'Active Player' ? 'bg-green-100' : 'bg-red-100',
@@ -375,11 +376,16 @@
                 statusCell.appendChild(statusBadge);
                 row.appendChild(statusCell);
 
+                // Attendance Slider Cell
                 const attendanceCell = document.createElement('td');
+                // Apply flex centering to the TD
+                attendanceCell.className = 'flex justify-center items-center';
+
                 const sliderId = `slider-${index}`;
                 const initialState = player.attendance;
                 const sliderContainer = document.createElement('div');
                 sliderContainer.id = sliderId;
+                // Removed mx-auto from slider div
                 sliderContainer.className = `attendance-slider state-${initialState}`;
                 sliderContainer.setAttribute('data-player', player.name);
                 sliderContainer.setAttribute('data-current-status', initialState);
@@ -496,7 +502,21 @@
 
 
         // Function to display messages (remains the same)
-        function showMessage(text, type = 'error') { /* ... */ }
+        function showMessage(text, type = 'error') {
+             messageArea.textContent = text;
+            messageArea.className = ''; // Clear existing classes first
+            messageArea.classList.add('text-center', 'mt-4', 'p-3', 'rounded-md', 'border', 'font-medium', 'max-w-md', 'mx-auto');
+            if (type === 'success') {
+                messageArea.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
+            } else { // Default to error
+                messageArea.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
+            }
+            messageArea.classList.remove('hidden');
+
+            setTimeout(() => {
+                 messageArea.classList.add('hidden');
+            }, 5000);
+        }
 
         // --- Functions to Populate Tabs with Fetched Data (remain the same) ---
         function populateSonmac(data) { /* ... */ }
