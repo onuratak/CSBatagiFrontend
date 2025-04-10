@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CS2 Game Night Attendance</title>
+    <title>CS2 Stats Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -33,7 +33,7 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
-        tr:hover {
+        tbody tr:hover { /* More specific selector for hover */
             background-color: #2d3748; /* Hover effect for rows */
         }
         /* Style the info panel */
@@ -55,57 +55,198 @@
         .info-panel strong {
             color: #a0aec0; /* Slightly lighter text for labels */
         }
+        /* Tab Navigation Styles */
+        .tab-nav-item {
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            color: #a0aec0; /* Default tab color */
+            font-weight: 500;
+        }
+        .tab-nav-item:hover {
+            color: #e2e8f0; /* Lighter color on hover */
+            border-bottom-color: #4a5568; /* Subtle border on hover */
+        }
+        .tab-nav-item.active {
+            color: #63b3ed; /* Active tab color (blue) */
+            border-bottom-color: #63b3ed; /* Active tab border color */
+            font-weight: 600;
+        }
+        /* Hide inactive page content */
+        .page-content.hidden {
+            display: none;
+        }
+        /* Basic Button Style */
+        .action-button {
+            background-color: #2b6cb0; /* Blue */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 500;
+        }
+        .action-button:hover {
+            background-color: #2c5282; /* Darker Blue */
+        }
+        .action-button:disabled {
+            background-color: #4a5568; /* Gray when disabled */
+            cursor: not-allowed;
+        }
+        /* Simple spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s ease-in-out infinite;
+            display: inline-block; /* Changed from block */
+            margin-left: 10px; /* Add some space */
+            vertical-align: middle; /* Align with button text */
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Message Area */
+        #message-area {
+            margin-top: 1rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+        }
+        #message-area.success {
+            background-color: #38a169; /* Green */
+            color: #fff;
+        }
+        #message-area.error {
+            background-color: #c53030; /* Red */
+            color: #fff;
+        }
     </style>
 </head>
 <body class="p-8">
 
     <div class="container mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">CS2 Game Night - Attendance</h1>
+        <h1 class="text-3xl font-bold mb-2 text-center text-blue-400">CSB CS2 Stats Hub</h1>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="text-center mb-6">
+             <button id="update-stats-button" class="action-button">
+                 Update Stats from Sheet
+                 <span id="spinner" class="spinner hidden"></span> </button>
+             <div id="message-area" class="hidden"></div> <p class="text-xs text-gray-500 mt-2">Note: Data update requires admin privileges verified via Google Sign-In by the backend script.</p>
+        </div>
 
-            <div class="md:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
-                <h2 class="text-2xl font-semibold mb-4 text-blue-300">Player Status</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead>
-                            <tr>
-                                <th>Player</th>
-                                <th>Status</th>
-                                <th>Attending Next Game?</th>
-                            </tr>
-                        </thead>
-                        <tbody id="player-list">
-                            </tbody>
-                    </table>
+
+        <div class="mb-8 border-b border-gray-700">
+            <nav class="flex flex-wrap -mb-px" id="main-tabs">
+                <a class="tab-nav-item active" data-page="attendance">Attendance</a>
+                 <a class="tab-nav-item" data-page="draft">DRAFT</a>
+                 <a class="tab-nav-item" data-page="pick">PICK</a>
+                 <a class="tab-nav-item" data-page="batak_domination">BATAK DOMINATION</a>
+                 <a class="tab-nav-item" data-page="sonmac">SONMAC</a>
+                 <a class="tab-nav-item" data-page="duel_sonmac">DUEL_SONMAC</a>
+                 <a class="tab-nav-item" data-page="gece_ortalama">Nightly Avg</a>
+                 <a class="tab-nav-item" data-page="last10">Last 10 Rank</a>
+                 <a class="tab-nav-item" data-page="hltv2">HLTV2 Perf</a>
+                 <a class="tab-nav-item" data-page="adr">ADR Perf</a>
+                 <a class="tab-nav-item" data-page="season_rank">Season Rank</a>
+            </nav>
+        </div>
+
+        <div id="page-content-area">
+
+            <div id="page-attendance" class="page-content">
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="md:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-semibold mb-4 text-blue-300">Player Status</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Player</th>
+                                        <th>Status</th>
+                                        <th>Attending Next Game?</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="player-list">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="info-panel">
+                         <h3 class="text-xl font-semibold">Schedule & Info</h3>
+                         <p><strong>Confirmation Deadline:</strong> 21:00</p>
+                         <p><strong>Team Setup:</strong> 21:15 - 21:45</p>
+                         <p><strong>Be Online By:</strong> 21:45</p>
+                         <p><strong>Match Start:</strong> 22:00</p>
+                         <hr class="border-gray-600 my-4">
+                         <h4 class="text-lg font-semibold mb-2 text-blue-300">Drafting Rules</h4>
+                         <ul class="list-disc list-inside text-sm space-y-1 text-gray-300">
+                             <li>Coin toss winner chooses first pick OR gives first pick away.</li>
+                             <li>Picks follow 1-2-2-2-2-1 format.</li>
+                             <li>Reroll if teams seem unbalanced.</li>
+                             <li>Coin toss loser picks 2nd & 3rd map bans.</li>
+                             <li>Coin toss winner picks 1st map ban.</li>
+                             <li>Coin toss winner chooses side on Map 1 & 3.</li>
+                             <li>Coin toss loser chooses side on Map 2.</li>
+                         </ul>
+                    </div>
                 </div>
             </div>
 
-            <div class="info-panel">
-                <h3 class="text-xl font-semibold">Schedule & Info</h3>
-                <p><strong>Confirmation Deadline:</strong> 21:00</p>
-                <p><strong>Team Setup:</strong> 21:15 - 21:45</p>
-                <p><strong>Be Online By:</strong> 21:45</p>
-                <p><strong>Match Start:</strong> 22:00</p>
-                <hr class="border-gray-600 my-4">
-                <h4 class="text-lg font-semibold mb-2 text-blue-300">Drafting Rules</h4>
-                <ul class="list-disc list-inside text-sm space-y-1 text-gray-300">
-                    <li>Coin toss winner chooses first pick OR gives first pick away.</li>
-                    <li>Picks follow 1-2-2-2-2-1 format.</li>
-                    <li>Reroll if teams seem unbalanced.</li>
-                    <li>Coin toss loser picks 2nd & 3rd map bans.</li>
-                    <li>Coin toss winner picks 1st map ban.</li>
-                    <li>Coin toss winner chooses side on Map 1 & 3.</li>
-                    <li>Coin toss loser chooses side on Map 2.</li>
-                </ul>
-            </div>
-        </div>
-    </div>
+            <div id="page-draft" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Draft Page</h2>
+                <p class="mt-4">Content for the Draft page will go here...</p>
+                <div id="draft-data-content"></div> </div>
+            <div id="page-pick" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Pick Page</h2>
+                <p class="mt-4">Content for the Pick page will go here...</p>
+                 <div id="pick-data-content"></div> </div>
+            <div id="page-batak_domination" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Batak Domination Page</h2>
+                <p class="mt-4">Content for the Batak Domination stats will go here...</p>
+                 <div id="batak-data-content"></div> </div>
+            <div id="page-sonmac" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Sonmac Page</h2>
+                <p class="mt-4">Sonmac stats will be loaded here when updated.</p>
+                <div id="sonmac-data-content" class="overflow-x-auto mt-4"></div> </div>
+            <div id="page-duel_sonmac" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Duel Sonmac Page</h2>
+                <p class="mt-4">Content for the Duel Sonmac stats will go here...</p>
+                 <div id="duel-sonmac-data-content"></div> </div>
+            <div id="page-gece_ortalama" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Nightly Average Stats</h2>
+                <p class="mt-4">Content for the Nightly Average stats will go here...</p>
+                 <div id="nightly-avg-data-content"></div> </div>
+            <div id="page-last10" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Last 10 Games Ranking</h2>
+                <p class="mt-4">Last 10 games ranking will be loaded here when updated.</p>
+                 <div id="last10-data-content" class="overflow-x-auto mt-4"></div> </div>
+             <div id="page-hltv2" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">HLTV 2.0 Performance</h2>
+                <p class="mt-4">Content for the HLTV 2.0 Performance stats will go here...</p>
+                 <div id="hltv2-data-content"></div> </div>
+             <div id="page-adr" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">ADR Performance</h2>
+                <p class="mt-4">Content for the ADR Performance stats will go here...</p>
+                 <div id="adr-data-content"></div> </div>
+             <div id="page-season_rank" class="page-content hidden bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold text-blue-300">Season Ranking</h2>
+                <p class="mt-4">Content for the Season Ranking stats will go here...</p>
+                 <div id="season-rank-data-content"></div> </div>
 
-    <script>
-        // Mock player data based on the screenshot
+        </div> </div> <script>
+        // --- Constants ---
+        // !!! REPLACE THIS WITH YOUR ACTUAL GOOGLE APPS SCRIPT WEB APP URL !!!
+        const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'; // Placeholder
+
+        // --- Mock Player Data (Attendance Only) ---
         const players = [
-            { name: "bobna", status: "Active Player", attending: true },
+            // ... (player data remains the same as before) ...
+             { name: "bobna", status: "Active Player", attending: true },
             { name: "Cago", status: "Active Player", attending: false },
             { name: "cat", status: "Active Player", attending: true },
             { name: "darbe", status: "Active Player", attending: true },
@@ -120,24 +261,34 @@
             { name: "foz", status: "Inactive Player", attending: false },
             { name: "mrbutters", status: "Inactive Player", attending: false },
             { name: "repamar", status: "Inactive Player", attending: false },
-            // Add NPC players if needed, or handle them differently
         ];
 
+        // --- DOM Elements ---
         const playerListBody = document.getElementById('player-list');
+        const tabsContainer = document.getElementById('main-tabs');
+        const pageContentArea = document.getElementById('page-content-area');
+        const navLinks = tabsContainer.querySelectorAll('.tab-nav-item');
+        const pageContents = pageContentArea.querySelectorAll('.page-content');
+        const updateButton = document.getElementById('update-stats-button');
+        const messageArea = document.getElementById('message-area');
+        const spinner = document.getElementById('spinner');
 
-        // Function to render player rows
+        // --- Functions ---
+
+        // Function to render player rows (only for attendance page)
         function renderPlayers() {
+            // ... (renderPlayers function remains the same as before) ...
+             if (!playerListBody) {
+                console.warn("Player list body not found. Skipping player rendering.");
+                return;
+            }
             playerListBody.innerHTML = ''; // Clear existing rows
             players.forEach(player => {
                 const row = document.createElement('tr');
-
-                // Player Name Cell
                 const nameCell = document.createElement('td');
                 nameCell.className = 'font-medium';
                 nameCell.textContent = player.name;
                 row.appendChild(nameCell);
-
-                // Player Status Cell
                 const statusCell = document.createElement('td');
                 const statusBadge = document.createElement('span');
                 statusBadge.className = 'px-2 py-1 text-xs font-semibold rounded-full';
@@ -149,10 +300,8 @@
                 }
                 statusCell.appendChild(statusBadge);
                 row.appendChild(statusCell);
-
-                // Attendance Toggle Cell
                 const attendanceCell = document.createElement('td');
-                const toggleId = `toggle_${player.name.replace(/\s+/g, '_')}`; // Create unique ID
+                const toggleId = `toggle_${player.name.replace(/\s+/g, '_')}`;
                 attendanceCell.innerHTML = `
                     <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                         <input type="checkbox" name="${toggleId}" id="${toggleId}" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" ${player.attending ? 'checked' : ''}/>
@@ -161,24 +310,221 @@
                     <label for="${toggleId}" class="text-xs text-gray-400 align-middle">${player.attending ? 'Coming' : 'Not Coming'}</label>
                 `;
                 row.appendChild(attendanceCell);
-
-                // Add event listener to update label text on change
                 const checkbox = attendanceCell.querySelector(`#${toggleId}`);
                 const label = attendanceCell.querySelector(`label[for='${toggleId}'].text-xs`);
                 checkbox.addEventListener('change', (event) => {
                     label.textContent = event.target.checked ? 'Coming' : 'Not Coming';
-                    // In a real app, you would also update the 'players' array
-                    // and send the data to your backend here.
+                    const playerIndex = players.findIndex(p => p.name === player.name);
+                    if (playerIndex > -1) {
+                         players[playerIndex].attending = event.target.checked;
+                    }
                     console.log(`${player.name} status changed to: ${event.target.checked ? 'Coming' : 'Not Coming'}`);
+                    console.log("Updated players array:", players);
+                    // TODO: Add logic here to *push* attendance changes back to a backend/Apps Script if needed
                 });
-
-
                 playerListBody.appendChild(row);
             });
         }
 
-        // Initial render
-        renderPlayers();
+        // Function to switch tabs/pages
+        function showPage(pageId) {
+            // ... (showPage function remains the same as before) ...
+             pageContents.forEach(page => {
+                page.classList.add('hidden');
+            });
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            const targetPage = document.getElementById(`page-${pageId}`);
+            const targetLink = tabsContainer.querySelector(`.tab-nav-item[data-page="${pageId}"]`);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            } else {
+                console.error(`Page content with ID 'page-${pageId}' not found.`);
+            }
+            if (targetLink) {
+                 targetLink.classList.add('active');
+            } else {
+                 console.error(`Nav link with data-page="${pageId}" not found.`);
+            }
+             if (pageId === 'attendance') {
+                 renderPlayers();
+             }
+        }
+
+        // Function to display messages
+        function showMessage(text, type = 'error') {
+            messageArea.textContent = text;
+            messageArea.className = type; // 'error' or 'success'
+            messageArea.classList.remove('hidden');
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                 messageArea.classList.add('hidden');
+            }, 5000);
+        }
+
+        // --- Functions to Populate Tabs with Fetched Data ---
+
+        // Example: Populate Sonmac Tab
+        function populateSonmac(data) {
+            const contentDiv = document.getElementById('sonmac-data-content');
+            if (!contentDiv) return;
+
+            // Assuming 'data' is an array of arrays (like from getValues())
+            // e.g., [ ['Player', 'Kills', 'Deaths', 'ADR'], ['bobna', 20, 15, 85.5], ... ]
+            if (!Array.isArray(data) || data.length === 0) {
+                contentDiv.innerHTML = '<p class="text-gray-400">No Sonmac data available or invalid format.</p>';
+                return;
+            }
+
+            let tableHTML = '<table class="min-w-full"><thead><tr>';
+            // Create headers
+            data[0].forEach(header => {
+                tableHTML += `<th>${header}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+
+            // Create rows (skip header row)
+            for (let i = 1; i < data.length; i++) {
+                tableHTML += '<tr>';
+                data[i].forEach(cell => {
+                    tableHTML += `<td>${cell}</td>`;
+                });
+                tableHTML += '</tr>';
+            }
+            tableHTML += '</tbody></table>';
+            contentDiv.innerHTML = tableHTML;
+        }
+
+        // Example: Populate Last 10 Rank Tab
+        function populateLast10(data) {
+             const contentDiv = document.getElementById('last10-data-content');
+             if (!contentDiv) return;
+
+             // Similar logic to populateSonmac, adapt based on expected data structure
+             if (!Array.isArray(data) || data.length === 0) {
+                 contentDiv.innerHTML = '<p class="text-gray-400">No Last 10 Rank data available or invalid format.</p>';
+                 return;
+             }
+             // Customize table generation based on 'Last 10' sheet columns
+             let tableHTML = '<table class="min-w-full"><thead><tr>';
+             data[0].forEach(header => { tableHTML += `<th>${header}</th>`; });
+             tableHTML += '</tr></thead><tbody>';
+             for (let i = 1; i < data.length; i++) {
+                 tableHTML += '<tr>';
+                 data[i].forEach(cell => { tableHTML += `<td>${cell}</td>`; });
+                 tableHTML += '</tr>';
+             }
+             tableHTML += '</tbody></table>';
+             contentDiv.innerHTML = tableHTML;
+        }
+
+        // --- Fetch Data Function ---
+        async function fetchStatsFromSheet() {
+            if (APPS_SCRIPT_URL === 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE') {
+                 showMessage('Error: Apps Script URL is not configured in the script.', 'error');
+                 return;
+            }
+
+            updateButton.disabled = true;
+            spinner.classList.remove('hidden');
+            messageArea.classList.add('hidden'); // Hide previous messages
+
+            try {
+                // Append a timestamp to try and prevent caching issues if needed
+                const url = `${APPS_SCRIPT_URL}?t=${new Date().getTime()}`;
+
+                // Make the request to the Apps Script Web App
+                // 'withCredentials: true' might be needed if your script relies on cookies/session
+                // but usually not required if checking Session.getActiveUser()
+                const response = await fetch(url, {
+                     method: 'GET', // Or 'POST' if your Apps Script uses doPost
+                     redirect: 'follow', // Important for Apps Script redirects during auth
+                     // mode: 'cors' // Usually default, might need adjustment
+                });
+
+                if (!response.ok) {
+                     // Try to get error message from response if possible
+                     let errorMsg = `Error fetching data: ${response.statusText}`;
+                     try {
+                         const errorData = await response.json();
+                         if (errorData && errorData.error) {
+                             errorMsg = `Error: ${errorData.error}`;
+                         } else if (typeof errorData === 'string') {
+                            errorMsg = `Error: ${errorData}`;
+                         }
+                     } catch (e) { /* Ignore if response is not JSON */ }
+
+                     // Handle common redirect which means user needs to authorize
+                     if (response.status === 401 || response.status === 403 || response.type === 'opaqueredirect') {
+                        errorMsg = 'Authorization required or access denied by script. Please ensure you are logged into the correct Google account and have permission.';
+                        // In a more complex app, you might redirect the user to the script URL
+                        // to complete the authorization flow, but that's harder here.
+                     }
+                     throw new Error(errorMsg);
+                 }
+
+                const data = await response.json();
+
+                 // Check if the Apps Script returned a specific error structure
+                 if (data.status === 'error') {
+                    throw new Error(data.message || 'An error occurred in the Apps Script.');
+                 }
+
+                // --- Populate tabs based on the received data structure ---
+                // Adjust these based on how your Apps Script returns the data
+                // e.g., data might be an object: { sonmacData: [...], last10Data: [...] }
+                if (data.sonmacData) {
+                    populateSonmac(data.sonmacData);
+                } else {
+                     console.warn("Sonmac data not found in response.");
+                     // Optionally clear or show message in the specific tab
+                     document.getElementById('sonmac-data-content').innerHTML = '<p class="text-gray-400">Sonmac data not received.</p>';
+                }
+
+                if (data.last10Data) {
+                    populateLast10(data.last10Data);
+                } else {
+                     console.warn("Last 10 Rank data not found in response.");
+                     document.getElementById('last10-data-content').innerHTML = '<p class="text-gray-400">Last 10 Rank data not received.</p>';
+                }
+
+                 // Add similar checks and calls for other tabs (ADR, HLTV2, etc.)
+                 // if (data.adrData) populateAdr(data.adrData);
+                 // if (data.hltvData) populateHltv(data.hltvData);
+                 // ...
+
+                showMessage('Stats updated successfully!', 'success');
+
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                showMessage(error.message || 'Failed to fetch stats. Check console for details.', 'error');
+            } finally {
+                updateButton.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        }
+
+
+        // --- Event Listeners ---
+
+        // Tab switching
+        tabsContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('tab-nav-item')) {
+                event.preventDefault();
+                const pageIdToShow = event.target.getAttribute('data-page');
+                if (pageIdToShow) {
+                    showPage(pageIdToShow);
+                }
+            }
+        });
+
+        // Update button click
+        updateButton.addEventListener('click', fetchStatsFromSheet);
+
+
+        // --- Initial Setup ---
+        showPage('attendance'); // Show attendance page first
 
     </script>
 
