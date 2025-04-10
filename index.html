@@ -573,7 +573,9 @@
 
         // --- Initial Setup ---
         showPage('attendance'); // Show attendance page first
-
+        
+        // Automatically fetch player data on page load
+        fetchStatsFromSheet();
         /*
           ASKING THE USER:
           - What is the expected behavior if updating attendance fails?
