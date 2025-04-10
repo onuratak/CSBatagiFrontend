@@ -77,16 +77,16 @@
             border-bottom: 1px solid #e5e7eb; /* Separator */
             border-left: 3px solid transparent; /* For active state indicator */
         }
-         #main-nav-links.mobile-menu-active a:last-child {
+        #main-nav-links.mobile-menu-active a:last-child {
             border-bottom: none; /* Remove border from last item */
-         }
-         #main-nav-links.mobile-menu-active a.active {
-             color: #2563eb; /* Active tab color (blue) */
-             border-left-color: #2563eb; /* Active tab border color */
-             background-color: #eff6ff; /* Light blue background */
-             border-bottom-color: #e5e7eb !important; /* Ensure bottom border remains consistent */
-             font-weight: 600;
-         }
+        }
+        #main-nav-links.mobile-menu-active a.active {
+            color: #2563eb; /* Active tab color (blue) */
+            border-left-color: #2563eb; /* Active tab border color */
+            background-color: #eff6ff; /* Light blue background */
+            border-bottom-color: #e5e7eb !important; /* Ensure bottom border remains consistent */
+            font-weight: 600;
+        }
 
         /* Hide inactive page content */
         .page-content.hidden {
@@ -307,7 +307,7 @@
 
         </div> </div> <script>
         // --- Constants ---
-        const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE'; // Placeholder
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysTTfbVYfXNO8JmrHUQHLOTnGjrOMS5ApRJ6fhbsB3qvdA7jYQGvf4t0Qf1t5xuyTF/exec';
 
         // --- Player Data ---
         let players = [
@@ -337,12 +337,30 @@
         // Nav elements
         const menuButton = document.getElementById('menu-button');
         const navLinksContainer = document.getElementById('main-nav-links');
-        const navLinks = navLinksContainer.querySelectorAll('.tab-nav-item'); // Specific links
+        const navLinks = navLinksContainer.querySelectorAll('.tab-nav-item');
         const iconHamburger = document.getElementById('icon-hamburger');
         const iconClose = document.getElementById('icon-close');
 
 
         // --- Functions ---
+
+        // Function to display messages
+        function showMessage(text, type = 'error') {
+            messageArea.textContent = text;
+            messageArea.className = '';
+            messageArea.classList.add('text-center', 'mt-4', 'p-3', 'rounded-md', 'border', 'font-medium', 'max-w-md', 'mx-auto');
+
+            if (type === 'success') {
+                messageArea.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
+            } else {
+                messageArea.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
+            }
+            messageArea.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageArea.classList.add('hidden');
+            }, 5000);
+        }
 
         // Function to set slider state visually
         function setSliderState(sliderElement, state) {
@@ -353,8 +371,9 @@
 
         // Function to render player rows
         function renderPlayers() {
-             if (!playerListBody) return;
+            if (!playerListBody) return;
             playerListBody.innerHTML = '';
+
             players.forEach((player, index) => {
                 const row = document.createElement('tr');
                 row.setAttribute('data-player-name', player.name);
@@ -385,7 +404,6 @@
                 const initialState = player.attendance;
                 const sliderContainer = document.createElement('div');
                 sliderContainer.id = sliderId;
-                // Removed mx-auto from slider div
                 sliderContainer.className = `attendance-slider state-${initialState}`;
                 sliderContainer.setAttribute('data-player', player.name);
                 sliderContainer.setAttribute('data-current-status', initialState);
@@ -398,8 +416,48 @@
             });
         }
 
+        // Fetch attendance data from Google Sheets
+        async function fetchStatsFromSheet() {
+            try {
+                spinner.classList.remove('hidden');
+                const response = await fetch(APPS_SCRIPT_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                // data format: [{ name: 'bobna', status: 'Active Player', attendance: 'coming'|'not_coming'|'no_response' }, ...]
+                players = data;
+                renderPlayers();
+                showMessage('Data loaded successfully', 'success');
+            } catch (err) {
+                console.error(err);
+                showMessage('Failed to fetch data');
+            } finally {
+                spinner.classList.add('hidden');
+            }
+        }
+
+        // Send updates to sheet when user changes status
+        async function updateAttendanceInSheet(playerName, newStatus) {
+            try {
+                const response = await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: playerName, attendance: newStatus }),
+                });
+                if (!response.ok) {
+                    // Try to log the response text for debugging
+                    const errorText = await response.text();
+                    console.error('Server error response:', errorText);
+                    throw new Error('Network response was not ok');
+                }
+                console.log(`Attendance updated in Google Sheets for ${playerName}`);
+            } catch (error) {
+                console.error('Failed to update attendance:', error);
+                showMessage('Failed to update attendance');
+            }
+        }
+
         // --- Event Listener for Attendance Sliders ---
-        playerListBody.addEventListener('click', (event) => {
+        playerListBody.addEventListener('click', async (event) => {
             const clickedSlider = event.target.closest('.attendance-slider');
             if (clickedSlider) {
                 const playerName = clickedSlider.getAttribute('data-player');
@@ -413,13 +471,14 @@
                         newStatus = (clickX < sliderWidth / 2) ? 'coming' : 'not_coming';
                     } else if (currentStatus === 'coming') {
                         newStatus = (clickX > sliderWidth / 2) ? 'not_coming' : 'no_response';
-                    } else { // currentStatus === 'not_coming'
+                    } else {
+                        // currentStatus === 'not_coming'
                         newStatus = (clickX < sliderWidth / 2) ? 'coming' : 'no_response';
                     }
                     players[playerIndex].attendance = newStatus;
-                    console.log(`${playerName} status updated to: ${newStatus}`);
                     setSliderState(clickedSlider, newStatus);
-                    // TODO: Send update to backend
+                    // Sync with Google Sheets
+                    await updateAttendanceInSheet(playerName, newStatus);
                 }
             }
         });
@@ -428,8 +487,8 @@
 
         // Function to switch tabs/pages
         function showPage(pageId) {
-             const allPages = pageContentArea.querySelectorAll('.page-content');
-             allPages.forEach(page => {
+            const allPages = pageContentArea.querySelectorAll('.page-content');
+            allPages.forEach(page => {
                 page.classList.add('hidden');
             });
             navLinks.forEach(link => {
@@ -447,27 +506,28 @@
                 console.error(`Page content with ID 'page-${pageId}' not found.`);
             }
             if (targetLink) {
-                 targetLink.classList.add('active');
-                 // Special handling for mobile active state styling
-                 if (navLinksContainer.classList.contains('mobile-menu-active')) {
-                     targetLink.classList.add('bg-blue-50', 'border-blue-500');
-                 }
+                targetLink.classList.add('active');
+                // Special handling for mobile active state styling
+                if (navLinksContainer.classList.contains('mobile-menu-active')) {
+                    targetLink.classList.add('bg-blue-50', 'border-blue-500');
+                }
             } else {
-                 console.error(`Nav link with data-page="${pageId}" not found.`);
+                console.error(`Nav link with data-page="${pageId}" not found.`);
             }
-             if (pageId === 'attendance') {
-                 renderPlayers(); // Re-render players when switching to attendance tab
-             }
+
+            if (pageId === 'attendance') {
+                renderPlayers(); // Re-render players when switching to attendance tab
+            }
         }
 
         // Toggle Mobile Menu
         menuButton.addEventListener('click', () => {
             const isExpanded = menuButton.getAttribute('aria-expanded') === 'true';
             menuButton.setAttribute('aria-expanded', !isExpanded);
-            navLinksContainer.classList.toggle('hidden'); // Main toggle for visibility
-            navLinksContainer.classList.toggle('flex'); // Ensure flex is added when shown on mobile
-            navLinksContainer.classList.toggle('flex-col'); // Stack vertically on mobile
-            navLinksContainer.classList.toggle('mobile-menu-active'); // Add class for mobile specific styles
+            navLinksContainer.classList.toggle('hidden');
+            navLinksContainer.classList.toggle('flex');
+            navLinksContainer.classList.toggle('flex-col');
+            navLinksContainer.classList.toggle('mobile-menu-active');
 
             // Toggle icons
             iconHamburger.classList.toggle('hidden');
@@ -475,10 +535,10 @@
 
             // Re-apply active styles if menu is opened
             if (!isExpanded) {
-                 const activeLink = navLinksContainer.querySelector('.tab-nav-item.active');
-                 if (activeLink) {
-                     activeLink.classList.add('bg-blue-50', 'border-blue-500');
-                 }
+                const activeLink = navLinksContainer.querySelector('.tab-nav-item.active');
+                if (activeLink) {
+                    activeLink.classList.add('bg-blue-50', 'border-blue-500');
+                }
             }
         });
 
@@ -486,44 +546,27 @@
         navLinksContainer.addEventListener('click', (event) => {
             const link = event.target.closest('.tab-nav-item');
             if (link) {
-                event.preventDefault(); // Prevent default anchor jump
+                event.preventDefault();
                 const pageIdToShow = link.getAttribute('data-page');
                 if (pageIdToShow) {
                     showPage(pageIdToShow);
 
-                    // Close mobile menu if it's open (check if button is visible)
+                    // Close mobile menu if it's open
                     const isMobileMenuOpen = menuButton.offsetParent !== null && !navLinksContainer.classList.contains('hidden');
                     if (isMobileMenuOpen) {
-                        menuButton.click(); // Simulate a click on the menu button to close it
+                        menuButton.click();
                     }
                 }
             }
         });
 
-
-        // Function to display messages (remains the same)
-        function showMessage(text, type = 'error') {
-             messageArea.textContent = text;
-            messageArea.className = ''; // Clear existing classes first
-            messageArea.classList.add('text-center', 'mt-4', 'p-3', 'rounded-md', 'border', 'font-medium', 'max-w-md', 'mx-auto');
-            if (type === 'success') {
-                messageArea.classList.add('bg-green-100', 'text-green-800', 'border-green-300');
-            } else { // Default to error
-                messageArea.classList.add('bg-red-100', 'text-red-800', 'border-red-300');
-            }
-            messageArea.classList.remove('hidden');
-
-            setTimeout(() => {
-                 messageArea.classList.add('hidden');
-            }, 5000);
+        // Stub functions for other tabs
+        function populateSonmac(data) {
+            // ...
         }
-
-        // --- Functions to Populate Tabs with Fetched Data (remain the same) ---
-        function populateSonmac(data) { /* ... */ }
-        function populateLast10(data) { /* ... */ }
-
-        // --- Fetch Data Function (remains the same) ---
-        async function fetchStatsFromSheet() { /* ... */ }
+        function populateLast10(data) {
+            // ...
+        }
 
         // --- Other Event Listeners ---
         updateButton.addEventListener('click', fetchStatsFromSheet);
@@ -531,6 +574,21 @@
         // --- Initial Setup ---
         showPage('attendance'); // Show attendance page first
 
+        /*
+          ASKING THE USER:
+          - What is the expected behavior if updating attendance fails?
+            Should the slider revert automatically, or remain in the new state?
+          - Are there any additional states needed (e.g., 'maybe')?
+        
+          TEST CASES:
+          1) Clicking "Update Stats from Sheet" should fetch data from the Google Apps Script.
+             - Expect to see console logs if fetch fails.
+             - Expect to see updated players if fetch succeeds.
+          2) Toggling the slider for a known player (e.g., bobna) from 'no_response' to 'coming'.
+             - Expect a console log: "Attendance updated..." if the network call is successful.
+          3) Toggling the slider for a nonexistent name (simulate by altering the code to a dummy name) should log an error.
+          4) Simulate a server error (e.g., invalid URL) to ensure "Failed to update attendance" message appears.
+        */
     </script>
 
 </body>
