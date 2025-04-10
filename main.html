@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Game Night Attendance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        /* Custom styles for toggle switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #48bb78; /* Green border when checked */
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #48bb78; /* Green background when checked */
+        }
+         /* Style the table */
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #4a5568; /* Darker border */
+        }
+        th {
+            background-color: #2d3748; /* Slightly lighter dark background for header */
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        tr:hover {
+            background-color: #2d3748; /* Hover effect for rows */
+        }
+        /* Style the info panel */
+        .info-panel {
+            background-color: #2d3748;
+            padding: 1.5rem;
+            border-radius: 0.5rem; /* Rounded corners */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .info-panel h3 {
+            color: #63b3ed; /* Accent color for heading */
+            border-bottom: 1px solid #4a5568;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .info-panel p {
+            margin-bottom: 0.5rem;
+        }
+        .info-panel strong {
+            color: #a0aec0; /* Slightly lighter text for labels */
+        }
+    </style>
+</head>
+<body class="p-8">
+
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">CS2 Game Night - Attendance</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+            <div class="md:col-span-2 bg-gray-800 p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 text-blue-300">Player Status</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th>Player</th>
+                                <th>Status</th>
+                                <th>Attending Next Game?</th>
+                            </tr>
+                        </thead>
+                        <tbody id="player-list">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <h3 class="text-xl font-semibold">Schedule & Info</h3>
+                <p><strong>Confirmation Deadline:</strong> 21:00</p>
+                <p><strong>Team Setup:</strong> 21:15 - 21:45</p>
+                <p><strong>Be Online By:</strong> 21:45</p>
+                <p><strong>Match Start:</strong> 22:00</p>
+                <hr class="border-gray-600 my-4">
+                <h4 class="text-lg font-semibold mb-2 text-blue-300">Drafting Rules</h4>
+                <ul class="list-disc list-inside text-sm space-y-1 text-gray-300">
+                    <li>Coin toss winner chooses first pick OR gives first pick away.</li>
+                    <li>Picks follow 1-2-2-2-2-1 format.</li>
+                    <li>Reroll if teams seem unbalanced.</li>
+                    <li>Coin toss loser picks 2nd & 3rd map bans.</li>
+                    <li>Coin toss winner picks 1st map ban.</li>
+                    <li>Coin toss winner chooses side on Map 1 & 3.</li>
+                    <li>Coin toss loser chooses side on Map 2.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock player data based on the screenshot
+        const players = [
+            { name: "bobna", status: "Active Player", attending: true },
+            { name: "Cago", status: "Active Player", attending: false },
+            { name: "cat", status: "Active Player", attending: true },
+            { name: "darbe", status: "Active Player", attending: true },
+            { name: "HILLDIR", status: "Active Player", attending: false },
+            { name: "Malewhor", status: "Active Player", attending: true },
+            { name: "Mustasem", status: "Active Player", attending: true },
+            { name: "Neruit", status: "Active Player", attending: false },
+            { name: "sedo", status: "Active Player", attending: true },
+            { name: "Uncle ton", status: "Active Player", attending: true },
+            { name: "womk", status: "Active Player", attending: false },
+            { name: "candena", status: "Inactive Player", attending: false },
+            { name: "foz", status: "Inactive Player", attending: false },
+            { name: "mrbutters", status: "Inactive Player", attending: false },
+            { name: "repamar", status: "Inactive Player", attending: false },
+            // Add NPC players if needed, or handle them differently
+        ];
+
+        const playerListBody = document.getElementById('player-list');
+
+        // Function to render player rows
+        function renderPlayers() {
+            playerListBody.innerHTML = ''; // Clear existing rows
+            players.forEach(player => {
+                const row = document.createElement('tr');
+
+                // Player Name Cell
+                const nameCell = document.createElement('td');
+                nameCell.className = 'font-medium';
+                nameCell.textContent = player.name;
+                row.appendChild(nameCell);
+
+                // Player Status Cell
+                const statusCell = document.createElement('td');
+                const statusBadge = document.createElement('span');
+                statusBadge.className = 'px-2 py-1 text-xs font-semibold rounded-full';
+                statusBadge.textContent = player.status;
+                if (player.status === 'Active Player') {
+                    statusBadge.classList.add('bg-green-700', 'text-green-100');
+                } else {
+                    statusBadge.classList.add('bg-red-700', 'text-red-100');
+                }
+                statusCell.appendChild(statusBadge);
+                row.appendChild(statusCell);
+
+                // Attendance Toggle Cell
+                const attendanceCell = document.createElement('td');
+                const toggleId = `toggle_${player.name.replace(/\s+/g, '_')}`; // Create unique ID
+                attendanceCell.innerHTML = `
+                    <div class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="${toggleId}" id="${toggleId}" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" ${player.attending ? 'checked' : ''}/>
+                        <label for="${toggleId}" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-600 cursor-pointer"></label>
+                    </div>
+                    <label for="${toggleId}" class="text-xs text-gray-400 align-middle">${player.attending ? 'Coming' : 'Not Coming'}</label>
+                `;
+                row.appendChild(attendanceCell);
+
+                // Add event listener to update label text on change
+                const checkbox = attendanceCell.querySelector(`#${toggleId}`);
+                const label = attendanceCell.querySelector(`label[for='${toggleId}'].text-xs`);
+                checkbox.addEventListener('change', (event) => {
+                    label.textContent = event.target.checked ? 'Coming' : 'Not Coming';
+                    // In a real app, you would also update the 'players' array
+                    // and send the data to your backend here.
+                    console.log(`${player.name} status changed to: ${event.target.checked ? 'Coming' : 'Not Coming'}`);
+                });
+
+
+                playerListBody.appendChild(row);
+            });
+        }
+
+        // Initial render
+        renderPlayers();
+
+    </script>
+
+</body>
+</html>
