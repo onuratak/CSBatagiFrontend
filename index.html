@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS2 Stats Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Use Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Light gray background */
+            color: #1f2937; /* Darker gray text */
+        }
+        /* Styles for the table - Light Theme */
+        th, td {
+            padding: 12px 15px;
+            text-align: left; /* Default alignment */
+            border-bottom: 1px solid #e5e7eb; /* Lighter border */
+            vertical-align: middle; /* Ensure vertical alignment */
+        }
+        th {
+            background-color: #f9fafb; /* Very light gray background for header */
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #374151; /* Medium-dark gray header text */
+        }
+        tbody tr:hover {
+            background-color: #f9fafb; /* Light hover effect for rows */
+        }
+        /* Styles for the info panel - Light Theme */
+        .info-panel {
+            background-color: #ffffff; /* White background */
+            padding: 1.5rem;
+            border-radius: 0.5rem; /* Rounded corners */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+            border: 1px solid #e5e7eb; /* Light border */
+        }
+        .info-panel h3 {
+            color: #2563eb; /* Blue accent for heading */
+            border-bottom: 1px solid #e5e7eb; /* Lighter border */
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .info-panel p {
+            margin-bottom: 0.5rem;
+            color: #4b5563; /* Slightly lighter text */
+        }
+        .info-panel strong {
+            color: #374151; /* Medium-dark gray text for labels */
+        }
+        /* Tab Navigation Styles - Light Theme */
+        .tab-nav-item {
+            padding: 0.75rem 1rem; /* Adjusted padding slightly */
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            color: #6b7280; /* Default tab color (gray) */
+            font-weight: 500;
+            white-space: nowrap; /* Prevent wrapping */
+        }
+        .tab-nav-item:hover {
+            color: #1f2937; /* Darker color on hover */
+            border-bottom-color: #d1d5db; /* Subtle border on hover */
+        }
+        .tab-nav-item.active {
+            color: #2563eb; /* Active tab color (blue) */
+            border-bottom-color: #2563eb; /* Active tab border color */
+            font-weight: 600;
+        }
+        /* Styles for mobile nav links */
+        #main-nav-links.mobile-menu-active a {
+            display: block; /* Make links block level */
+            padding: 0.75rem 1rem; /* Consistent padding */
+            border-bottom: 1px solid #e5e7eb; /* Separator */
+            border-left: 3px solid transparent; /* For active state indicator */
+        }
+        #main-nav-links.mobile-menu-active a:last-child {
+            border-bottom: none; /* Remove border from last item */
+        }
+        #main-nav-links.mobile-menu-active a.active {
+            color: #2563eb; /* Active tab color (blue) */
+            border-left-color: #2563eb; /* Active tab border color */
+            background-color: #eff6ff; /* Light blue background */
+            border-bottom-color: #e5e7eb !important; /* Ensure bottom border remains consistent */
+            font-weight: 600;
+        }
+
+        /* Hide inactive page content */
+        .page-content.hidden {
+            display: none;
+        }
+        /* Basic Button Style - Light Theme */
+        .action-button {
+            background-color: #2563eb; /* Blue */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 0.375rem; /* Slightly more rounded */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: 500;
+        }
+        .action-button:hover {
+            background-color: #1d4ed8; /* Darker Blue */
+        }
+        .action-button:disabled {
+            background-color: #9ca3af; /* Gray when disabled */
+            cursor: not-allowed;
+        }
+        /* Simple spinner */
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s ease-in-out infinite;
+            display: inline-block;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Message Area - Light Theme */
+        #message-area {
+            margin-top: 1rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            border-width: 1px;
+        }
+        #message-area.success {
+            background-color: #dcfce7; color: #166534; border-color: #86efac;
+        }
+        #message-area.error {
+            background-color: #fee2e2; color: #991b1b; border-color: #fca5a5;
+        }
+        /* General Page Content Container Style */
+        .page-content-container {
+             background-color: #ffffff; padding: 1.5rem; border-radius: 0.5rem;
+             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); border: 1px solid #e5e7eb;
+        }
+
+        /* --- Custom Attendance Slider Styles --- */
+        .attendance-slider {
+            width: 60px; height: 28px; border-radius: 9999px; cursor: pointer;
+            position: relative; transition: background-color 0.3s ease-in-out; overflow: hidden;
+            /* Centering is handled by parent TD's flex properties */
+        }
+        .attendance-slider .dot {
+            width: 22px; height: 22px; border-radius: 50%; position: absolute;
+            top: 3px; left: 0;
+            transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        /* State: No Response */
+        .attendance-slider.state-no_response { background-color: #d1d5db; }
+        .attendance-slider.state-no_response .dot { background-color: #9ca3af; transform: translateX(19px); }
+        /* State: Coming */
+        .attendance-slider.state-coming { background-color: #10b981; }
+        .attendance-slider.state-coming .dot { background-color: #ffffff; transform: translateX(3px); }
+        /* State: Not Coming */
+        .attendance-slider.state-not_coming { background-color: #ef4444; }
+        .attendance-slider.state-not_coming .dot { background-color: #ffffff; transform: translateX(35px); }
+
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="container mx-auto">
+
+        <header class="relative mb-6">
+            <div class="flex justify-between items-center border-b border-gray-300 pb-3">
+                <h1 class="text-2xl md:text-3xl font-bold text-blue-700">CSB CS2 Stats Hub</h1>
+                <button id="menu-button" type="button" class="md:hidden p-2 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" aria-controls="main-nav-links" aria-expanded="false">
+                    <span class="sr-only">Open main menu</span>
+                    <svg id="icon-hamburger" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg id="icon-close" class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <nav id="main-nav-links" class="hidden md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2 absolute md:relative top-full left-0 right-0 z-20 bg-white md:bg-transparent shadow-md md:shadow-none rounded-b-md md:rounded-none" aria-label="Main navigation">
+                <a class="tab-nav-item active" data-page="attendance" href="#">Attendance</a>
+                <a class="tab-nav-item" data-page="draft" href="#">DRAFT</a>
+                <a class="tab-nav-item" data-page="pick" href="#">PICK</a>
+                <a class="tab-nav-item" data-page="batak_domination" href="#">BATAK DOMINATION</a>
+                <a class="tab-nav-item" data-page="sonmac" href="#">SONMAC</a>
+                <a class="tab-nav-item" data-page="duel_sonmac" href="#">DUEL_SONMAC</a>
+                <a class="tab-nav-item" data-page="gece_ortalama" href="#">Nightly Avg</a>
+                <a class="tab-nav-item" data-page="last10" href="#">Last 10 Rank</a>
+                <a class="tab-nav-item" data-page="hltv2" href="#">HLTV2 Perf</a>
+                <a class="tab-nav-item" data-page="adr" href="#">ADR Perf</a>
+                <a class="tab-nav-item" data-page="season_rank" href="#">Season Rank</a>
+            </nav>
+        </header>
+
+        <div class="text-center mb-6">
+             <button id="update-stats-button" class="action-button">
+                 Update Stats from Sheet
+                 <span id="spinner" class="spinner hidden"></span>
+             </button>
+             <div id="message-area" class="hidden"></div>
+             <p class="text-xs text-gray-500 mt-2">Note: Data update requires admin privileges verified via Google Sign-In by the backend script.</p>
+             <p><button onclick="testConnection()" class="action-button mt-2">Test Connection</button></p>        </div>
+
+
+        <div id="page-content-area">
+
+            <div id="page-attendance" class="page-content">
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+                    <div class="md:col-span-2 page-content-container">
+                        <h2 class="text-2xl font-semibold mb-4 text-blue-600">Player Status</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full">
+                                <thead>
+                                    <tr>
+                                        <th>Player</th>
+                                        <th>Status</th>
+                                        <th class="text-center">Attendance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="player-list">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="info-panel">
+                         <h3 class="text-xl font-semibold">Schedule & Info</h3>
+                         <p><strong>Confirmation Deadline:</strong> 21:00</p>
+                         <p><strong>Team Setup:</strong> 21:15 - 21:45</p>
+                         <p><strong>Be Online By:</strong> 21:45</p>
+                         <p><strong>Match Start:</strong> 22:00</p>
+                         <hr class="border-gray-200 my-4">
+                         <h4 class="text-lg font-semibold mb-2 text-blue-600">Drafting Rules</h4>
+                         <ul class="list-disc list-inside text-sm space-y-1 text-gray-600">
+                             <li>Coin toss winner chooses first pick OR gives first pick away.</li>
+                             <li>Picks follow 1-2-2-2-2-1 format.</li>
+                             <li>Reroll if teams seem unbalanced.</li>
+                             <li>Coin toss loser picks 2nd & 3rd map bans.</li>
+                             <li>Coin toss winner picks 1st map ban.</li>
+                             <li>Coin toss winner chooses side on Map 1 & 3.</li>
+                             <li>Coin toss loser chooses side on Map 2.</li>
+                         </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="page-draft" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Draft Page</h2>
+                <p class="mt-4 text-gray-700">Content for the Draft page will go here...</p>
+                <div id="draft-data-content"></div>
+            </div>
+             <div id="page-pick" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Pick Page</h2>
+                <p class="mt-4 text-gray-700">Content for the Pick page will go here...</p>
+                 <div id="pick-data-content"></div>
+            </div>
+            <div id="page-batak_domination" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Batak Domination Page</h2>
+                <p class="mt-4 text-gray-700">Content for the Batak Domination stats will go here...</p>
+                 <div id="batak-data-content"></div>
+            </div>
+            <div id="page-sonmac" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Sonmac Page</h2>
+                <p class="mt-4 text-gray-700">Sonmac stats will be loaded here when updated.</p>
+                <div id="sonmac-data-content" class="overflow-x-auto mt-4"></div>
+            </div>
+            <div id="page-duel_sonmac" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Duel Sonmac Page</h2>
+                <p class="mt-4 text-gray-700">Content for the Duel Sonmac stats will go here...</p>
+                 <div id="duel-sonmac-data-content"></div>
+            </div>
+            <div id="page-gece_ortalama" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Nightly Average Stats</h2>
+                <p class="mt-4 text-gray-700">Content for the Nightly Average stats will go here...</p>
+                 <div id="nightly-avg-data-content"></div>
+            </div>
+            <div id="page-last10" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Last 10 Games Ranking</h2>
+                <p class="mt-4 text-gray-700">Last 10 games ranking will be loaded here when updated.</p>
+                 <div id="last10-data-content" class="overflow-x-auto mt-4"></div>
+            </div>
+             <div id="page-hltv2" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">HLTV 2.0 Performance</h2>
+                <p class="mt-4 text-gray-700">Content for the HLTV 2.0 Performance stats will go here...</p>
+                 <div id="hltv2-data-content"></div>
+            </div>
+             <div id="page-adr" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">ADR Performance</h2>
+                <p class="mt-4 text-gray-700">Content for the ADR Performance stats will go here...</p>
+                 <div id="adr-data-content"></div>
+            </div>
+             <div id="page-season_rank" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600">Season Ranking</h2>
+                <p class="mt-4 text-gray-700">Content for the Season Ranking stats will go here...</p>
+                 <div id="season-rank-data-content"></div>
+            </div>
+
+
+        </div> </div> <script>
+    </script>
+    <script src="main.js"></script>
+
+</body>
+</html>
