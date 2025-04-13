@@ -30,6 +30,13 @@
         tbody tr:hover {
             background-color: #f9fafb; /* Light hover effect for rows */
         }
+            /* Responsive adjustments for table cells on mobile */
+        @media (max-width: 640px) {
+        th, td {
+            padding: 8px 10px;
+            font-size: 0.875rem;
+        }
+        }
         /* Styles for the info panel - Light Theme */
         .info-panel {
             background-color: #ffffff; /* White background */
@@ -188,7 +195,7 @@
             </div>
 
             <nav id="main-nav-links" class="hidden md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2 absolute md:relative top-full left-0 right-0 z-20 bg-white md:bg-transparent shadow-md md:shadow-none rounded-b-md md:rounded-none" aria-label="Main navigation">
-                <a class="tab-nav-item active" data-page="attendance" href="#">Attendance</a>
+                <a class="tab-nav-item active" data-page="attendance" href="#">ATTENDANCE</a>
                 <a class="tab-nav-item" data-page="draft" href="#">DRAFT</a>
                 <a class="tab-nav-item" data-page="pick" href="#">PICK</a>
                 <a class="tab-nav-item" data-page="batak_domination" href="#">BATAK DOMINATION</a>
@@ -204,7 +211,7 @@
 
         <div class="text-center mb-6">
              <button id="update-stats-button" class="action-button">
-                 Update Stats from Sheet
+                 Update Attendance from Sheet
                  <span id="spinner" class="spinner hidden"></span>
              </button>
         </div>
@@ -216,8 +223,8 @@
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                     <div class="md:col-span-2 page-content-container">
                         <h2 class="text-2xl font-semibold mb-4 text-blue-600">Player Status</h2>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full">
+                        <div>
+                            <table class="table-fixed w-full">
                                 <thead>
                                     <tr>
                                         <th>Player</th>
@@ -226,9 +233,10 @@
                                     </tr>
                                 </thead>
                                 <tbody id="player-list">
-                                    </tbody>
+                                    <!-- Player rows will be inserted here -->
+                                </tbody>
                             </table>
-                        </div>
+                        </div>                        
                     </div>
                     <div class="info-panel">
                          <h3 class="text-xl font-semibold">Schedule & Info</h3>
@@ -369,50 +377,59 @@
 
         // Function to render player rows
         function renderPlayers() {
-            if (!playerListBody) return;
-            playerListBody.innerHTML = '';
+        if (!playerListBody) return;
+        playerListBody.innerHTML = '';
 
-            players.forEach((player, index) => {
-                const row = document.createElement('tr');
-                row.setAttribute('data-player-name', player.name);
+        players.forEach((player, index) => {
+            const row = document.createElement('tr');
+            row.setAttribute('data-player-name', player.name);
 
-                const nameCell = document.createElement('td');
-                nameCell.className = 'font-medium text-gray-900';
-                nameCell.textContent = player.name;
-                row.appendChild(nameCell);
+            // Player Name Cell
+            const nameCell = document.createElement('td');
+            nameCell.className = 'font-medium text-gray-900 px-2 py-1';
+            nameCell.textContent = player.name;
+            row.appendChild(nameCell);
 
-                // Player Status Cell
-                const statusCell = document.createElement('td');
-                const statusBadge = document.createElement('span');
-                statusBadge.className = 'px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap';
-                statusBadge.textContent = player.status;
-                statusBadge.classList.add(
-                    player.status === 'Active Player' ? 'bg-green-100' : 'bg-red-100',
-                    player.status === 'Active Player' ? 'text-green-800' : 'text-red-800'
-                );
-                statusCell.appendChild(statusBadge);
-                row.appendChild(statusCell);
+            // Status Cell
+            const statusCell = document.createElement('td');
+            statusCell.className = 'px-2 py-1';
+            const statusBadge = document.createElement('span');
+            statusBadge.className = 'px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap';
+            statusBadge.textContent = player.status;
 
-                // Attendance Slider Cell
-                const attendanceCell = document.createElement('td');
-                // Apply flex centering to the TD
-                attendanceCell.className = 'flex justify-center items-center';
+            if (player.status.includes('Aktif')) {
+            statusBadge.classList.add('bg-green-200', 'text-green-800');
+            } else if (player.status.includes('Evde Yok')) {
+            statusBadge.classList.add('bg-red-100', 'text-red-800');
+            } else {
+            statusBadge.classList.add('bg-gray-100', 'text-gray-800');
+            }
 
-                const sliderId = `slider-${index}`;
-                const initialState = player.attendance;
-                const sliderContainer = document.createElement('div');
-                sliderContainer.id = sliderId;
-                sliderContainer.className = `attendance-slider state-${initialState}`;
-                sliderContainer.setAttribute('data-player', player.name);
-                sliderContainer.setAttribute('data-current-status', initialState);
-                const dot = document.createElement('div');
-                dot.className = 'dot';
-                sliderContainer.appendChild(dot);
-                attendanceCell.appendChild(sliderContainer);
-                row.appendChild(attendanceCell);
-                playerListBody.appendChild(row);
-            });
+            statusCell.appendChild(statusBadge);
+            row.appendChild(statusCell);
+
+            // Attendance Slider Cell
+            const attendanceCell = document.createElement('td');
+            attendanceCell.className = 'px-2 py-1 flex justify-center items-center';
+
+            const sliderId = `slider-${index}`;
+            const initialState = player.attendance;
+            const sliderContainer = document.createElement('div');
+            sliderContainer.id = sliderId;
+            sliderContainer.className = `attendance-slider state-${initialState}`;
+            sliderContainer.setAttribute('data-player', player.name);
+            sliderContainer.setAttribute('data-current-status', initialState);
+
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            sliderContainer.appendChild(dot);
+            attendanceCell.appendChild(sliderContainer);
+            row.appendChild(attendanceCell);
+
+            playerListBody.appendChild(row);
+        });
         }
+
 
         // Fetch attendance data from Google Sheets
         async function fetchStatsFromSheet() {
@@ -512,10 +529,10 @@
             } else {
                 console.error(`Nav link with data-page="${pageId}" not found.`);
             }
-
             if (pageId === 'attendance') {
                 renderPlayers(); // Re-render players when switching to attendance tab
             }
+            
         }
 
         // Toggle Mobile Menu
@@ -555,6 +572,8 @@
                         menuButton.click();
                     }
                 }
+                
+
             }
         });
 
