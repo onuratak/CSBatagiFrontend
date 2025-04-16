@@ -352,7 +352,7 @@
                 <a class="tab-nav-item" data-page="last10" href="#">Last 10 Rank</a>
                 <a class="tab-nav-item" data-page="hltv2" href="#">HLTV2 Perf</a>
                 <a class="tab-nav-item" data-page="adr" href="#">ADR Perf</a>
-                <a class="tab-nav-item" data-page="season_rank" href="#">Season Rank</a>
+                <a class="tab-nav-item" data-page="season_avg" href="#">Sezon Ortalamasi</a>
             </nav>
         </header>
 
@@ -460,17 +460,52 @@
                 <p class="mt-4 text-gray-700">Content for the ADR Performance stats will go here...</p>
                  <div id="adr-data-content" class="mt-4"></div>
             </div>
-             <div id="page-season_rank" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Season Ranking</h2>
-                <p class="mt-4 text-gray-700">Content for the Season Ranking stats will go here...</p>
-                 <div id="season-rank-data-content" class="mt-4"></div>
+            <div id="page-season_avg" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Sezon Ortalaması</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                        <thead>
+                            <tr>
+                                <th class="px-2 py-2">Oyuncu</th>
+                                <th class="px-2 py-2">HLTV2</th>
+                                <th class="px-2 py-2">ADR</th>
+                                <th class="px-2 py-2">K/D</th>
+                                <th class="px-2 py-2">MVP</th>
+                                <th class="px-2 py-2">Kills</th>
+                                <th class="px-2 py-2">Deaths</th>
+                                <th class="px-2 py-2">Assists</th>
+                                <th class="px-2 py-2">HS</th>
+                                <th class="px-2 py-2">HS/Kill ratio</th>
+                                <th class="px-2 py-2">First Kill</th>
+                                <th class="px-2 py-2">First Death</th>
+                                <th class="px-2 py-2">Bomb Planted</th>
+                                <th class="px-2 py-2">Bomb Defused</th>
+                                <th class="px-2 py-2">HLTV</th>
+                                <th class="px-2 py-2">KAST</th>
+                                <th class="px-2 py-2">Utility Damage</th>
+                                <th class="px-2 py-2">2 kills</th>
+                                <th class="px-2 py-2">3 kills</th>
+                                <th class="px-2 py-2">4 kills</th>
+                                <th class="px-2 py-2">5 kills</th>
+                                <th class="px-2 py-2">Nr of Matches</th>
+                                <th class="px-2 py-2">WIN RATE (%)</th>
+                                <th class="px-2 py-2">Nr of clutches per game</th>
+                                <th class="px-2 py-2">Clutches Won</th>
+                                <th class="px-2 py-2">Successful Clutch (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="season-avg-table-body">
+                            <!-- Data rows will be injected here by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
         </div> </div> <script>
         // --- Constants ---
         const APPS_SCRIPT_URL = 'https://royal-flower-aa89.onur1atak.workers.dev/'; // Replace with your actual URL
         const ATTENDANCE_STATES = ["not_coming", "no_response", "coming"]; // Order matters for cycling
-        const DEFAULT_PAGE = 'attendance';
+        const DEFAULT_PAGE = 'season_avg';
         const TEKER_DONDU_THRESHOLD = 10; // Number of players needed for the wheel
 
         // --- State ---
@@ -707,7 +742,7 @@
                 }
                 players = data; // Update the global players array
                 renderPlayers(); // Re-render the table with new data
-                showMessage('Attendance data loaded successfully!', 'success');
+                //showMessage('Attendance data loaded successfully!', 'success');
             } catch (err) {
                 console.error('Failed to fetch stats:', err);
                 showMessage(`Error loading data: ${err.message}`, 'error');
@@ -917,14 +952,124 @@
             }
         }
 
+        /**
+         * Fetches season average player stats from the Google Apps Script endpoint.
+         * Expects an array of objects with the raw format fields.
+         * You may need to adjust the endpoint or query params as needed.
+         */
+        async function fetchSeasonAvgStats() {
+            try {
+                // Example: Add a query param to indicate which data you want (optional)
+                // const url = APPS_SCRIPT_URL + '?type=season_avg';
+                const url = APPS_SCRIPT_URL; // Use your endpoint as needed
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    let errorDetails = `HTTP error! Status: ${response.status}`;
+                    try {
+                        const errorData = await response.json();
+                        errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
+                    } catch (e) { /* Ignore if not JSON */ }
+                    throw new Error(errorDetails);
+                }
+                const data = await response.json();
+                // Basic validation: Check if it's an array
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid data format received from server.");
+                }
+                // You may want to filter/map here if needed
+                return data;
+            } catch (err) {
+                console.error('Failed to fetch season avg stats:', err);
+                showMessage(`Error loading season stats: ${err.message}`, 'error');
+                return [];
+            }
+        }
+
+        // Example usage: fetch and render
+        async function loadAndRenderSeasonAvgTable() {
+            const stats = await fetchSeasonAvgStats();
+            if (stats.length > 0) {
+                fillSeasonAvgTable(stats);
+            }
+        }
+
+        // Modify fillSeasonAvgTable to accept data as a parameter:
+        function fillSeasonAvgTable(data) {
+            // --- Calculate min/max for gradient columns ---
+            const hltv2Vals = data.map(d => d.hltv_2);
+            const adrVals = data.map(d => d.adr);
+            const kdVals = data.map(d => d.kd);
+
+            const minHLTV2 = Math.min(...hltv2Vals), maxHLTV2 = Math.max(...hltv2Vals);
+            const minADR = Math.min(...adrVals), maxADR = Math.max(...adrVals);
+            const minKD = Math.min(...kdVals), maxKD = Math.max(...kdVals);
+
+            // Helper: pick Tailwind color class based on percent (red-200, red-400, yellow-200, green-200, green-400, green-600)
+            function getTailwindBg(percent) {
+                if (percent < 0.2) return 'bg-red-400';
+                if (percent < 0.3) return 'bg-red-300';
+                if (percent < 0.4) return 'bg-red-200';
+                if (percent < 0.5) return 'bg-red-100';
+                if (percent < 0.6) return 'bg-green-100';
+                if (percent < 0.7) return 'bg-green-200';
+                if (percent < 0.8) return 'bg-green-300';
+                if (percent < 0.9) return 'bg-green-400';
+                return 'bg-green-500';
+            }
+            function getGradientClass(val, min, max) {
+                if (max === min) return 'bg-white';
+                const percent = (val - min) / (max - min);
+                return getTailwindBg(percent);
+            }
+
+            // --- Sort by HLTV2 descending ---
+            data.sort((a, b) => b.hltv_2 - a.hltv_2);
+            
+            const tbody = document.getElementById('season-avg-table-body');
+            tbody.innerHTML = '';
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-medium text-gray-900">${row.name}</td>
+                    <td class="${getGradientClass(row.hltv_2, minHLTV2, maxHLTV2)}">${row.hltv_2.toFixed(2)}</td>
+                    <td class="${getGradientClass(row.adr, minADR, maxADR)} ">${row.adr.toFixed(2)}</td>
+                    <td class="${getGradientClass(row.kd, minKD, maxKD)} ">${row.kd.toFixed(2)}</td>
+                    <td>${row.mvp.toFixed(2)}</td>
+                    <td>${row.kills.toFixed(2)}</td>
+                    <td>${row.deaths.toFixed(2)}</td>
+                    <td>${row.assists.toFixed(2)}</td>
+                    <td>${row.hs.toFixed(2)}</td>
+                    <td>${row.hs_ratio.toFixed(2)}%</td>
+                    <td>${row.first_kill.toFixed(2)}</td>
+                    <td>${row.first_death.toFixed(2)}</td>
+                    <td>${row.bomb_planted.toFixed(2)}</td>
+                    <td>${row.bomb_defused.toFixed(2)}</td>
+                    <td>${row.hltv.toFixed(2)}</td>
+                    <td>${row.kast.toFixed(2)}%</td>
+                    <td>${row.utl_dmg.toFixed(2)}</td>
+                    <td>${row.two_kills.toFixed(2)}</td>
+                    <td>${row.three_kills.toFixed(2)}</td>
+                    <td>${row.four_kills.toFixed(2)}</td>
+                    <td>${row.five_kills.toFixed(2)}</td>
+                    <td>${row.matches}</td>
+                    <td>${row.win_rate.toFixed(2)}%</td>
+                    <td>${row.avg_clutches.toFixed(2)}</td>
+                    <td>${row.avg_clutches_won.toFixed(2)}</td>
+                    <td>${row.clutch_success.toFixed(2)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
         // --- Event Listeners ---
 
         // Initial load: Fetch data and show the default page
         document.addEventListener('DOMContentLoaded', () => {
             showPage(DEFAULT_PAGE); // Show the initial page
             fetchStatsFromSheet(); // Fetch initial data
-            // Placeholder: Load data for other tabs if needed initially
-            // loadOtherTabData('draft'); // Example
+            loadAndRenderSeasonAvgTable(); // Fetch and render season average stats
         });
 
         // Update button click
