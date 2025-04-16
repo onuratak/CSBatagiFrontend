@@ -507,6 +507,7 @@
         const ATTENDANCE_STATES = ["not_coming", "no_response", "coming"]; // Order matters for cycling
         const DEFAULT_PAGE = 'season_avg';
         const TEKER_DONDU_THRESHOLD = 10; // Number of players needed for the wheel
+        const SEASON_AVG_JSON_URL = 'season_avg.json';
 
         // --- State ---
         let players = []; // Initialize empty, will be filled by fetch
@@ -953,31 +954,18 @@
         }
 
         /**
-         * Fetches season average player stats from the Google Apps Script endpoint.
-         * Expects an array of objects with the raw format fields.
-         * You may need to adjust the endpoint or query params as needed.
+         * Fetches season average player stats from the local JSON file.
          */
         async function fetchSeasonAvgStats() {
             try {
-                // Example: Add a query param to indicate which data you want (optional)
-                // const url = APPS_SCRIPT_URL + '?type=season_avg';
-                const url = APPS_SCRIPT_URL; // Use your endpoint as needed
-
-                const response = await fetch(url);
+                const response = await fetch(SEASON_AVG_JSON_URL);
                 if (!response.ok) {
-                    let errorDetails = `HTTP error! Status: ${response.status}`;
-                    try {
-                        const errorData = await response.json();
-                        errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
-                    } catch (e) { /* Ignore if not JSON */ }
-                    throw new Error(errorDetails);
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
                 const data = await response.json();
-                // Basic validation: Check if it's an array
                 if (!Array.isArray(data)) {
-                    throw new Error("Invalid data format received from server.");
+                    throw new Error("Invalid data format received from JSON file.");
                 }
-                // You may want to filter/map here if needed
                 return data;
             } catch (err) {
                 console.error('Failed to fetch season avg stats:', err);
