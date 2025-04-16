@@ -944,7 +944,22 @@
                  // loadTabDataIfNeeded(pageId);
             }
         });
-
+        
+        // --- Responsive menu fix: Ensure nav is visible on desktop after resizing from mobile ---
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) { // Tailwind's md breakpoint is 768px
+                navLinksContainer.classList.remove('hidden', 'mobile-menu-active');
+                menuButton.setAttribute('aria-expanded', 'false');
+                iconHamburger.classList.remove('hidden');
+                iconClose.classList.add('hidden');
+            } else {
+                navLinksContainer.classList.add('hidden');
+                navLinksContainer.classList.remove('mobile-menu-active');
+                menuButton.setAttribute('aria-expanded', 'false');
+                iconHamburger.classList.remove('hidden');
+                iconClose.classList.add('hidden');
+            }
+        });
         // Mobile menu button click
         menuButton.addEventListener('click', () => toggleMobileMenu());
 
