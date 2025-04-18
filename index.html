@@ -1315,7 +1315,10 @@
             table.appendChild(thead);
             
             // Table body
+            // Assign a unique id to tbody for heatmap targeting
+            const tbodyId = `sonmac-${teamData.name.replace(/\s+/g, '_').toLowerCase()}-${color}`;
             const tbody = document.createElement('tbody');
+            tbody.id = tbodyId;
             
             // Add player rows
             teamData.players.forEach(player => {
@@ -1358,7 +1361,18 @@
             table.appendChild(tbody);
             tableContainer.appendChild(table);
             teamDiv.appendChild(tableContainer);
-            
+            // Apply heatmap to HLTV2, ADR, K/D columns (after DOM is updated)
+            setTimeout(() => {
+                const gradient = [
+                    { percent: 0, color: '#EF4444' },
+                    { percent: 0.5, color: '#FDE68A' },
+                    { percent: 1, color: '#22C55E' }
+                ];
+                // HLTV2: 1, ADR: 2, K/D: 3 (0-based)
+                applyHeatmapToColumn(tbodyId, 1, gradient);
+                applyHeatmapToColumn(tbodyId, 2, gradient);
+                applyHeatmapToColumn(tbodyId, 3, gradient);
+            }, 0);
             return teamDiv;
         }
 
