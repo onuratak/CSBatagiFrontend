@@ -1,298 +1,213 @@
-// PostgreSQL to JSON converter for CS:GO stats
-// This script connects to your PostgreSQL database, runs queries, and generates JSON files
-const { Pool } = require('pg');
+// API-based stats generator for CS:GO stats
+// This script connects to your database via API endpoint, runs queries, and generates JSON files
+const fetch = require('node-fetch');
 const fs = require('fs');
 const path = require('path');
 
-// Database connection
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  ssl: {
-    rejectUnauthorized: false // Needed for some cloud DBs
-  }
-});
+// API endpoint configuration
+const API_ENDPOINT = 'https://db2.csbatagi.com/execute-query';
+const MW_TOKEN = process.env.MW_TOKEN;
 
-// SQL Queries - replace these with your actual queries from Google Sheets
+// Define the SQL select clause to be used in queries
+const selectClause = `
+          AVG(p1.hltv_rating_2) AS HLTV_2,
+          AVG(p1.average_damage_per_round) AS adr,
+          AVG(p1.kill_count) AS KILLS,
+          AVG(p1.death_count) AS DEATHS,
+          AVG(p1.assist_count) AS ASSISTS,
+          AVG(p1.kill_death_ratio) AS KD,
+          AVG(p1.headshot_count) AS Headshot_kills,
+          AVG(p1.headshot_percentage) AS Headshot_killratio,
+          AVG(p1.first_kill_count) AS first_kill_count,
+          AVG(p1.first_death_count) AS first_death_count,
+          AVG(p1.bomb_planted_count) AS bomb_planted,
+          AVG(p1.bomb_defused_count) AS bomb_defused,
+          AVG(p1.hltv_rating) AS HLTV,
+          AVG(p1.mvp_count) AS MVP,
+          AVG(p1.kast) AS KAST,
+          AVG(p1.utility_damage) AS UTL_DMG,
+          AVG(p1.two_kill_count) AS two_kills,
+          AVG(p1.three_kill_count) AS three_kills,
+          AVG(p1.four_kill_count) AS four_kills,
+          AVG(p1.five_kill_count) AS five_kills,
+          AVG(p1.score) AS SCORE,
+          `;
+
+// Season start date (can be passed as environment variable or hardcoded)
+const sezonbaslangic = process.env.SEZON_BASLANGIC || '2023-09-01';
+
+// SQL Queries
 const queries = {
   // Query for season_avg.json - retrieves overall season stats
   seasonAvg: `
-    SELECT 
-      player_name as name,
-      ROUND(AVG(hltv2)::numeric, 2) as hltv_2,
-      ROUND(AVG(adr)::numeric, 2) as adr,
-      ROUND(AVG(k_d)::numeric, 2) as kd,
-      ROUND(AVG(mvp)::numeric, 2) as mvp,
-      ROUND(AVG(kills)::numeric, 2) as kills,
-      ROUND(AVG(deaths)::numeric, 2) as deaths,
-      ROUND(AVG(assists)::numeric, 2) as assists,
-      ROUND(AVG(headshots)::numeric, 2) as hs,
-      ROUND(AVG(hs_percentage)::numeric, 2) as hs_ratio,
-      ROUND(AVG(first_kills)::numeric, 2) as first_kill,
-      ROUND(AVG(first_deaths)::numeric, 2) as first_death,
-      ROUND(AVG(bomb_planted)::numeric, 2) as bomb_planted,
-      ROUND(AVG(bomb_defused)::numeric, 2) as bomb_defused,
-      ROUND(AVG(hltv)::numeric, 2) as hltv,
-      ROUND(AVG(kast)::numeric, 2) as kast,
-      ROUND(AVG(utility_damage)::numeric, 2) as utl_dmg,
-      ROUND(AVG(two_kills)::numeric, 2) as two_kills,
-      ROUND(AVG(three_kills)::numeric, 2) as three_kills,
-      ROUND(AVG(four_kills)::numeric, 2) as four_kills,
-      ROUND(AVG(five_kills)::numeric, 2) as five_kills,
-      COUNT(DISTINCT match_id) as matches,
-      ROUND((SUM(CASE WHEN won THEN 1 ELSE 0 END)::numeric / COUNT(DISTINCT match_id)) * 100, 2) as win_rate,
-      ROUND(AVG(clutches)::numeric, 2) as avg_clutches,
-      ROUND(AVG(clutches_won)::numeric, 2) as avg_clutches_won,
-      ROUND((SUM(clutches_won)::numeric / NULLIF(SUM(clutches), 0)) * 100, 2) as clutch_success
-    FROM player_stats
-    GROUP BY player_name
-    HAVING COUNT(DISTINCT match_id) >= 5
-    ORDER BY hltv_2 DESC
+         WITH match_date_info AS (
+            SELECT MAX(matches.date::date) AS latest_match_date 
+            FROM matches
+        ),
+        season_start_info AS (
+            SELECT '${sezonbaslangic}'::date AS seasonstart
+        ),
+        match_agg AS (
+            SELECT
+              p1.steam_id,
+              MAX(p1.name) AS name,
+              ${selectClause}
+              (SELECT latest_match_date FROM match_date_info) AS latest_match_date,
+              COUNT(*) AS matches_in_interval,
+              COUNT(CASE WHEN matches.winner_name = p1.team_name THEN 1 END) AS win_count,
+              ROUND(
+                  (COUNT(CASE WHEN matches.winner_name = p1.team_name THEN 1 END)::numeric 
+                  / COUNT(*) * 100)
+                  , 2
+              ) AS win_rate_percentage
+            FROM players AS p1
+            INNER JOIN matches ON p1.match_checksum = matches.checksum
+            WHERE 
+                matches.date::date BETWEEN 
+                    (SELECT seasonstart FROM season_start_info) 
+                    AND 
+                    (SELECT latest_match_date FROM match_date_info)
+            GROUP BY p1.steam_id
+        ),
+        clutch_agg AS (
+            SELECT
+              c.clutcher_steam_id AS steam_id,
+              COUNT(*)::numeric AS total_clutches,
+              COUNT(CASE WHEN c.won = TRUE THEN 1 END)::numeric AS total_clutches_won
+            FROM clutches c
+            JOIN matches m ON c.match_checksum = m.checksum
+            WHERE m.date::date BETWEEN 
+                    (SELECT seasonstart FROM season_start_info) 
+                    AND 
+                    (SELECT latest_match_date FROM match_date_info)
+            GROUP BY c.clutcher_steam_id
+        )
+        SELECT
+          m.*,
+          ROUND(coalesce(c.total_clutches, 0) / m.matches_in_interval, 2) AS avg_clutches,
+          ROUND(coalesce(c.total_clutches_won, 0) / m.matches_in_interval, 2) AS avg_clutches_won,
+          CASE 
+            WHEN coalesce(c.total_clutches, 0) = 0 THEN 0
+            ELSE ROUND(c.total_clutches_won / c.total_clutches * 100, 2)
+          END AS successful_clutch_percentage
+        FROM match_agg m
+        LEFT JOIN clutch_agg c ON m.steam_id = c.steam_id
+        ORDER BY HLTV_2 DESC;
   `,
   
+  // Other queries commented out until needed
+  /*
   // Query for last10.json - retrieves stats from last 10 matches
   last10: `
-    SELECT 
-      ps.player_name as name,
-      ROUND(AVG(ps.hltv2)::numeric, 2) as hltv_2,
-      ROUND(AVG(ps.adr)::numeric, 2) as adr,
-      ROUND(AVG(ps.k_d)::numeric, 2) as kd,
-      ROUND(AVG(ps.mvp)::numeric, 2) as mvp,
-      ROUND(AVG(ps.kills)::numeric, 2) as kills,
-      ROUND(AVG(ps.deaths)::numeric, 2) as deaths,
-      ROUND(AVG(ps.assists)::numeric, 2) as assists,
-      ROUND(AVG(ps.headshots)::numeric, 2) as hs,
-      ROUND(AVG(ps.hs_percentage)::numeric, 2) as hs_ratio,
-      ROUND(AVG(ps.first_kills)::numeric, 2) as first_kill,
-      ROUND(AVG(ps.first_deaths)::numeric, 2) as first_death,
-      ROUND(AVG(ps.bomb_planted)::numeric, 2) as bomb_planted,
-      ROUND(AVG(ps.bomb_defused)::numeric, 2) as bomb_defused,
-      ROUND(AVG(ps.hltv)::numeric, 2) as hltv,
-      ROUND(AVG(ps.kast)::numeric, 2) as kast,
-      ROUND(AVG(ps.utility_damage)::numeric, 2) as utl_dmg,
-      ROUND(AVG(ps.two_kills)::numeric, 2) as two_kills,
-      ROUND(AVG(ps.three_kills)::numeric, 2) as three_kills,
-      ROUND(AVG(ps.four_kills)::numeric, 2) as four_kills,
-      ROUND(AVG(ps.five_kills)::numeric, 2) as five_kills,
-      COUNT(DISTINCT ps.match_id) as matches,
-      ROUND((SUM(CASE WHEN ps.won THEN 1 ELSE 0 END)::numeric / COUNT(DISTINCT ps.match_id)) * 100, 2) as win_rate,
-      ROUND(AVG(ps.clutches)::numeric, 2) as avg_clutches,
-      ROUND(AVG(ps.clutches_won)::numeric, 2) as avg_clutches_won,
-      ROUND((SUM(ps.clutches_won)::numeric / NULLIF(SUM(ps.clutches), 0)) * 100, 2) as clutch_success
-    FROM player_stats ps
-    JOIN (
-      SELECT DISTINCT match_id 
-      FROM matches
-      ORDER BY match_date DESC 
-      LIMIT 10
-    ) recent ON ps.match_id = recent.match_id
-    GROUP BY ps.player_name
-    HAVING COUNT(DISTINCT ps.match_id) >= 3
-    ORDER BY hltv_2 DESC
+    // Query will be added later
   `,
   
   // Query for night_avg.json - retrieves stats from night matches
   nightAvg: `
-    SELECT 
-      ps.player_name as name,
-      ROUND(AVG(ps.hltv2)::numeric, 2) as hltv_2,
-      ROUND(AVG(ps.adr)::numeric, 2) as adr,
-      ROUND(AVG(ps.k_d)::numeric, 2) as kd,
-      ROUND(AVG(ps.mvp)::numeric, 2) as mvp,
-      ROUND(AVG(ps.kills)::numeric, 2) as kills,
-      ROUND(AVG(ps.deaths)::numeric, 2) as deaths,
-      ROUND(AVG(ps.assists)::numeric, 2) as assists,
-      ROUND(AVG(ps.headshots)::numeric, 2) as hs,
-      ROUND(AVG(ps.hs_percentage)::numeric, 2) as hs_ratio,
-      ROUND(AVG(ps.first_kills)::numeric, 2) as first_kill,
-      ROUND(AVG(ps.first_deaths)::numeric, 2) as first_death,
-      ROUND(AVG(ps.bomb_planted)::numeric, 2) as bomb_planted,
-      ROUND(AVG(ps.bomb_defused)::numeric, 2) as bomb_defused,
-      ROUND(AVG(ps.hltv)::numeric, 2) as hltv,
-      ROUND(AVG(ps.kast)::numeric, 2) as kast,
-      ROUND(AVG(ps.utility_damage)::numeric, 2) as utl_dmg,
-      ROUND(AVG(ps.two_kills)::numeric, 2) as two_kills,
-      ROUND(AVG(ps.three_kills)::numeric, 2) as three_kills,
-      ROUND(AVG(ps.four_kills)::numeric, 2) as four_kills,
-      ROUND(AVG(ps.five_kills)::numeric, 2) as five_kills,
-      COUNT(DISTINCT ps.match_id) as matches,
-      ROUND((SUM(CASE WHEN ps.won THEN 1 ELSE 0 END)::numeric / COUNT(DISTINCT ps.match_id)) * 100, 2) as win_rate,
-      ROUND(AVG(ps.clutches)::numeric, 2) as avg_clutches,
-      ROUND(AVG(ps.clutches_won)::numeric, 2) as avg_clutches_won,
-      ROUND((SUM(ps.clutches_won)::numeric / NULLIF(SUM(ps.clutches), 0)) * 100, 2) as clutch_success
-    FROM player_stats ps
-    JOIN matches m ON ps.match_id = m.match_id
-    WHERE EXTRACT(HOUR FROM m.match_date) >= 22 
-       OR EXTRACT(HOUR FROM m.match_date) < 4
-    GROUP BY ps.player_name
-    HAVING COUNT(DISTINCT ps.match_id) >= 5
-    ORDER BY hltv_2 DESC
+    // Query will be added later
   `,
   
   // Query for sonmac.json - retrieves latest match data
   matchStats: `
-    SELECT 
-      m.map_name,
-      t.team_name,
-      ps.player_name as name,
-      ps.steam_id,
-      t.score as team_score,
-      ps.hltv2,
-      ps.adr,
-      ps.kills,
-      ps.deaths,
-      ps.assists,
-      ps.k_d as kd,
-      ps.headshots as headshot_kills,
-      ps.hs_percentage as headshot_killratio,
-      ps.first_kills as first_kill_count,
-      ps.first_deaths as first_death_count,
-      ps.bomb_planted,
-      ps.bomb_defused,
-      ps.hltv,
-      ps.mvp,
-      ps.kast,
-      ps.utility_damage as utl_dmg,
-      ps.two_kills,
-      ps.three_kills,
-      ps.four_kills,
-      ps.five_kills,
-      ps.score,
-      ps.clutches as number_of_clutches,
-      ps.clutches_won as number_of_successful_clutches,
-      m.match_date as latest_match_date
-    FROM player_stats ps
-    JOIN teams t ON ps.team_id = t.team_id
-    JOIN maps m ON ps.map_id = m.map_id
-    JOIN matches match ON m.match_id = match.match_id
-    WHERE match.match_id = (
-      SELECT match_id 
-      FROM matches 
-      ORDER BY match_date DESC 
-      LIMIT 1
-    )
-    ORDER BY m.map_name, t.team_name, ps.hltv2 DESC
+    // Query will be added later
   `
+  */
 };
 
-// Function to execute query and write results to JSON file
-async function updateStats(queryName, fileName) {
+// Execute query via API and return results
+async function executeDbQuery(dbQuery) {
   try {
-    const result = await pool.query(queries[queryName]);
-    const jsonData = JSON.stringify(result.rows, null, 2);
-    fs.writeFileSync(path.join(__dirname, '..', 'data', fileName), jsonData);
-    console.log(`✅ Updated data/${fileName}`);
-  } catch (error) {
-    console.error(`❌ Error updating ${fileName}:`, error);
+    const res = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${MW_TOKEN}` 
+      },
+      body: JSON.stringify({ "query": dbQuery }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error('Error executing query:', err);
+    throw err;
   }
 }
 
-// Map for the match stats (needs special processing)
-async function updateMatchStats() {
+// Process the season average stats
+async function updateSeasonAvgStats() {
   try {
-    const result = await pool.query(queries.matchStats);
+    console.log('Updating season average stats...');
     
-    // Transform the flat data into the nested structure for sonmac.json
-    const matchData = {
-      match_date: result.rows[0]?.latest_match_date?.split('T')[0] || '',
-      maps: {}
-    };
+    // Execute the query
+    const results = await executeDbQuery(queries.seasonAvg);
     
-    // Process rows to build the structure
-    result.rows.forEach(row => {
-      const mapName = row.map_name;
-      
-      if (!matchData.maps[mapName]) {
-        matchData.maps[mapName] = {
-          team1: null,
-          team2: null
-        };
-      }
-      
-      // Determine team1 or team2
-      let teamKey;
-      if (!matchData.maps[mapName].team1) {
-        teamKey = 'team1';
-      } else if (matchData.maps[mapName].team1.name !== row.team_name && !matchData.maps[mapName].team2) {
-        teamKey = 'team2';
-      } else {
-        teamKey = matchData.maps[mapName].team1.name === row.team_name ? 'team1' : 'team2';
-      }
-      
-      // Initialize team if needed
-      if (!matchData.maps[mapName][teamKey]) {
-        matchData.maps[mapName][teamKey] = {
-          name: row.team_name,
-          score: parseInt(row.team_score),
-          players: []
-        };
-      }
-      
-      // Add player
-      matchData.maps[mapName][teamKey].players.push({
-        name: row.name,
-        steam_id: row.steam_id,
-        hltv_2: parseFloat(row.hltv2),
-        adr: parseFloat(row.adr),
-        kd: parseFloat(row.kd),
-        kills: parseInt(row.kills),
-        deaths: parseInt(row.deaths),
-        assists: parseInt(row.assists),
-        hs: parseInt(row.headshot_kills),
-        hs_ratio: parseInt(row.headshot_killratio),
-        first_kill: parseInt(row.first_kill_count),
-        first_death: parseInt(row.first_death_count),
-        bomb_planted: parseInt(row.bomb_planted),
-        bomb_defused: parseInt(row.bomb_defused),
-        hltv: parseFloat(row.hltv),
-        mvp: parseInt(row.mvp),
-        kast: parseFloat(row.kast),
-        utl_dmg: parseInt(row.utl_dmg),
-        two_kills: parseInt(row.two_kills),
-        three_kills: parseInt(row.three_kills),
-        four_kills: parseInt(row.four_kills),
-        five_kills: parseInt(row.five_kills),
-        score: parseInt(row.score),
-        clutches: parseInt(row.number_of_clutches),
-        clutches_won: parseInt(row.number_of_successful_clutches)
-      });
-    });
+    if (!results || !results.length) {
+      console.log('No results found for season average stats');
+      return;
+    }
     
-    // Update path to write to data folder
-    fs.writeFileSync(
-      path.join(__dirname, '..', 'data', 'sonmac.json'), 
-      JSON.stringify(matchData, null, 2)
-    );
-    console.log('✅ Updated data/sonmac.json');
+    // Transform the data
+    const transformedData = results.map(player => ({
+      name: player.name,
+      hltv_2: parseFloat(player.hltv_2 || 0),
+      adr: parseFloat(player.adr || 0),
+      kd: parseFloat(player.kd || 0),
+      mvp: parseFloat(player.mvp || 0),
+      kills: parseFloat(player.kills || 0),
+      deaths: parseFloat(player.deaths || 0),
+      assists: parseFloat(player.assists || 0),
+      hs: parseFloat(player.headshot_kills || 0),
+      hs_ratio: parseFloat(player.headshot_killratio || 0),
+      first_kill: parseFloat(player.first_kill_count || 0),
+      first_death: parseFloat(player.first_death_count || 0),
+      bomb_planted: parseFloat(player.bomb_planted || 0),
+      bomb_defused: parseFloat(player.bomb_defused || 0),
+      hltv: parseFloat(player.hltv || 0),
+      kast: parseFloat(player.kast || 0),
+      utl_dmg: parseFloat(player.utl_dmg || 0),
+      two_kills: parseFloat(player.two_kills || 0),
+      three_kills: parseFloat(player.three_kills || 0),
+      four_kills: parseFloat(player.four_kills || 0),
+      five_kills: parseFloat(player.five_kills || 0),
+      matches: parseInt(player.matches_in_interval || 0),
+      win_rate: parseFloat(player.win_rate_percentage || 0),
+      avg_clutches: parseFloat(player.avg_clutches || 0),
+      avg_clutches_won: parseFloat(player.avg_clutches_won || 0),
+      clutch_success: parseFloat(player.successful_clutch_percentage || 0)
+    }));
+    
+    // Write the result to season_avg.json
+    const dataDir = path.join(__dirname, '..', 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    const filePath = path.join(dataDir, 'season_avg.json');
+    fs.writeFileSync(filePath, JSON.stringify(transformedData, null, 2));
+    console.log('✅ Season average stats written to data/season_avg.json');
   } catch (error) {
-    console.error('❌ Error updating sonmac.json:', error);
+    console.error('❌ Error updating season average stats:', error);
   }
 }
 
 // Main function
 async function main() {
   try {
-    // Create data directory if it doesn't exist
-    const dataDir = path.join(__dirname, '..', 'data');
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
+    console.log('Starting stats update process...');
     
-    await updateStats('seasonAvg', 'season_avg.json');
-    await updateStats('last10', 'last10.json');
-    await updateStats('nightAvg', 'night_avg.json');
-    await updateMatchStats();
-    console.log('✅ All stats updated successfully');
+    // Only update season average stats for now
+    await updateSeasonAvgStats();
+    
+    console.log('✅ Stats update process completed');
   } catch (error) {
-    console.error('❌ Error updating stats:', error);
-  } finally {
-    // Close pool
-    await pool.end();
+    console.error('❌ Error in main function:', error);
+    process.exit(1);
   }
 }
 
-// Run the script
+// Run the main function
 main(); 

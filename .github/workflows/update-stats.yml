@@ -23,21 +23,17 @@ jobs:
       
       - name: Install dependencies
         run: |
-          npm install pg dotenv
+          npm install node-fetch@2
       
       - name: Run stats update script
         env:
-          DB_HOST: ${{ secrets.DB_HOST }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          DB_NAME: ${{ secrets.DB_NAME }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASS: ${{ secrets.DB_PASS }}
+          MW_TOKEN: ${{ secrets.MW_TOKEN }}
         run: node scripts/update-stats.js
       
       - name: Commit and push if changes
         run: |
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions Bot"
-          git add season_avg.json last10.json night_avg.json sonmac.json
+          git add data/season_avg.json data/last10.json data/night_avg.json data/sonmac.json
           git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update stats data [skip ci]"
           git push 
