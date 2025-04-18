@@ -175,24 +175,24 @@ async function updateSeasonAvgStats() {
         hltv_2: getData('hltv_2'),
         adr: getData('adr'),
         kd: getData('kd'),
-        mvp: getData('mvp', parseInt), // Assuming mvp is integer
-        kills: getData('kills', parseInt),
-        deaths: getData('deaths', parseInt),
-        assists: getData('assists', parseInt),
-        hs: getData('headshot_kills', parseInt),
+        mvp: getData('mvp'), // Use parseFloat (default)
+        kills: getData('kills'), // Use parseFloat (default)
+        deaths: getData('deaths'), // Use parseFloat (default)
+        assists: getData('assists'), // Use parseFloat (default)
+        hs: getData('headshot_kills'), // Use parseFloat (default)
         hs_ratio: getData('headshot_killratio'),
-        first_kill: getData('first_kill_count', parseInt),
-        first_death: getData('first_death_count', parseInt),
-        bomb_planted: getData('bomb_planted', parseInt),
-        bomb_defused: getData('bomb_defused', parseInt),
+        first_kill: getData('first_kill_count'), // Use parseFloat (default)
+        first_death: getData('first_death_count'), // Use parseFloat (default)
+        bomb_planted: getData('bomb_planted'), // Use parseFloat (default)
+        bomb_defused: getData('bomb_defused'), // Use parseFloat (default)
         hltv: getData('hltv'),
         kast: getData('kast'),
         utl_dmg: getData('utl_dmg'),
-        two_kills: getData('two_kills', parseInt),
-        three_kills: getData('three_kills', parseInt),
-        four_kills: getData('four_kills', parseInt),
-        five_kills: getData('five_kills', parseInt),
-        matches: getData('matches_in_interval', parseInt),
+        two_kills: getData('two_kills'), // Use parseFloat (default)
+        three_kills: getData('three_kills'), // Use parseFloat (default)
+        four_kills: getData('four_kills'), // Use parseFloat (default)
+        five_kills: getData('five_kills'), // Use parseFloat (default)
+        matches: getData('matches_in_interval'), // Use parseFloat (default)
         win_rate: getData('win_rate_percentage'),
         avg_clutches: getData('avg_clutches'),
         avg_clutches_won: getData('avg_clutches_won'),

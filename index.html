@@ -930,33 +930,6 @@
 
         // Modify fillSeasonAvgTable to accept data as a parameter:
         function fillSeasonAvgTable(data) {
-            // --- Calculate min/max for rating columns ---
-            const hltv2Vals = data.map(d => d.hltv_2).filter(v => typeof v === 'number');
-            const adrVals = data.map(d => d.adr).filter(v => typeof v === 'number');
-            const kdVals = data.map(d => d.kd).filter(v => typeof v === 'number');
-
-            // Ensure we have valid numbers before calculating min/max
-            const minHLTV2 = hltv2Vals.length > 0 ? Math.min(...hltv2Vals) : 0;
-            const maxHLTV2 = hltv2Vals.length > 0 ? Math.max(...hltv2Vals) : 1; // Avoid div by zero if only one value
-            const minADR = adrVals.length > 0 ? Math.min(...adrVals) : 0;
-            const maxADR = adrVals.length > 0 ? Math.max(...adrVals) : 1;
-            const minKD = kdVals.length > 0 ? Math.min(...kdVals) : 0;
-            const maxKD = kdVals.length > 0 ? Math.max(...kdVals) : 1;
-
-            // Helper: Get CSS badge class based on value and range
-            function getBadgeClass(val, min, max) {
-                if (max === min) return 'badge-average'; // Handle cases with single player or all same values
-                const percent = (val - min) / (max - min);
-
-                if (percent >= 0.95) return 'badge-super-elite'; // Red
-                if (percent >= 0.85) return 'badge-elite';       // Orange
-                if (percent >= 0.70) return 'badge-very-good';   // Info Blue
-                if (percent >= 0.55) return 'badge-good';        // Green
-                if (percent >= 0.45) return 'badge-average';     // Grey
-                if (percent >= 0.30) return 'badge-below-average';// Steel Blue
-                return 'badge-poor';                             // Dark Grey
-            }
-
             // --- Sort by HLTV2 descending ---
             data.sort((a, b) => (b.hltv_2 ?? 0) - (a.hltv_2 ?? 0)); // Handle potential null/undefined
 
@@ -969,12 +942,12 @@
                 const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
 
                 const tr = document.createElement('tr');
-                // Apply CSS badge classes using spans inside stat-badge-cell
+                // Apply ONLY stat-badge class to spans in the HTML string
                 tr.innerHTML = `
                     <td class="font-medium text-gray-900 whitespace-nowrap">${row.name || 'N/A'}</td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.hltv_2, minHLTV2, maxHLTV2)}">${formatNum(row.hltv_2)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.adr, minADR, maxADR)}">${formatNum(row.adr, 0)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.kd, minKD, maxKD)}">${formatNum(row.kd)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.kd)}</span></td>
                     <td class="text-center">${formatNum(row.mvp)}</td>
                     <td class="text-center">${formatNum(row.kills)}</td>
                     <td class="text-center">${formatNum(row.deaths)}</td>
@@ -1000,6 +973,18 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            // Define the gradient (adjust colors as desired)
+            const gradient = [
+                { percent: 0, color: '#EF4444' },   // Red-500
+                { percent: 0.5, color: '#FDE68A' }, // Yellow-200 (the lighter one)
+                { percent: 1, color: '#22C55E' }    // Green-500
+            ];
+
+            // Apply heatmap AFTER rows are in the DOM
+            applyHeatmapToColumn('season-avg-table-body', 1, gradient); // HLTV2 (index 1)
+            applyHeatmapToColumn('season-avg-table-body', 2, gradient); // ADR (index 2)
+            applyHeatmapToColumn('season-avg-table-body', 3, gradient); // K/D (index 3)
         }
 
         /**
@@ -1033,33 +1018,6 @@
 
         // Function to fill the last 10 table with data
         function fillLast10Table(data) {
-            // --- Calculate min/max for rating columns ---
-            const hltv2Vals = data.map(d => d.hltv_2).filter(v => typeof v === 'number');
-            const adrVals = data.map(d => d.adr).filter(v => typeof v === 'number');
-            const kdVals = data.map(d => d.kd).filter(v => typeof v === 'number');
-
-            // Ensure we have valid numbers before calculating min/max
-            const minHLTV2 = hltv2Vals.length > 0 ? Math.min(...hltv2Vals) : 0;
-            const maxHLTV2 = hltv2Vals.length > 0 ? Math.max(...hltv2Vals) : 1; // Avoid div by zero if only one value
-            const minADR = adrVals.length > 0 ? Math.min(...adrVals) : 0;
-            const maxADR = adrVals.length > 0 ? Math.max(...adrVals) : 1;
-            const minKD = kdVals.length > 0 ? Math.min(...kdVals) : 0;
-            const maxKD = kdVals.length > 0 ? Math.max(...kdVals) : 1;
-
-            // Helper: Get CSS badge class based on value and range
-            function getBadgeClass(val, min, max) {
-                if (max === min) return 'badge-average'; // Handle cases with single player or all same values
-                const percent = (val - min) / (max - min);
-
-                if (percent >= 0.95) return 'badge-super-elite'; // Red
-                if (percent >= 0.85) return 'badge-elite';       // Orange
-                if (percent >= 0.70) return 'badge-very-good';   // Info Blue
-                if (percent >= 0.55) return 'badge-good';        // Green
-                if (percent >= 0.45) return 'badge-average';     // Grey
-                if (percent >= 0.30) return 'badge-below-average';// Steel Blue
-                return 'badge-poor';                             // Dark Grey
-            }
-
             // --- Sort by HLTV2 descending ---
             data.sort((a, b) => (b.hltv_2 ?? 0) - (a.hltv_2 ?? 0)); // Handle potential null/undefined
 
@@ -1072,12 +1030,12 @@
                 const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
 
                 const tr = document.createElement('tr');
-                // Apply CSS badge classes using spans inside stat-badge-cell
+                // Apply ONLY stat-badge class to spans in the HTML string
                 tr.innerHTML = `
                     <td class="font-medium text-gray-900 whitespace-nowrap">${row.name || 'N/A'}</td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.hltv_2, minHLTV2, maxHLTV2)}">${formatNum(row.hltv_2)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.adr, minADR, maxADR)}">${formatNum(row.adr, 0)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.kd, minKD, maxKD)}">${formatNum(row.kd)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.kd)}</span></td>
                     <td class="text-center">${formatNum(row.mvp)}</td>
                     <td class="text-center">${formatNum(row.kills)}</td>
                     <td class="text-center">${formatNum(row.deaths)}</td>
@@ -1103,6 +1061,17 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            const gradient = [
+                { percent: 0, color: '#EF4444' },   // Red-500
+                { percent: 0.5, color: '#FDE68A' }, // Yellow-200
+                { percent: 1, color: '#22C55E' }    // Green-500
+            ];
+
+            // Apply heatmap AFTER rows are in the DOM
+            applyHeatmapToColumn('last10-table-body', 1, gradient); // HLTV2 (index 1)
+            applyHeatmapToColumn('last10-table-body', 2, gradient); // ADR (index 2)
+            applyHeatmapToColumn('last10-table-body', 3, gradient); // K/D (index 3)
         }
 
         /**
@@ -1136,33 +1105,6 @@
 
         // Function to fill the nightly average table with data
         function fillNightAvgTable(data) {
-            // --- Calculate min/max for rating columns ---
-            const hltv2Vals = data.map(d => d.hltv_2).filter(v => typeof v === 'number');
-            const adrVals = data.map(d => d.adr).filter(v => typeof v === 'number');
-            const kdVals = data.map(d => d.kd).filter(v => typeof v === 'number');
-
-            // Ensure we have valid numbers before calculating min/max
-            const minHLTV2 = hltv2Vals.length > 0 ? Math.min(...hltv2Vals) : 0;
-            const maxHLTV2 = hltv2Vals.length > 0 ? Math.max(...hltv2Vals) : 1; // Avoid div by zero if only one value
-            const minADR = adrVals.length > 0 ? Math.min(...adrVals) : 0;
-            const maxADR = adrVals.length > 0 ? Math.max(...adrVals) : 1;
-            const minKD = kdVals.length > 0 ? Math.min(...kdVals) : 0;
-            const maxKD = kdVals.length > 0 ? Math.max(...kdVals) : 1;
-
-            // Helper: Get CSS badge class based on value and range
-            function getBadgeClass(val, min, max) {
-                if (max === min) return 'badge-average'; // Handle cases with single player or all same values
-                const percent = (val - min) / (max - min);
-
-                if (percent >= 0.95) return 'badge-super-elite'; // Red
-                if (percent >= 0.85) return 'badge-elite';       // Orange
-                if (percent >= 0.70) return 'badge-very-good';   // Info Blue
-                if (percent >= 0.55) return 'badge-good';        // Green
-                if (percent >= 0.45) return 'badge-average';     // Grey
-                if (percent >= 0.30) return 'badge-below-average';// Steel Blue
-                return 'badge-poor';                             // Dark Grey
-            }
-
             // --- Sort by HLTV2 descending ---
             data.sort((a, b) => (b.hltv_2 ?? 0) - (a.hltv_2 ?? 0)); // Handle potential null/undefined
 
@@ -1175,12 +1117,12 @@
                 const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
 
                 const tr = document.createElement('tr');
-                // Apply CSS badge classes using spans inside stat-badge-cell
+                // Apply ONLY stat-badge class to spans in the HTML string
                 tr.innerHTML = `
                     <td class="font-medium text-gray-900 whitespace-nowrap">${row.name || 'N/A'}</td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.hltv_2, minHLTV2, maxHLTV2)}">${formatNum(row.hltv_2)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.adr, minADR, maxADR)}">${formatNum(row.adr, 0)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.kd, minKD, maxKD)}">${formatNum(row.kd)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.kd)}</span></td>
                     <td class="text-center">${formatNum(row.mvp)}</td>
                     <td class="text-center">${formatNum(row.kills)}</td>
                     <td class="text-center">${formatNum(row.deaths)}</td>
@@ -1206,6 +1148,17 @@
                 `;
                 tbody.appendChild(tr);
             });
+
+            const gradient = [
+                { percent: 0, color: '#EF4444' },   // Red-500
+                { percent: 0.5, color: '#FDE68A' }, // Yellow-200
+                { percent: 1, color: '#22C55E' }    // Green-500
+            ];
+
+            // Apply heatmap AFTER rows are in the DOM
+            applyHeatmapToColumn('night-avg-table-body', 1, gradient); // HLTV2 (index 1)
+            applyHeatmapToColumn('night-avg-table-body', 2, gradient); // ADR (index 2)
+            applyHeatmapToColumn('night-avg-table-body', 3, gradient); // K/D (index 3)
         }
 
         /**
@@ -1368,26 +1321,15 @@
             teamData.players.forEach(player => {
                 const tr = document.createElement('tr');
                 
-                // Helper function for badge classes
-                function getBadgeClass(val) {
-                    if (val >= 1.7) return 'badge-super-elite';
-                    if (val >= 1.4) return 'badge-elite';
-                    if (val >= 1.2) return 'badge-very-good';
-                    if (val >= 1.0) return 'badge-good';
-                    if (val >= 0.85) return 'badge-average';
-                    if (val >= 0.7) return 'badge-below-average';
-                    return 'badge-poor';
-                }
-                
                 // Helper to safely format numbers or return 'N/A'
                 const formatNum = (num, decimals = 2) => (typeof num === 'number' ? num.toFixed(decimals) : 'N/A');
                 const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
                 
                 tr.innerHTML = `
                     <td class="font-medium text-gray-900 whitespace-nowrap">${player.name || 'N/A'}</td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.hltv_2)}">${formatNum(player.hltv_2)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.adr / 100)}">${formatNum(player.adr, 0)}</span></td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.kd)}">${formatNum(player.kd)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(player.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(player.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(player.kd)}</span></td>
                     <td class="text-center">${formatNum(player.mvp)}</td>
                     <td class="text-center">${formatNum(player.kills, 0)}</td>
                     <td class="text-center">${formatNum(player.deaths, 0)}</td>
@@ -1398,7 +1340,7 @@
                     <td class="text-center">${formatNum(player.first_death, 0)}</td>
                     <td class="text-center">${formatNum(player.bomb_planted, 0)}</td>
                     <td class="text-center">${formatNum(player.bomb_defused, 0)}</td>
-                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.hltv)}">${formatNum(player.hltv)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(player.hltv)}</span></td>
                     <td class="text-center">${formatPercent(player.kast)}</td>
                     <td class="text-center">${formatNum(player.utl_dmg, 0)}</td>
                     <td class="text-center">${formatNum(player.two_kills, 0)}</td>
@@ -1521,6 +1463,153 @@
             // Set initial navigation visibility based on screen size
             // ... existing code ...
         });
+
+        /**
+         * Interpolates between two hex colors.
+         * @param {string} hex1 Start color (#RRGGBB)
+         * @param {string} hex2 End color (#RRGGBB)
+         * @param {number} factor Interpolation factor (0 to 1)
+         * @returns {string} Interpolated hex color
+         */
+        function interpolateColor(hex1, hex2, factor) {
+            const r1 = parseInt(hex1.substring(1, 3), 16);
+            const g1 = parseInt(hex1.substring(3, 5), 16);
+            const b1 = parseInt(hex1.substring(5, 7), 16);
+            const r2 = parseInt(hex2.substring(1, 3), 16);
+            const g2 = parseInt(hex2.substring(3, 5), 16);
+            const b2 = parseInt(hex2.substring(5, 7), 16);
+
+            const r = Math.round(r1 + factor * (r2 - r1));
+            const g = Math.round(g1 + factor * (g2 - g1));
+            const b = Math.round(b1 + factor * (b2 - b1));
+
+            const toHex = (c) => c.toString(16).padStart(2, '0');
+            return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+        }
+
+        /**
+         * Calculates color based on value within a range and gradient stops.
+         * @param {number} value The value to map.
+         * @param {number} min Minimum value in the range.
+         * @param {number} max Maximum value in the range.
+         * @param {Array<{percent: number, color: string}>} gradientStops Array of stops (e.g., [{percent: 0, color: '#ff0000'}, {percent: 1, color: '#00ff00'}])
+         * @returns {string} Calculated hex color.
+         */
+        function calculateColor(value, min, max, gradientStops) {
+            if (max === min || isNaN(value) || value === null) {
+                // Return middle color if range is zero or value is invalid
+                const middleIndex = Math.floor(gradientStops.length / 2);
+                return gradientStops[middleIndex]?.color || '#ffffff'; // Fallback to white
+            }
+            // Clamp value to min/max to handle potential outliers slightly outside fetched range
+            const clampedValue = Math.max(min, Math.min(max, value));
+            const percent = (clampedValue - min) / (max - min);
+
+            // Find the two stops the percentage falls between
+            let stop1 = gradientStops[0];
+            let stop2 = gradientStops[gradientStops.length - 1];
+
+            for (let i = 0; i < gradientStops.length - 1; i++) {
+                if (percent >= gradientStops[i].percent && percent <= gradientStops[i + 1].percent) {
+                    stop1 = gradientStops[i];
+                    stop2 = gradientStops[i + 1];
+                    break;
+                }
+            }
+
+            // Calculate the factor for interpolation between the two stops
+            const rangePercent = stop2.percent - stop1.percent;
+            const factor = (rangePercent === 0) ? 0 : (percent - stop1.percent) / rangePercent;
+
+            return interpolateColor(stop1.color, stop2.color, factor);
+        }
+
+        /**
+         * Calculates relative luminance of a hex color.
+         * @param {string} hexColor (#RRGGBB)
+         * @returns {number} Luminance value (0 to 1)
+         */
+        function getLuminance(hexColor) {
+            const rgb = parseInt(hexColor.substring(1), 16);
+            const r = (rgb >> 16) & 0xff;
+            const g = (rgb >>  8) & 0xff;
+            const b = (rgb >>  0) & 0xff;
+
+            const sR = r / 255;
+            const sG = g / 255;
+            const sB = b / 255;
+
+            const R = (sR <= 0.03928) ? sR / 12.92 : Math.pow((sR + 0.055) / 1.055, 2.4);
+            const G = (sG <= 0.03928) ? sG / 12.92 : Math.pow((sG + 0.055) / 1.055, 2.4);
+            const B = (sB <= 0.03928) ? sB / 12.92 : Math.pow((sB + 0.055) / 1.055, 2.4);
+
+            return 0.2126 * R + 0.7152 * G + 0.0722 * B;
+        }
+
+        /**
+         * Determines if white or black text provides better contrast against a background color.
+         * Uses WCAG contrast ratio recommendations (simplified: chooses based on luminance threshold).
+         * @param {string} bgColorHex (#RRGGBB)
+         * @returns {string} '#ffffff' (white) or '#000000' (black)
+         */
+        function calculateTextColor(bgColorHex) {
+            const luminance = getLuminance(bgColorHex);
+            // Threshold slightly adjusted from pure 0.5 for better aesthetics in some cases
+            return (luminance > 0.4) ? '#000000' : '#ffffff';
+        }
+
+
+        /**
+         * Applies heatmap colors to badge spans within a specific table column.
+         * @param {string} tbodyId The ID of the table body.
+         * @param {number} columnIndex The 0-based index of the column.
+         * @param {Array<{percent: number, color: string}>} gradientStops Color gradient definition.
+         */
+        function applyHeatmapToColumn(tbodyId, columnIndex, gradientStops) {
+            const tbody = document.getElementById(tbodyId);
+            if (!tbody) {
+                console.error(`applyHeatmapToColumn: tbody with id '${tbodyId}' not found.`);
+                return;
+            }
+
+            // Select the SPAN inside the TD at the correct index (nth-child is 1-based)
+            const spans = tbody.querySelectorAll(`tr td:nth-child(${columnIndex + 1}) span.stat-badge`);
+            if (spans.length === 0) {
+                 // console.warn(`applyHeatmapToColumn: No spans found in column ${columnIndex} of tbody '${tbodyId}'.`);
+                 return; // No spans to color
+            }
+
+            const values = [];
+            spans.forEach(span => {
+                const value = parseFloat(span.textContent);
+                if (!isNaN(value)) {
+                    values.push(value);
+                    // Store value on span for easy retrieval later, avoiding re-parsing
+                    span.dataset.value = value;
+                } else {
+                     span.dataset.value = 'NaN'; // Mark as invalid
+                }
+            });
+
+            if (values.length === 0) return; // No valid numeric values found
+
+            const minVal = Math.min(...values);
+            const maxVal = Math.max(...values);
+
+            spans.forEach(span => {
+                const value = parseFloat(span.dataset.value); // Retrieve stored value
+                if (!isNaN(value)) {
+                    const bgColor = calculateColor(value, minVal, maxVal, gradientStops);
+                    const textColor = calculateTextColor(bgColor);
+                    span.style.backgroundColor = bgColor;
+                    span.style.color = textColor;
+                } else {
+                    // Optional: Style invalid values differently (e.g., gray)
+                    span.style.backgroundColor = '#e5e7eb'; // Light gray
+                    span.style.color = '#4b5563';      // Darker gray text
+                }
+            });
+        }
     </script>
 </body>
 </html>
