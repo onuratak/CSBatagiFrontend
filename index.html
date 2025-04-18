@@ -77,82 +77,15 @@
         /* Rules from table-styles.css will override these for tables with .styled-table class */
 
         /* --- Status Badge Style (Keep for non-table badges if needed) --- */
-        .status-badge {
-            display: inline-block; /* Crucial for background on wrapped lines */
-            line-height: 1.4;    /* Adjust line spacing if needed */
-            text-align: center;  /* Center text if it wraps */
-            /* Base padding/font/rounding applied via JS classes */
-            cursor: pointer; /* Add pointer cursor to indicate clickability */
-        }
-
+        /* Status badge styles are now in table-styles.css */
 
         /* --- Responsive adjustments for mobile (max-width: 640px) --- */
         @media (max-width: 640px) {
-            /* Adjust table padding and font size for mobile */
-            th, td {
-                padding: 8px 6px; /* Reduced horizontal padding for mobile */
-                font-size: 0.875rem; /* text-sm */
-            }
-            /* Reduce size of attendance control elements */
-            .attendance-control-container {
-                flex-wrap: nowrap; /* Prevent wrapping */
-                gap: 0.125rem; /* Tighter gap (space-x-0.5) */
-            }
-            .attendance-label {
-                 width: 64px; /* Reduced fixed width (w-16) */
-                 padding-top: 0.25rem; /* py-1 */
-                 padding-bottom: 0.25rem; /* py-1 */
-                 font-size: 0.75rem; /* text-xs, make text smaller */
-                 cursor: pointer; /* Add pointer cursor to indicate clickability */
-                 /* Removed horizontal padding */
-            }
-            .attendance-arrow {
-                width: 1.5rem; /* Reduced size (w-6) */
-                height: 1.5rem; /* Reduced size (h-6) */
-            }
-            .attendance-arrow svg {
-                 width: 0.75rem; /* Smaller icon (w-3) */
-                 height: 0.75rem; /* Smaller icon (h-3) */
-            }
-            /* Adjust player name/status columns if needed */
-            /* Example: allow player name to wrap */
-             td:first-child { /* Target player name cell */
-                white-space: normal;
-             }
-             /* Adjust summary font size and padding */
-             #attendance-summary {
-                font-size: 1rem; /* text-base */
-                padding: 0.5rem 1rem; /* py-2 px-4 */
-             }
-             /* Adjust wheel spinner size on mobile */
-             .wheel-spinner {
-                width: 25px;
-                height: 25px;
-             }
-             /* Removed specific .status-badge rule from here as base style handles it */
+            /* Mobile styles are now in table-styles.css */
         }
 
         /* --- Info Panel Styles (Light Theme) --- */
-        .info-panel {
-            background-color: #ffffff; /* White background */
-            padding: 1.5rem;
-            border-radius: 0.5rem; /* Rounded corners */
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-            border: 1px solid #e5e7eb; /* Light border */
-        }
-        .info-panel h3 {
-            color: #2563eb; /* Blue accent for heading */
-            border-bottom: 1px solid #e5e7eb; /* Lighter border */
-            padding-bottom: 0.5rem;
-            margin-bottom: 1rem;
-        }
-        .info-panel p {
-            margin-bottom: 0.5rem;
-            color: #4b5563; /* Slightly lighter text */
-        }
-        .info-panel strong {
-            color: #374151; /* Medium-dark gray text for labels */
-        }
+        /* Info panel styles are now in table-styles.css */
 
         /* --- Tab Navigation Styles (Light Theme) --- */
         .tab-nav-item {
@@ -269,53 +202,10 @@
         }
 
         /* --- Attendance Control Styles --- */
-        .attendance-control-container {
-            display: flex;
-            align-items: center;
-            justify-content: center; /* Center the control */
-            gap: 0.25rem; /* Reduced default gap (space-x-1) */
-        }
-        .attendance-arrow {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 2rem; /* w-8 - Default size */
-            height: 2rem; /* h-8 - Default size */
-            border-radius: 9999px; /* rounded-full */
-            background-color: #e5e7eb; /* bg-gray-200 */
-            color: #4b5563; /* text-gray-600 */
-            transition: background-color 0.2s ease-in-out;
-            cursor: pointer;
-            border: 1px solid #d1d5db; /* Add subtle border */
-        }
-        .attendance-arrow:hover {
-            background-color: #d1d5db; /* bg-gray-300 */
-        }
-        .attendance-arrow:focus {
-             outline: 2px solid transparent;
-             outline-offset: 2px;
-             box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.5); /* Ring focus gray */
-        }
-        .attendance-arrow svg {
-            width: 1rem; /* w-4 - Default icon size */
-            height: 1rem; /* h-4 - Default icon size */
-        }
-        .attendance-label {
-            display: inline-flex; /* Use inline-flex for centering */
-            align-items: center;
-            justify-content: center;
-            width: 76px; /* Fixed width as requested */
-            padding-top: 0.5rem; /* py-2 */
-            padding-bottom: 0.5rem; /* py-2 */
-            border-radius: 9999px; /* rounded-full */
-            font-weight: 500; /* font-medium */
-            text-align: center;
-            line-height: 1; /* leading-none */
-            font-size: 0.875rem; /* text-sm - Default font size */
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
-            cursor: pointer; /* Add pointer cursor to indicate clickability */
-        }
+        /* Attendance control styles are now in table-styles.css */
 
+        /* --- Player Status Table Styles --- */
+        /* Player status table styles are now in table-styles.css */
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -323,7 +213,7 @@
     <div class="container mx-auto max-w-7xl"> <header class="relative mb-6">
             <div class="flex justify-between items-center border-b border-gray-300 pb-3">
                 <div class="flex items-center">
-                    <img src="BatakLogo.png"
+                    <img src="images/BatakLogo.png"
                          alt="Gaming Group Logo"
                          class="h-10 w-10 mr-2 object-contain"
                          onerror="this.onerror=null; this.src='https://placehold.co/40x40/e0e0e0/333?text=Logo';">
@@ -340,33 +230,27 @@
                 </button>
             </div>
 
-            <nav id="main-nav-links" class="md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2" aria-label="Main navigation">
-                 <a class="tab-nav-item" data-page="attendance" href="#">ATTENDANCE</a>
-                <a class="tab-nav-item" data-page="draft" href="#">DRAFT</a>
-                <a class="tab-nav-item" data-page="pick" href="#">PICK</a>
-                <a class="tab-nav-item" data-page="batak_domination" href="#">BATAK DOMINATION</a>
-                <a class="tab-nav-item" data-page="sonmac" href="#">SONMAC</a>
-                <a class="tab-nav-item" data-page="duel_sonmac" href="#">DUEL_SONMAC</a>
-                <a class="tab-nav-item" data-page="gece_ortalama" href="#">Nightly Avg</a>
-                <a class="tab-nav-item" data-page="last10" href="#">Last 10 Rank</a>
-                <a class="tab-nav-item" data-page="hltv2" href="#">HLTV2 Perf</a>
-                <a class="tab-nav-item" data-page="adr" href="#">ADR Perf</a>
-                <a class="tab-nav-item" data-page="season_avg" href="#">Sezon Ortalamasi</a>
-            </nav>
+            <nav id="main-nav-links" class="sm:hidden md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2" aria-label="Main navigation">
+        <a class="tab-nav-item" data-page="attendance" href="#">Attendance</a>
+        <a class="tab-nav-item" data-page="batak_domination" href="#">Batak Domination</a>
+        <a class="tab-nav-item" data-page="sonmac" href="#">Son Maç</a>
+        <a class="tab-nav-item" data-page="gece_ortalama" href="#">Gece Ortalaması</a>
+        <a class="tab-nav-item" data-page="last10" href="#">Son 10 Ortalaması</a>
+        <a class="tab-nav-item" data-page="season_avg" href="#">Sezon Ortalaması</a>
+    </nav>
         </header>
-
-        <div class="text-center mb-6">
-             <button id="update-stats-button" class="action-button">
-                 Update Attendance from Sheet
-                 <span id="spinner" class="spinner hidden"></span>
-             </button>
-        </div>
 
         <div id="message-area" class="hidden" role="alert" aria-live="polite"></div>
 
         <div id="page-content-area">
 
             <div id="page-attendance" class="page-content">
+                <div class="text-center mb-6">
+                    <button id="update-stats-button" class="action-button">
+                        Update Attendance from Sheet
+                        <span id="spinner" class="spinner hidden"></span>
+                    </button>
+                </div>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
                     <div class="lg:col-span-2 page-content-container overflow-x-auto"> <h2 class="text-2xl font-semibold mb-1 text-blue-600">Player Status</h2>
                         <div id="attendance-summary" class="text-lg font-semibold mb-4 flex items-center justify-center text-center px-4 py-2 rounded-md transition-colors duration-300">
@@ -381,10 +265,10 @@
                                 <col style="width: 30%;">
                                 <col style="width: 40%;">
                             </colgroup>
-                            <thead>
+                            <thead class="player-status-header">
                                 <tr>
                                     <th scope="col">Player</th>
-                                    <th scope="col">Status</th>
+                                    <th scope="col" class="text-center">Status</th>
                                     <th scope="col" class="text-center">Attendance</th>
                                 </tr>
                             </thead>
@@ -414,50 +298,107 @@
                 </div>
             </div>
 
-            <div id="page-draft" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Draft Page</h2>
-                <p class="mt-4 text-gray-700">Content for the Draft page will go here...</p>
-                <div id="draft-data-content" class="mt-4"></div>
-            </div>
-             <div id="page-pick" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Pick Page</h2>
-                <p class="mt-4 text-gray-700">Content for the Pick page will go here...</p>
-                 <div id="pick-data-content" class="mt-4"></div>
-            </div>
             <div id="page-batak_domination" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Batak Domination Page</h2>
-                <p class="mt-4 text-gray-700">Content for the Batak Domination stats will go here...</p>
-                 <div id="batak-data-content" class="mt-4"></div>
+                <h2 class="text-2xl font-semibold text-blue-600">Batak Domination</h2>
+                <div class="mt-6 flex justify-center">
+                    <img src="images/BatakDom.jpg" alt="Batak Domination" class="max-w-full h-auto rounded-lg shadow-md" />
+                </div>
+                <div id="batak-data-content" class="mt-4"></div>
             </div>
             <div id="page-sonmac" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Sonmac Page</h2>
-                <p class="mt-4 text-gray-700">Sonmac stats will be loaded here when updated.</p>
-                <div id="sonmac-data-content" class="overflow-x-auto mt-4"></div>
-            </div>
-            <div id="page-duel_sonmac" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Duel Sonmac Page</h2>
-                <p class="mt-4 text-gray-700">Content for the Duel Sonmac stats will go here...</p>
-                 <div id="duel-sonmac-data-content" class="mt-4"></div>
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Son Maç</h2>
+                
+                <!-- Map tabs navigation -->
+                <div class="mb-4 border-b border-gray-200">
+                    <ul id="map-tabs" class="flex flex-wrap -mb-px text-sm font-medium text-center">
+                        <!-- Map tabs will be dynamically generated here -->
+                    </ul>
+                </div>
+                
+                <!-- Map tab content -->
+                <div id="mapTabContent">
+                    <!-- Map content will be dynamically generated here -->
+                </div>
             </div>
             <div id="page-gece_ortalama" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Nightly Average Stats</h2>
-                <p class="mt-4 text-gray-700">Content for the Nightly Average stats will go here...</p>
-                 <div id="nightly-avg-data-content" class="mt-4"></div>
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Gece Ortalaması</h2>
+                <div class="overflow-x-auto">
+                    <table class="styled-table min-w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th>Oyuncu</th>
+                                <th>HLTV2</th>
+                                <th>ADR</th>
+                                <th>K/D</th>
+                                <th>MVP</th>
+                                <th>Kills</th>
+                                <th>Deaths</th>
+                                <th>Assists</th>
+                                <th>HS</th>
+                                <th>HS/Kill ratio</th>
+                                <th>First Kill</th>
+                                <th>First Death</th>
+                                <th>Bomb Planted</th>
+                                <th>Bomb Defused</th>
+                                <th>HLTV</th>
+                                <th>KAST</th>
+                                <th>Utility Damage</th>
+                                <th>2 kills</th>
+                                <th>3 kills</th>
+                                <th>4 kills</th>
+                                <th>5 kills</th>
+                                <th>Nr of Matches</th>
+                                <th>WIN RATE (%)</th>
+                                <th>Nr of clutches per game</th>
+                                <th>Clutches Won</th>
+                                <th>Successful Clutch (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="night-avg-table-body">
+                            <!-- Data rows will be injected here by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div id="page-last10" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">Last 10 Games Ranking</h2>
-                <p class="mt-4 text-gray-700">Last 10 games ranking will be loaded here when updated.</p>
-                 <div id="last10-data-content" class="overflow-x-auto mt-4"></div>
-            </div>
-             <div id="page-hltv2" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">HLTV 2.0 Performance</h2>
-                <p class="mt-4 text-gray-700">Content for the HLTV 2.0 Performance stats will go here...</p>
-                 <div id="hltv2-data-content" class="mt-4"></div>
-            </div>
-             <div id="page-adr" class="page-content hidden page-content-container">
-                <h2 class="text-2xl font-semibold text-blue-600">ADR Performance</h2>
-                <p class="mt-4 text-gray-700">Content for the ADR Performance stats will go here...</p>
-                 <div id="adr-data-content" class="mt-4"></div>
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Son 10 Ortalaması</h2>
+                <div class="overflow-x-auto">
+                    <table class="styled-table min-w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th>Oyuncu</th>
+                                <th>HLTV2</th>
+                                <th>ADR</th>
+                                <th>K/D</th>
+                                <th>MVP</th>
+                                <th>Kills</th>
+                                <th>Deaths</th>
+                                <th>Assists</th>
+                                <th>HS</th>
+                                <th>HS/Kill ratio</th>
+                                <th>First Kill</th>
+                                <th>First Death</th>
+                                <th>Bomb Planted</th>
+                                <th>Bomb Defused</th>
+                                <th>HLTV</th>
+                                <th>KAST</th>
+                                <th>Utility Damage</th>
+                                <th>2 kills</th>
+                                <th>3 kills</th>
+                                <th>4 kills</th>
+                                <th>5 kills</th>
+                                <th>Nr of Matches</th>
+                                <th>WIN RATE (%)</th>
+                                <th>Nr of clutches per game</th>
+                                <th>Clutches Won</th>
+                                <th>Successful Clutch (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="last10-table-body">
+                            <!-- Data rows will be injected here by JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div id="page-season_avg" class="page-content hidden page-content-container">
                 <h2 class="text-2xl font-semibold text-blue-600 mb-4">Sezon Ortalaması</h2>
@@ -500,13 +441,18 @@
                 </div>
             </div>
 
-        </div> </div> <script>
+        </div> </div>
+
+    <script>
         // --- Constants ---
         const APPS_SCRIPT_URL = 'https://royal-flower-aa89.onur1atak.workers.dev/'; // Replace with your actual URL
         const ATTENDANCE_STATES = ["not_coming", "no_response", "coming"]; // Order matters for cycling
         const DEFAULT_PAGE = 'season_avg';
         const TEKER_DONDU_THRESHOLD = 10; // Number of players needed for the wheel
-        const SEASON_AVG_JSON_URL = 'season_avg.json';
+        const SEASON_AVG_JSON_URL = 'data/season_avg.json';
+        const LAST10_JSON_URL = 'data/last10.json';
+        const NIGHT_AVG_JSON_URL = 'data/night_avg.json';
+        const SONMAC_JSON_URL = 'data/sonmac.json';
 
         // --- State ---
         let players = []; // Initialize empty, will be filled by fetch
@@ -1055,6 +1001,424 @@
             });
         }
 
+        /**
+         * Fetches last 10 games player stats from the local JSON file.
+         */
+        async function fetchLast10Stats() {
+            try {
+                const response = await fetch(LAST10_JSON_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid data format received from JSON file.");
+                }
+                return data;
+            } catch (err) {
+                console.error('Failed to fetch last 10 stats:', err);
+                showMessage(`Error loading last 10 stats: ${err.message}`, 'error');
+                return [];
+            }
+        }
+
+        // Function to fetch and render the last 10 games data
+        async function loadAndRenderLast10Table() {
+            const stats = await fetchLast10Stats();
+            if (stats.length > 0) {
+                fillLast10Table(stats);
+            }
+        }
+
+        // Function to fill the last 10 table with data
+        function fillLast10Table(data) {
+            // --- Calculate min/max for rating columns ---
+            const hltv2Vals = data.map(d => d.hltv_2).filter(v => typeof v === 'number');
+            const adrVals = data.map(d => d.adr).filter(v => typeof v === 'number');
+            const kdVals = data.map(d => d.kd).filter(v => typeof v === 'number');
+
+            // Ensure we have valid numbers before calculating min/max
+            const minHLTV2 = hltv2Vals.length > 0 ? Math.min(...hltv2Vals) : 0;
+            const maxHLTV2 = hltv2Vals.length > 0 ? Math.max(...hltv2Vals) : 1; // Avoid div by zero if only one value
+            const minADR = adrVals.length > 0 ? Math.min(...adrVals) : 0;
+            const maxADR = adrVals.length > 0 ? Math.max(...adrVals) : 1;
+            const minKD = kdVals.length > 0 ? Math.min(...kdVals) : 0;
+            const maxKD = kdVals.length > 0 ? Math.max(...kdVals) : 1;
+
+            // Helper: Get CSS badge class based on value and range
+            function getBadgeClass(val, min, max) {
+                if (max === min) return 'badge-average'; // Handle cases with single player or all same values
+                const percent = (val - min) / (max - min);
+
+                if (percent >= 0.95) return 'badge-super-elite'; // Red
+                if (percent >= 0.85) return 'badge-elite';       // Orange
+                if (percent >= 0.70) return 'badge-very-good';   // Info Blue
+                if (percent >= 0.55) return 'badge-good';        // Green
+                if (percent >= 0.45) return 'badge-average';     // Grey
+                if (percent >= 0.30) return 'badge-below-average';// Steel Blue
+                return 'badge-poor';                             // Dark Grey
+            }
+
+            // --- Sort by HLTV2 descending ---
+            data.sort((a, b) => (b.hltv_2 ?? 0) - (a.hltv_2 ?? 0)); // Handle potential null/undefined
+
+            const tbody = document.getElementById('last10-table-body');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            data.forEach(row => {
+                // Helper to safely format numbers or return 'N/A'
+                const formatNum = (num, decimals = 2) => (typeof num === 'number' ? num.toFixed(decimals) : 'N/A');
+                const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
+
+                const tr = document.createElement('tr');
+                // Apply CSS badge classes using spans inside stat-badge-cell
+                tr.innerHTML = `
+                    <td class="font-medium text-gray-900 whitespace-nowrap">${row.name || 'N/A'}</td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.hltv_2, minHLTV2, maxHLTV2)}">${formatNum(row.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.adr, minADR, maxADR)}">${formatNum(row.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.kd, minKD, maxKD)}">${formatNum(row.kd)}</span></td>
+                    <td class="text-center">${formatNum(row.mvp)}</td>
+                    <td class="text-center">${formatNum(row.kills)}</td>
+                    <td class="text-center">${formatNum(row.deaths)}</td>
+                    <td class="text-center">${formatNum(row.assists)}</td>
+                    <td class="text-center">${formatNum(row.hs)}</td>
+                    <td class="text-center">${formatPercent(row.hs_ratio)}</td>
+                    <td class="text-center">${formatNum(row.first_kill)}</td>
+                    <td class="text-center">${formatNum(row.first_death)}</td>
+                    <td class="text-center">${formatNum(row.bomb_planted)}</td>
+                    <td class="text-center">${formatNum(row.bomb_defused)}</td>
+                    <td class="text-center">${formatNum(row.hltv)}</td>
+                    <td class="text-center">${formatPercent(row.kast)}</td>
+                    <td class="text-center">${formatNum(row.utl_dmg)}</td>
+                    <td class="text-center">${formatNum(row.two_kills)}</td>
+                    <td class="text-center">${formatNum(row.three_kills)}</td>
+                    <td class="text-center">${formatNum(row.four_kills)}</td>
+                    <td class="text-center">${formatNum(row.five_kills)}</td>
+                    <td class="text-center">${row.matches ?? 'N/A'}</td>
+                    <td class="text-center">${formatPercent(row.win_rate)}</td>
+                    <td class="text-center">${formatNum(row.avg_clutches)}</td>
+                    <td class="text-center">${formatNum(row.avg_clutches_won)}</td>
+                    <td class="text-center">${formatPercent(row.clutch_success)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /**
+         * Fetches nightly average player stats from the local JSON file.
+         */
+        async function fetchNightAvgStats() {
+            try {
+                const response = await fetch(NIGHT_AVG_JSON_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    throw new Error("Invalid data format received from JSON file.");
+                }
+                return data;
+            } catch (err) {
+                console.error('Failed to fetch night avg stats:', err);
+                showMessage(`Error loading night stats: ${err.message}`, 'error');
+                return [];
+            }
+        }
+
+        // Function to fetch and render the nightly average data
+        async function loadAndRenderNightAvgTable() {
+            const stats = await fetchNightAvgStats();
+            if (stats.length > 0) {
+                fillNightAvgTable(stats);
+            }
+        }
+
+        // Function to fill the nightly average table with data
+        function fillNightAvgTable(data) {
+            // --- Calculate min/max for rating columns ---
+            const hltv2Vals = data.map(d => d.hltv_2).filter(v => typeof v === 'number');
+            const adrVals = data.map(d => d.adr).filter(v => typeof v === 'number');
+            const kdVals = data.map(d => d.kd).filter(v => typeof v === 'number');
+
+            // Ensure we have valid numbers before calculating min/max
+            const minHLTV2 = hltv2Vals.length > 0 ? Math.min(...hltv2Vals) : 0;
+            const maxHLTV2 = hltv2Vals.length > 0 ? Math.max(...hltv2Vals) : 1; // Avoid div by zero if only one value
+            const minADR = adrVals.length > 0 ? Math.min(...adrVals) : 0;
+            const maxADR = adrVals.length > 0 ? Math.max(...adrVals) : 1;
+            const minKD = kdVals.length > 0 ? Math.min(...kdVals) : 0;
+            const maxKD = kdVals.length > 0 ? Math.max(...kdVals) : 1;
+
+            // Helper: Get CSS badge class based on value and range
+            function getBadgeClass(val, min, max) {
+                if (max === min) return 'badge-average'; // Handle cases with single player or all same values
+                const percent = (val - min) / (max - min);
+
+                if (percent >= 0.95) return 'badge-super-elite'; // Red
+                if (percent >= 0.85) return 'badge-elite';       // Orange
+                if (percent >= 0.70) return 'badge-very-good';   // Info Blue
+                if (percent >= 0.55) return 'badge-good';        // Green
+                if (percent >= 0.45) return 'badge-average';     // Grey
+                if (percent >= 0.30) return 'badge-below-average';// Steel Blue
+                return 'badge-poor';                             // Dark Grey
+            }
+
+            // --- Sort by HLTV2 descending ---
+            data.sort((a, b) => (b.hltv_2 ?? 0) - (a.hltv_2 ?? 0)); // Handle potential null/undefined
+
+            const tbody = document.getElementById('night-avg-table-body');
+            tbody.innerHTML = ''; // Clear existing rows
+
+            data.forEach(row => {
+                // Helper to safely format numbers or return 'N/A'
+                const formatNum = (num, decimals = 2) => (typeof num === 'number' ? num.toFixed(decimals) : 'N/A');
+                const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
+
+                const tr = document.createElement('tr');
+                // Apply CSS badge classes using spans inside stat-badge-cell
+                tr.innerHTML = `
+                    <td class="font-medium text-gray-900 whitespace-nowrap">${row.name || 'N/A'}</td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.hltv_2, minHLTV2, maxHLTV2)}">${formatNum(row.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.adr, minADR, maxADR)}">${formatNum(row.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.kd, minKD, maxKD)}">${formatNum(row.kd)}</span></td>
+                    <td class="text-center">${formatNum(row.mvp)}</td>
+                    <td class="text-center">${formatNum(row.kills)}</td>
+                    <td class="text-center">${formatNum(row.deaths)}</td>
+                    <td class="text-center">${formatNum(row.assists)}</td>
+                    <td class="text-center">${formatNum(row.hs)}</td>
+                    <td class="text-center">${formatPercent(row.hs_ratio)}</td>
+                    <td class="text-center">${formatNum(row.first_kill)}</td>
+                    <td class="text-center">${formatNum(row.first_death)}</td>
+                    <td class="text-center">${formatNum(row.bomb_planted)}</td>
+                    <td class="text-center">${formatNum(row.bomb_defused)}</td>
+                    <td class="text-center">${formatNum(row.hltv)}</td>
+                    <td class="text-center">${formatPercent(row.kast)}</td>
+                    <td class="text-center">${formatNum(row.utl_dmg)}</td>
+                    <td class="text-center">${formatNum(row.two_kills)}</td>
+                    <td class="text-center">${formatNum(row.three_kills)}</td>
+                    <td class="text-center">${formatNum(row.four_kills)}</td>
+                    <td class="text-center">${formatNum(row.five_kills)}</td>
+                    <td class="text-center">${row.matches ?? 'N/A'}</td>
+                    <td class="text-center">${formatPercent(row.win_rate)}</td>
+                    <td class="text-center">${formatNum(row.avg_clutches)}</td>
+                    <td class="text-center">${formatNum(row.avg_clutches_won)}</td>
+                    <td class="text-center">${formatPercent(row.clutch_success)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        /**
+         * Fetches Son Maç match stats from the local JSON file.
+         */
+        async function fetchSonMacData() {
+            try {
+                const response = await fetch(SONMAC_JSON_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                if (!data || !data.maps) {
+                    throw new Error("Invalid data format received from JSON file.");
+                }
+                return data;
+            } catch (err) {
+                console.error('Failed to fetch Son Maç data:', err);
+                showMessage(`Error loading Son Maç data: ${err.message}`, 'error');
+                return null;
+            }
+        }
+
+        // Function to fetch and render the Son Maç data
+        async function loadAndRenderSonMacData() {
+            const matchData = await fetchSonMacData();
+            if (matchData) {
+                populateSonMacData(matchData);
+            }
+        }
+
+        // Function to populate the Son Maç page with match data
+        function populateSonMacData(data) {
+            if (!data || !data.maps) return;
+            
+            // Get map tabs
+            const mapTabs = document.querySelector('#map-tabs');
+            mapTabs.innerHTML = ''; // Clear existing tabs
+            
+            // Create tabs for each map
+            let isFirst = true;
+            Object.keys(data.maps).forEach(mapName => {
+                const li = document.createElement('li');
+                li.className = 'mr-2';
+                li.setAttribute('role', 'presentation');
+                
+                const button = document.createElement('button');
+                button.id = `${mapName}-tab`;
+                button.className = `inline-block p-4 border-b-2 ${isFirst ? 'border-blue-500 active' : 'border-transparent'} rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
+                button.setAttribute('aria-controls', mapName);
+                button.textContent = mapName;
+                
+                li.appendChild(button);
+                mapTabs.appendChild(li);
+                
+                // Create/populate map content
+                populateMapContent(mapName, data.maps[mapName], isFirst);
+                
+                if (isFirst) isFirst = false;
+            });
+            
+            // Re-initialize tab functionality
+            initSonMacTabs();
+        }
+
+        function populateMapContent(mapName, mapData, isActive) {
+            const mapTabContent = document.getElementById('mapTabContent');
+            
+            // Create map div if it doesn't exist
+            let mapDiv = document.getElementById(mapName);
+            if (!mapDiv) {
+                mapDiv = document.createElement('div');
+                mapDiv.id = mapName;
+                mapDiv.className = isActive ? 'active' : 'hidden';
+                mapTabContent.appendChild(mapDiv);
+            } else {
+                mapDiv.innerHTML = ''; // Clear existing content
+                mapDiv.className = isActive ? 'active' : 'hidden';
+            }
+            
+            // Create scoreboard
+            const scoreboardDiv = document.createElement('div');
+            scoreboardDiv.className = 'flex justify-between items-center mb-6 px-4 py-3 bg-gray-100 rounded-lg';
+            scoreboardDiv.innerHTML = `
+                <div class="text-center">
+                    <h3 class="text-lg font-bold">${mapData.team1.name}</h3>
+                    <div class="text-3xl font-extrabold text-blue-600">${mapData.team1.score}</div>
+                </div>
+                <div class="text-xl font-semibold text-gray-500">vs</div>
+                <div class="text-center">
+                    <h3 class="text-lg font-bold">${mapData.team2.name}</h3>
+                    <div class="text-3xl font-extrabold text-green-600">${mapData.team2.score}</div>
+                </div>
+            `;
+            mapDiv.appendChild(scoreboardDiv);
+            
+            // Create team1 section
+            const team1Div = createTeamSection(mapData.team1, 'blue');
+            mapDiv.appendChild(team1Div);
+            
+            // Create team2 section
+            const team2Div = createTeamSection(mapData.team2, 'green');
+            mapDiv.appendChild(team2Div);
+        }
+
+        function createTeamSection(teamData, color) {
+            const teamDiv = document.createElement('div');
+            teamDiv.className = 'mb-6';
+            
+            // Team heading
+            const teamHeading = document.createElement('h3');
+            teamHeading.className = `text-lg font-semibold text-${color}-600 mb-2 px-3`;
+            teamHeading.textContent = teamData.name;
+            teamDiv.appendChild(teamHeading);
+            
+            // Table container
+            const tableContainer = document.createElement('div');
+            tableContainer.className = 'overflow-x-auto';
+            
+            // Create table
+            const table = document.createElement('table');
+            table.className = 'styled-table min-w-full text-sm';
+            
+            // Table head
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+                <tr>
+                    <th>Oyuncu</th>
+                    <th>HLTV2</th>
+                    <th>ADR</th>
+                    <th>K/D</th>
+                    <th>MVP</th>
+                    <th>Kills</th>
+                    <th>Deaths</th>
+                    <th>Assists</th>
+                    <th>HS</th>
+                    <th>HS/Kill ratio</th>
+                    <th>First Kill</th>
+                    <th>First Death</th>
+                    <th>Bomb Planted</th>
+                    <th>Bomb Defused</th>
+                    <th>HLTV</th>
+                    <th>KAST</th>
+                    <th>Utility Damage</th>
+                    <th>2 kills</th>
+                    <th>3 kills</th>
+                    <th>4 kills</th>
+                    <th>5 kills</th>
+                    <th>Score</th>
+                    <th>Nr of clutches</th>
+                    <th>Clutches Won</th>
+                </tr>
+            `;
+            table.appendChild(thead);
+            
+            // Table body
+            const tbody = document.createElement('tbody');
+            
+            // Add player rows
+            teamData.players.forEach(player => {
+                const tr = document.createElement('tr');
+                
+                // Helper function for badge classes
+                function getBadgeClass(val) {
+                    if (val >= 1.7) return 'badge-super-elite';
+                    if (val >= 1.4) return 'badge-elite';
+                    if (val >= 1.2) return 'badge-very-good';
+                    if (val >= 1.0) return 'badge-good';
+                    if (val >= 0.85) return 'badge-average';
+                    if (val >= 0.7) return 'badge-below-average';
+                    return 'badge-poor';
+                }
+                
+                // Helper to safely format numbers or return 'N/A'
+                const formatNum = (num, decimals = 2) => (typeof num === 'number' ? num.toFixed(decimals) : 'N/A');
+                const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
+                
+                tr.innerHTML = `
+                    <td class="font-medium text-gray-900 whitespace-nowrap">${player.name || 'N/A'}</td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.hltv_2)}">${formatNum(player.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.adr / 100)}">${formatNum(player.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.kd)}">${formatNum(player.kd)}</span></td>
+                    <td class="text-center">${formatNum(player.mvp)}</td>
+                    <td class="text-center">${formatNum(player.kills, 0)}</td>
+                    <td class="text-center">${formatNum(player.deaths, 0)}</td>
+                    <td class="text-center">${formatNum(player.assists, 0)}</td>
+                    <td class="text-center">${formatNum(player.hs, 0)}</td>
+                    <td class="text-center">${formatNum(player.hs_ratio)}</td>
+                    <td class="text-center">${formatNum(player.first_kill, 0)}</td>
+                    <td class="text-center">${formatNum(player.first_death, 0)}</td>
+                    <td class="text-center">${formatNum(player.bomb_planted, 0)}</td>
+                    <td class="text-center">${formatNum(player.bomb_defused, 0)}</td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(player.hltv)}">${formatNum(player.hltv)}</span></td>
+                    <td class="text-center">${formatPercent(player.kast)}</td>
+                    <td class="text-center">${formatNum(player.utl_dmg, 0)}</td>
+                    <td class="text-center">${formatNum(player.two_kills, 0)}</td>
+                    <td class="text-center">${formatNum(player.three_kills, 0)}</td>
+                    <td class="text-center">${formatNum(player.four_kills, 0)}</td>
+                    <td class="text-center">${formatNum(player.five_kills, 0)}</td>
+                    <td class="text-center">${formatNum(player.score, 0)}</td>
+                    <td class="text-center">${formatNum(player.clutches, 0)}</td>
+                    <td class="text-center">${formatNum(player.clutches_won, 0)}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(tbody);
+            tableContainer.appendChild(table);
+            teamDiv.appendChild(tableContainer);
+            
+            return teamDiv;
+        }
+
         // --- Event Listeners ---
 
         // Initial load: Fetch data and show the default page
@@ -1062,6 +1426,21 @@
             showPage(DEFAULT_PAGE); // Show the initial page
             fetchStatsFromSheet(); // Fetch initial data
             loadAndRenderSeasonAvgTable(); // Fetch and render season average stats
+            loadAndRenderLast10Table(); // Fetch and render last 10 games stats
+            loadAndRenderNightAvgTable(); // Fetch and render nightly average stats
+            loadAndRenderSonMacData(); // Fetch and render Son Maç data
+            initSonMacTabs(); // Initialize tabs for Son Maç page
+            
+            // Set initial navigation visibility based on screen size
+            if (window.innerWidth >= 768) { // Tailwind's md breakpoint is 768px
+                navLinksContainer.classList.remove('hidden', 'mobile-menu-active');
+            } else {
+                navLinksContainer.classList.add('hidden');
+                navLinksContainer.classList.remove('mobile-menu-active');
+                menuButton.setAttribute('aria-expanded', 'false');
+                iconHamburger.classList.remove('hidden');
+                iconClose.classList.add('hidden');
+            }
         });
 
         // Update button click
@@ -1100,6 +1479,47 @@
         // Mobile menu button click
         menuButton.addEventListener('click', () => toggleMobileMenu());
 
+        // Add JavaScript for tab functionality at the end of the script section
+        // ... existing code ...
+
+        // Add this to your DOMContentLoaded event listener or as a separate function
+        function initSonMacTabs() {
+            const mapTabs = document.querySelectorAll('#map-tabs button');
+            const mapContents = document.querySelectorAll('#mapTabContent > div');
+            
+            mapTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active classes from all tabs and contents
+                    mapTabs.forEach(t => {
+                        t.classList.remove('active', 'border-blue-500');
+                        t.classList.add('border-transparent');
+                    });
+                    mapContents.forEach(c => c.classList.add('hidden'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active', 'border-blue-500');
+                    tab.classList.remove('border-transparent');
+                    
+                    // Show corresponding content
+                    const contentId = tab.getAttribute('aria-controls');
+                    document.getElementById(contentId).classList.remove('hidden');
+                });
+            });
+        }
+
+        // Modify the DOMContentLoaded event listener to initialize the Son Maç tabs
+        document.addEventListener('DOMContentLoaded', () => {
+            showPage(DEFAULT_PAGE); // Show the initial page
+            fetchStatsFromSheet(); // Fetch initial data
+            loadAndRenderSeasonAvgTable(); // Fetch and render season average stats
+            loadAndRenderLast10Table(); // Fetch and render last 10 games stats
+            loadAndRenderNightAvgTable(); // Fetch and render nightly average stats
+            loadAndRenderSonMacData(); // Fetch and render Son Maç data
+            initSonMacTabs(); // Initialize tabs for Son Maç page
+            
+            // Set initial navigation visibility based on screen size
+            // ... existing code ...
+        });
     </script>
 </body>
 </html>

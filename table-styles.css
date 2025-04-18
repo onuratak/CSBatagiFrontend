@@ -13,30 +13,42 @@
 .styled-table {
     width: 100%;
     border-collapse: collapse;
-    margin: 15px 0;
+    margin: 0;
     font-size: 0.9em;
     min-width: 1000px; /* Prevent excessive wrapping on small screens */
     background-color: #fff;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
     text-align: left; /* Default text alignment for table */
+    /* Match the attendance table */
+    border-bottom: 1px solid #e5e7eb;
+    border-top: 1px solid #e5e7eb;
 }
 
 /* Table header */
 .styled-table thead th {
-    background-color: #add8e6; /* Light blue header */
-    color: #333;
+    background-color: #f1f1f1; /* Light gray background */
+    color: #374151; /* Text color matching attendance table */
     text-align: left; /* Ensure header text is left-aligned by default */
-    padding: 12px 15px; /* Reverted horizontal padding */
-    font-weight: bold;
+    padding: 12px 16px; /* Match attendance table padding */
+    font-weight: 600;
     position: sticky; /* Sticky header */
     top: 0;
     z-index: 2; /* Ensure header is above body */
     white-space: nowrap; /* Prevent header text wrapping */
+    border-bottom: 1px solid #e5e7eb; /* Match the attendance table border */
+}
+
+/* Center align ADR and K/D columns */
+.styled-table th:nth-child(3),  /* ADR column (3rd) */
+.styled-table td:nth-child(3),  /* ADR cells */
+.styled-table th:nth-child(4),  /* K/D column (4th) */
+.styled-table td:nth-child(4) { /* K/D cells */
+    text-align: center;
 }
 
 /* Table body rows */
 .styled-table tbody tr {
-    border-bottom: 1px solid #dddddd;
+    border-bottom: 1px solid #e5e7eb; /* Match attendance table borders */
     transition: background-color 0.2s ease;
 }
 
@@ -45,14 +57,14 @@
 }
 
 .styled-table tbody td {
-    padding: 9px 15px; /* Reverted horizontal padding */
+    padding: 12px 16px; /* Match attendance table padding */
     white-space: nowrap; /* Prevent text wrapping in cells by default */
     vertical-align: middle; /* Align cell content vertically */
 }
 
 /* Hover effect for rows */
 .styled-table tbody tr:hover {
-    background-color: #f1f1f1; /* Light grey hover */
+    background-color: #f9fafb; /* Light hover matching Tailwind's hover */
 }
 
 /* --- Badge Styles --- */
@@ -64,7 +76,7 @@
 .stat-badge-cell > span {
     display: inline-block;
     padding: 4px 8px;
-    border-radius: 0.25rem; /* Rectangular with slightly rounded corners */
+    border-radius: 0.375rem; /* Match the rounded-md in attendance */
     font-size: 0.85em;
     font-weight: bold;
     color: #fff; /* Default white text */
@@ -73,15 +85,14 @@
     line-height: 1; /* Ensure text stays centered vertically */
 }
 
-/* Specific badge colors (Red/Green Scheme) */
+/* Specific badge colors (Updated to match the attendance status styles) */
 .badge-super-elite { background-color: #059669; } /* Dark Green */
 .badge-elite { background-color: #10B981; }       /* Medium Green */
-.badge-very-good { background-color: #A7F3D0; color: #065f46; }   /* Light Green (emerald-200, dark text) */
-.badge-good { background-color: #FACC15; color: #713f12; }        /* Yellow (amber-400, dark text) */
-.badge-average { background-color: #FED7AA; color: #9A3412; }     /* Light Orange (orange-200, dark text) */
-.badge-below-average { background-color: #FCA5A5; color: #991b1b; } /* Light Red (red-300, dark text) */
-.badge-poor { background-color: #EF4444; }         /* Red (red-500) */
-
+.badge-very-good { background-color: #A7F3D0; color: #065f46; }   /* Light Green with dark text */
+.badge-good { background-color: #FACC15; color: #713f12; }        /* Yellow with dark text */
+.badge-average { background-color: #FED7AA; color: #9A3412; }     /* Light Orange with dark text */
+.badge-below-average { background-color: #FCA5A5; color: #991b1b; } /* Light Red with dark text */
+.badge-poor { background-color: #EF4444; }         /* Red */
 
 /* --- Sticky First Column --- */
 .styled-table thead th:first-child,
@@ -90,23 +101,156 @@
     left: 0;
     z-index: 1; /* Below header but above other cells */
     background-color: #fff; /* Set explicit white background for body cells */
-    border-right: 1px solid #e0e0e0; /* Add separator line */
-     /* Ensure player names don't wrap unless necessary */
-     white-space: nowrap;
-     width: 1%; /* Let content decide width */
-     min-width: 80px; /* Minimum reasonable width */
-     max-width: 220px; /* Prevent overflow if name is very long */
-     overflow: hidden;
-     text-overflow: ellipsis;
+    border-right: 1px solid #e5e7eb; /* Match border color */
+    /* Ensure player names don't wrap unless necessary */
+    white-space: nowrap;
+    width: 1%; /* Let content decide width */
+    min-width: 80px; /* Minimum reasonable width */
+    max-width: 220px; /* Prevent overflow if name is very long */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Ensure sticky header's first cell has correct background and is above body's sticky cell */
 .styled-table thead th:first-child {
-    background-color: #add8e6; /* Match header background */
+    background-color: #f1f1f1; /* Match header background */
     z-index: 3; /* Above everything */
 }
 
 /* Ensure sticky body cell's background matches row hover */
 .styled-table tbody tr:hover td:first-child {
-    background-color: #f1f1f1; /* Match row hover background */
+    background-color: #f9fafb; /* Match row hover background */
+}
+
+/* Add a consistent header row style to top row */
+.styled-table thead {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* --- Player Status Table Specific Styles --- */
+/* This applies only to the player status table while preserving its Tailwind styling */
+.player-status-header {
+    background-color: #f1f1f1 !important; /* Light gray background to match other tables */
+}
+
+/* --- Status Badge Style --- */
+.status-badge {
+    display: inline-block; /* Crucial for background on wrapped lines */
+    line-height: 1.4;    /* Adjust line spacing if needed */
+    text-align: center;  /* Center text if it wraps */
+    cursor: pointer; /* Add pointer cursor to indicate clickability */
+}
+
+/* --- Info Panel Styles (Light Theme) --- */
+.info-panel {
+    background-color: #ffffff; /* White background */
+    padding: 1.5rem;
+    border-radius: 0.5rem; /* Rounded corners */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    border: 1px solid #e5e7eb; /* Light border */
+}
+.info-panel h3 {
+    color: #2563eb; /* Blue accent for heading */
+    border-bottom: 1px solid #e5e7eb; /* Lighter border */
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+.info-panel p {
+    margin-bottom: 0.5rem;
+    color: #4b5563; /* Slightly lighter text */
+}
+.info-panel strong {
+    color: #374151; /* Medium-dark gray text for labels */
+}
+
+/* --- Attendance Control Styles --- */
+.attendance-control-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the control */
+    gap: 0.25rem; /* Reduced default gap (space-x-1) */
+}
+.attendance-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem; /* w-8 - Default size */
+    height: 2rem; /* h-8 - Default size */
+    border-radius: 9999px; /* rounded-full */
+    background-color: #e5e7eb; /* bg-gray-200 */
+    color: #4b5563; /* text-gray-600 */
+    transition: background-color 0.2s ease-in-out;
+    cursor: pointer;
+    border: 1px solid #d1d5db; /* Add subtle border */
+}
+.attendance-arrow:hover {
+    background-color: #d1d5db; /* bg-gray-300 */
+}
+.attendance-arrow:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(156, 163, 175, 0.5); /* Ring focus gray */
+}
+.attendance-arrow svg {
+    width: 1rem; /* w-4 - Default icon size */
+    height: 1rem; /* h-4 - Default icon size */
+}
+.attendance-label {
+    display: inline-flex; /* Use inline-flex for centering */
+    align-items: center;
+    justify-content: center;
+    width: 76px; /* Fixed width as requested */
+    padding-top: 0.5rem; /* py-2 */
+    padding-bottom: 0.5rem; /* py-2 */
+    border-radius: 9999px; /* rounded-full */
+    font-weight: 500; /* font-medium */
+    text-align: center;
+    line-height: 1; /* leading-none */
+    font-size: 0.875rem; /* text-sm - Default font size */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    cursor: pointer; /* Add pointer cursor to indicate clickability */
+}
+
+/* --- Mobile Responsive Adjustments --- */
+@media (max-width: 640px) {
+    /* Adjust table padding and font size for mobile */
+    th, td {
+        padding: 8px 6px; /* Reduced horizontal padding for mobile */
+        font-size: 0.875rem; /* text-sm */
+    }
+    /* Reduce size of attendance control elements */
+    .attendance-control-container {
+        flex-wrap: nowrap; /* Prevent wrapping */
+        gap: 0.125rem; /* Tighter gap (space-x-0.5) */
+    }
+    .attendance-label {
+        width: 64px; /* Reduced fixed width (w-16) */
+        padding-top: 0.6rem; /* Increased padding */
+        padding-bottom: 0.6rem; /* Increased padding */
+        padding-left: 0; /* Remove horizontal padding */
+        padding-right: 0; /* Remove horizontal padding */
+        font-size: 0.8rem; /* Increased font size */
+    }
+    .attendance-arrow {
+        width: 1.8rem; /* Increased size (was 1.5rem) */
+        height: 1.8rem; /* Increased size (was 1.5rem) */
+    }
+    .attendance-arrow svg {
+        width: 0.9rem; /* Increased size (was 0.75rem) */
+        height: 0.9rem; /* Increased size (was 0.75rem) */
+    }
+    /* Allow player name to wrap */
+    td:first-child {
+        white-space: normal;
+    }
+    /* Adjust summary font size and padding */
+    #attendance-summary {
+        font-size: 1rem; /* text-base */
+        padding: 0.5rem 1rem; /* py-2 px-4 */
+    }
+    /* Adjust wheel spinner size on mobile */
+    .wheel-spinner {
+        width: 25px;
+        height: 25px;
+    }
 } 

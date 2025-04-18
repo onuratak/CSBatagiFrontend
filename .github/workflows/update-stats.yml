@@ -1,0 +1,43 @@
+name: Update CS:GO Stats
+
+on:
+  # Comment out schedule for now until testing is complete
+  # schedule:
+  #   # Run twice a week (Monday and Thursday at 3 AM UTC)
+  #   - cron: '0 3 * * 1,4'
+  # Allow manual trigger from GitHub UI
+  workflow_dispatch:
+
+jobs:
+  update-stats:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+      
+      - name: Install dependencies
+        run: |
+          npm install pg dotenv
+      
+      - name: Run stats update script
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: node scripts/update-stats.js
+      
+      - name: Commit and push if changes
+        run: |
+          git config --local user.email "github-actions@github.com"
+          git config --local user.name "GitHub Actions Bot"
+          git add season_avg.json last10.json night_avg.json sonmac.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update stats data [skip ci]"
+          git push 
