@@ -6,6 +6,7 @@
     <title>CS2 Stats Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="table-styles.css">
     <style>
         /* Use Inter font */
         body {
@@ -60,48 +61,36 @@
             to { transform: rotate(360deg); }
         }
 
-        /* --- Table Styles (Light Theme) --- */
+        /* --- Table Styles (Desktop Default) --- */
         th, td {
-            padding: 12px 15px;
-            text-align: left; /* Default alignment */
-            border-bottom: 1px solid #e5e7eb; /* Lighter border */
-            vertical-align: middle; /* Ensure vertical alignment */
+            /* Default padding for desktop view */
+            padding: 12px 16px; /* Equivalent to py-3 px-4 */
+            text-align: left;
+            vertical-align: middle;
+            /* border-bottom will be handled by Tailwind on the table/tbody or specific rules */
         }
+        /* Header specific styles (if needed beyond default th, td) */
         th {
-            background-color: #f9fafb; /* Very light gray background for header */
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #374151; /* Medium-dark gray header text */
+             font-weight: 600;
         }
-        tbody tr:hover {
-            background-color: #f9fafb; /* Light hover effect for rows */
-        }
-        #season-avg-table-body td:first-child,
-        #page-season_avg th:first-child {
-            position: sticky;
-            left: 0;
-            background: #fff;
-            z-index: 2;
-            white-space: nowrap;
-            width: 1%;         /* Let content decide width */
-            min-width: 80px;   /* Minimum reasonable width */
-            max-width: 220px;  /* Prevent overflow if name is very long */
-        }
-        /* --- Status Badge Style --- */
+
+        /* Rules from table-styles.css will override these for tables with .styled-table class */
+
+        /* --- Status Badge Style (Keep for non-table badges if needed) --- */
         .status-badge {
             display: inline-block; /* Crucial for background on wrapped lines */
             line-height: 1.4;    /* Adjust line spacing if needed */
             text-align: center;  /* Center text if it wraps */
             /* Base padding/font/rounding applied via JS classes */
+            cursor: pointer; /* Add pointer cursor to indicate clickability */
         }
 
 
         /* --- Responsive adjustments for mobile (max-width: 640px) --- */
         @media (max-width: 640px) {
-            /* Adjust table padding and font size */
+            /* Adjust table padding and font size for mobile */
             th, td {
-                padding: 8px 6px; /* Reduced horizontal padding */
+                padding: 8px 6px; /* Reduced horizontal padding for mobile */
                 font-size: 0.875rem; /* text-sm */
             }
             /* Reduce size of attendance control elements */
@@ -351,7 +340,7 @@
                 </button>
             </div>
 
-            <nav id="main-nav-links" class="hidden md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2" aria-label="Main navigation">
+            <nav id="main-nav-links" class="md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2" aria-label="Main navigation">
                  <a class="tab-nav-item" data-page="attendance" href="#">ATTENDANCE</a>
                 <a class="tab-nav-item" data-page="draft" href="#">DRAFT</a>
                 <a class="tab-nav-item" data-page="pick" href="#">PICK</a>
@@ -473,35 +462,35 @@
             <div id="page-season_avg" class="page-content hidden page-content-container">
                 <h2 class="text-2xl font-semibold text-blue-600 mb-4">Sezon Ortalaması</h2>
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <table class="styled-table min-w-full text-sm">
                         <thead>
                             <tr>
-                                <th class="px-2 py-2">Oyuncu</th>
-                                <th class="px-2 py-2">HLTV2</th>
-                                <th class="px-2 py-2">ADR</th>
-                                <th class="px-2 py-2">K/D</th>
-                                <th class="px-2 py-2">MVP</th>
-                                <th class="px-2 py-2">Kills</th>
-                                <th class="px-2 py-2">Deaths</th>
-                                <th class="px-2 py-2">Assists</th>
-                                <th class="px-2 py-2">HS</th>
-                                <th class="px-2 py-2">HS/Kill ratio</th>
-                                <th class="px-2 py-2">First Kill</th>
-                                <th class="px-2 py-2">First Death</th>
-                                <th class="px-2 py-2">Bomb Planted</th>
-                                <th class="px-2 py-2">Bomb Defused</th>
-                                <th class="px-2 py-2">HLTV</th>
-                                <th class="px-2 py-2">KAST</th>
-                                <th class="px-2 py-2">Utility Damage</th>
-                                <th class="px-2 py-2">2 kills</th>
-                                <th class="px-2 py-2">3 kills</th>
-                                <th class="px-2 py-2">4 kills</th>
-                                <th class="px-2 py-2">5 kills</th>
-                                <th class="px-2 py-2">Nr of Matches</th>
-                                <th class="px-2 py-2">WIN RATE (%)</th>
-                                <th class="px-2 py-2">Nr of clutches per game</th>
-                                <th class="px-2 py-2">Clutches Won</th>
-                                <th class="px-2 py-2">Successful Clutch (%)</th>
+                                <th>Oyuncu</th>
+                                <th>HLTV2</th>
+                                <th>ADR</th>
+                                <th>K/D</th>
+                                <th>MVP</th>
+                                <th>Kills</th>
+                                <th>Deaths</th>
+                                <th>Assists</th>
+                                <th>HS</th>
+                                <th>HS/Kill ratio</th>
+                                <th>First Kill</th>
+                                <th>First Death</th>
+                                <th>Bomb Planted</th>
+                                <th>Bomb Defused</th>
+                                <th>HLTV</th>
+                                <th>KAST</th>
+                                <th>Utility Damage</th>
+                                <th>2 kills</th>
+                                <th>3 kills</th>
+                                <th>4 kills</th>
+                                <th>5 kills</th>
+                                <th>Nr of Matches</th>
+                                <th>WIN RATE (%)</th>
+                                <th>Nr of clutches per game</th>
+                                <th>Clutches Won</th>
+                                <th>Successful Clutch (%)</th>
                             </tr>
                         </thead>
                         <tbody id="season-avg-table-body">
@@ -680,7 +669,7 @@
                     const attendanceCell = document.createElement('td');
                     attendanceCell.className = 'text-center'; // Center content within the cell
 
-                    const currentState = player.attendance || 'no_response'; // Default if missing
+                    const currentState = player.attendance || 'no_response';
                     const config = stateConfigs[currentState];
 
                     // Container for the control
@@ -994,68 +983,73 @@
 
         // Modify fillSeasonAvgTable to accept data as a parameter:
         function fillSeasonAvgTable(data) {
-            // --- Calculate min/max for gradient columns ---
-            const hltv2Vals = data.map(d => d.hltv_2);
-            const adrVals = data.map(d => d.adr);
-            const kdVals = data.map(d => d.kd);
+            // --- Calculate min/max for rating columns ---
+            const hltv2Vals = data.map(d => d.hltv_2).filter(v => typeof v === 'number');
+            const adrVals = data.map(d => d.adr).filter(v => typeof v === 'number');
+            const kdVals = data.map(d => d.kd).filter(v => typeof v === 'number');
 
-            const minHLTV2 = Math.min(...hltv2Vals), maxHLTV2 = Math.max(...hltv2Vals);
-            const minADR = Math.min(...adrVals), maxADR = Math.max(...adrVals);
-            const minKD = Math.min(...kdVals), maxKD = Math.max(...kdVals);
+            // Ensure we have valid numbers before calculating min/max
+            const minHLTV2 = hltv2Vals.length > 0 ? Math.min(...hltv2Vals) : 0;
+            const maxHLTV2 = hltv2Vals.length > 0 ? Math.max(...hltv2Vals) : 1; // Avoid div by zero if only one value
+            const minADR = adrVals.length > 0 ? Math.min(...adrVals) : 0;
+            const maxADR = adrVals.length > 0 ? Math.max(...adrVals) : 1;
+            const minKD = kdVals.length > 0 ? Math.min(...kdVals) : 0;
+            const maxKD = kdVals.length > 0 ? Math.max(...kdVals) : 1;
 
-            // Helper: pick Tailwind color class based on percent (red-200, red-400, yellow-200, green-200, green-400, green-600)
-            function getTailwindBg(percent) {
-                if (percent < 0.2) return 'bg-red-400';
-                if (percent < 0.3) return 'bg-red-300';
-                if (percent < 0.4) return 'bg-red-200';
-                if (percent < 0.5) return 'bg-red-100';
-                if (percent < 0.6) return 'bg-green-100';
-                if (percent < 0.7) return 'bg-green-200';
-                if (percent < 0.8) return 'bg-green-300';
-                if (percent < 0.9) return 'bg-green-400';
-                return 'bg-green-500';
-            }
-            function getGradientClass(val, min, max) {
-                if (max === min) return 'bg-white';
+            // Helper: Get CSS badge class based on value and range
+            function getBadgeClass(val, min, max) {
+                if (max === min) return 'badge-average'; // Handle cases with single player or all same values
                 const percent = (val - min) / (max - min);
-                return getTailwindBg(percent);
+
+                if (percent >= 0.95) return 'badge-super-elite'; // Red
+                if (percent >= 0.85) return 'badge-elite';       // Orange
+                if (percent >= 0.70) return 'badge-very-good';   // Info Blue
+                if (percent >= 0.55) return 'badge-good';        // Green
+                if (percent >= 0.45) return 'badge-average';     // Grey
+                if (percent >= 0.30) return 'badge-below-average';// Steel Blue
+                return 'badge-poor';                             // Dark Grey
             }
 
             // --- Sort by HLTV2 descending ---
-            data.sort((a, b) => b.hltv_2 - a.hltv_2);
-            
+            data.sort((a, b) => (b.hltv_2 ?? 0) - (a.hltv_2 ?? 0)); // Handle potential null/undefined
+
             const tbody = document.getElementById('season-avg-table-body');
-            tbody.innerHTML = '';
+            tbody.innerHTML = ''; // Clear existing rows
 
             data.forEach(row => {
+                // Helper to safely format numbers or return 'N/A'
+                const formatNum = (num, decimals = 2) => (typeof num === 'number' ? num.toFixed(decimals) : 'N/A');
+                const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
+
                 const tr = document.createElement('tr');
+                // Apply CSS badge classes using spans inside stat-badge-cell
                 tr.innerHTML = `
-                    <td class="font-medium text-gray-900">${row.name}</td>
-                    <td class="${getGradientClass(row.hltv_2, minHLTV2, maxHLTV2)}">${row.hltv_2.toFixed(2)}</td>
-                    <td class="${getGradientClass(row.adr, minADR, maxADR)} ">${row.adr.toFixed(2)}</td>
-                    <td class="${getGradientClass(row.kd, minKD, maxKD)} ">${row.kd.toFixed(2)}</td>
-                    <td>${row.mvp.toFixed(2)}</td>
-                    <td>${row.kills.toFixed(2)}</td>
-                    <td>${row.deaths.toFixed(2)}</td>
-                    <td>${row.assists.toFixed(2)}</td>
-                    <td>${row.hs.toFixed(2)}</td>
-                    <td>${row.hs_ratio.toFixed(2)}%</td>
-                    <td>${row.first_kill.toFixed(2)}</td>
-                    <td>${row.first_death.toFixed(2)}</td>
-                    <td>${row.bomb_planted.toFixed(2)}</td>
-                    <td>${row.bomb_defused.toFixed(2)}</td>
-                    <td>${row.hltv.toFixed(2)}</td>
-                    <td>${row.kast.toFixed(2)}%</td>
-                    <td>${row.utl_dmg.toFixed(2)}</td>
-                    <td>${row.two_kills.toFixed(2)}</td>
-                    <td>${row.three_kills.toFixed(2)}</td>
-                    <td>${row.four_kills.toFixed(2)}</td>
-                    <td>${row.five_kills.toFixed(2)}</td>
-                    <td>${row.matches}</td>
-                    <td>${row.win_rate.toFixed(2)}%</td>
-                    <td>${row.avg_clutches.toFixed(2)}</td>
-                    <td>${row.avg_clutches_won.toFixed(2)}</td>
-                    <td>${row.clutch_success.toFixed(2)}%</td>
+                    <td class="font-medium text-gray-900 whitespace-nowrap">${row.name || 'N/A'}</td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.hltv_2, minHLTV2, maxHLTV2)}">${formatNum(row.hltv_2)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.adr, minADR, maxADR)}">${formatNum(row.adr, 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="${getBadgeClass(row.kd, minKD, maxKD)}">${formatNum(row.kd)}</span></td>
+                    <td class="text-center">${formatNum(row.mvp)}</td>
+                    <td class="text-center">${formatNum(row.kills)}</td>
+                    <td class="text-center">${formatNum(row.deaths)}</td>
+                    <td class="text-center">${formatNum(row.assists)}</td>
+                    <td class="text-center">${formatNum(row.hs)}</td>
+                    <td class="text-center">${formatPercent(row.hs_ratio)}</td>
+                    <td class="text-center">${formatNum(row.first_kill)}</td>
+                    <td class="text-center">${formatNum(row.first_death)}</td>
+                    <td class="text-center">${formatNum(row.bomb_planted)}</td>
+                    <td class="text-center">${formatNum(row.bomb_defused)}</td>
+                    <td class="text-center">${formatNum(row.hltv)}</td>
+                    <td class="text-center">${formatPercent(row.kast)}</td>
+                    <td class="text-center">${formatNum(row.utl_dmg)}</td>
+                    <td class="text-center">${formatNum(row.two_kills)}</td>
+                    <td class="text-center">${formatNum(row.three_kills)}</td>
+                    <td class="text-center">${formatNum(row.four_kills)}</td>
+                    <td class="text-center">${formatNum(row.five_kills)}</td>
+                    <td class="text-center">${row.matches ?? 'N/A'}</td>
+                    <td class="text-center">${formatPercent(row.win_rate)}</td>
+                    <td class="text-center">${formatNum(row.avg_clutches)}</td>
+                    <td class="text-center">${formatNum(row.avg_clutches_won)}</td>
+                    <td class="text-center">${formatPercent(row.clutch_success)}</td>
                 `;
                 tbody.appendChild(tr);
             });

@@ -1,0 +1,112 @@
+/* Consolidated Table and Badge Styles */
+
+/* Table container styles */
+.table-container {
+    overflow-x: auto; /* Enable horizontal scrolling */
+    max-height: 70vh; /* Limit table height and enable vertical scroll */
+    overflow-y: auto;
+    position: relative; /* Needed for sticky header/column */
+    margin-top: 1.25rem; /* ~20px */
+}
+
+/* Generalized styled table */
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0;
+    font-size: 0.9em;
+    min-width: 1000px; /* Prevent excessive wrapping on small screens */
+    background-color: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+    text-align: left; /* Default text alignment for table */
+}
+
+/* Table header */
+.styled-table thead th {
+    background-color: #add8e6; /* Light blue header */
+    color: #333;
+    text-align: left; /* Ensure header text is left-aligned by default */
+    padding: 12px 15px; /* Reverted horizontal padding */
+    font-weight: bold;
+    position: sticky; /* Sticky header */
+    top: 0;
+    z-index: 2; /* Ensure header is above body */
+    white-space: nowrap; /* Prevent header text wrapping */
+}
+
+/* Table body rows */
+.styled-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+    transition: background-color 0.2s ease;
+}
+
+.styled-table tbody tr:last-of-type {
+    border-bottom: none;
+}
+
+.styled-table tbody td {
+    padding: 9px 15px; /* Reverted horizontal padding */
+    white-space: nowrap; /* Prevent text wrapping in cells by default */
+    vertical-align: middle; /* Align cell content vertically */
+}
+
+/* Hover effect for rows */
+.styled-table tbody tr:hover {
+    background-color: #f1f1f1; /* Light grey hover */
+}
+
+/* --- Badge Styles --- */
+.stat-badge-cell {
+    text-align: center; /* Center align badge content */
+}
+
+/* Styles for the span containing the badge */
+.stat-badge-cell > span {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 0.25rem; /* Rectangular with slightly rounded corners */
+    font-size: 0.85em;
+    font-weight: bold;
+    color: #fff; /* Default white text */
+    min-width: 50px; /* Ensure consistent width */
+    text-align: center;
+    line-height: 1; /* Ensure text stays centered vertically */
+}
+
+/* Specific badge colors (Red/Green Scheme) */
+.badge-super-elite { background-color: #059669; } /* Dark Green */
+.badge-elite { background-color: #10B981; }       /* Medium Green */
+.badge-very-good { background-color: #A7F3D0; color: #065f46; }   /* Light Green (emerald-200, dark text) */
+.badge-good { background-color: #FACC15; color: #713f12; }        /* Yellow (amber-400, dark text) */
+.badge-average { background-color: #FED7AA; color: #9A3412; }     /* Light Orange (orange-200, dark text) */
+.badge-below-average { background-color: #FCA5A5; color: #991b1b; } /* Light Red (red-300, dark text) */
+.badge-poor { background-color: #EF4444; }         /* Red (red-500) */
+
+
+/* --- Sticky First Column --- */
+.styled-table thead th:first-child,
+.styled-table tbody td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1; /* Below header but above other cells */
+    background-color: #fff; /* Set explicit white background for body cells */
+    border-right: 1px solid #e0e0e0; /* Add separator line */
+     /* Ensure player names don't wrap unless necessary */
+     white-space: nowrap;
+     width: 1%; /* Let content decide width */
+     min-width: 80px; /* Minimum reasonable width */
+     max-width: 220px; /* Prevent overflow if name is very long */
+     overflow: hidden;
+     text-overflow: ellipsis;
+}
+
+/* Ensure sticky header's first cell has correct background and is above body's sticky cell */
+.styled-table thead th:first-child {
+    background-color: #add8e6; /* Match header background */
+    z-index: 3; /* Above everything */
+}
+
+/* Ensure sticky body cell's background matches row hover */
+.styled-table tbody tr:hover td:first-child {
+    background-color: #f1f1f1; /* Match row hover background */
+} 
