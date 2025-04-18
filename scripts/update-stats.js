@@ -145,40 +145,60 @@ async function updateSeasonAvgStats() {
     // Execute the query
     const results = await executeDbQuery(queries.seasonAvg);
     
-    if (!results || !results.length) {
-      console.log('No results found for season average stats');
+    // Check if the 'rows' property exists and has data
+    if (!results || !results.rows || !results.rows.length) { 
+      console.log('No results found for season average stats (or results.rows is missing/empty)');
       return;
     }
     
-    // Transform the data
-    const transformedData = results.map(player => ({
-      name: player.name,
-      hltv_2: parseFloat(player.hltv_2 || 0),
-      adr: parseFloat(player.adr || 0),
-      kd: parseFloat(player.kd || 0),
-      mvp: parseFloat(player.mvp || 0),
-      kills: parseFloat(player.kills || 0),
-      deaths: parseFloat(player.deaths || 0),
-      assists: parseFloat(player.assists || 0),
-      hs: parseFloat(player.headshot_kills || 0),
-      hs_ratio: parseFloat(player.headshot_killratio || 0),
-      first_kill: parseFloat(player.first_kill_count || 0),
-      first_death: parseFloat(player.first_death_count || 0),
-      bomb_planted: parseFloat(player.bomb_planted || 0),
-      bomb_defused: parseFloat(player.bomb_defused || 0),
-      hltv: parseFloat(player.hltv || 0),
-      kast: parseFloat(player.kast || 0),
-      utl_dmg: parseFloat(player.utl_dmg || 0),
-      two_kills: parseFloat(player.two_kills || 0),
-      three_kills: parseFloat(player.three_kills || 0),
-      four_kills: parseFloat(player.four_kills || 0),
-      five_kills: parseFloat(player.five_kills || 0),
-      matches: parseInt(player.matches_in_interval || 0),
-      win_rate: parseFloat(player.win_rate_percentage || 0),
-      avg_clutches: parseFloat(player.avg_clutches || 0),
-      avg_clutches_won: parseFloat(player.avg_clutches_won || 0),
-      clutch_success: parseFloat(player.successful_clutch_percentage || 0)
-    }));
+    // Create a mapping from column names to their index for easier lookup
+    const columnMap = {};
+    results.columns.forEach((colName, index) => {
+      // Ensure column names are consistently lowercased for matching
+      columnMap[colName.toLowerCase()] = index; 
+    });
+
+    // Transform the data by mapping over results.rows
+    const transformedData = results.rows.map(row => {
+      // Helper function to safely get data and parse it
+      const getData = (colName, parseFn = parseFloat, defaultValue = 0) => {
+        const index = columnMap[colName.toLowerCase()];
+        const value = (index !== undefined && row[index] !== null && row[index] !== undefined) ? row[index] : defaultValue;
+        // Attempt parsing, fall back to defaultValue if parsing results in NaN or fails
+        const parsedValue = parseFn(value);
+        return isNaN(parsedValue) ? defaultValue : parsedValue;
+      };
+
+      // Access data using the getData helper function
+      return { 
+        name: row[columnMap['name'.toLowerCase()]], // Name is likely a string, handle separately if needed
+        hltv_2: getData('hltv_2'),
+        adr: getData('adr'),
+        kd: getData('kd'),
+        mvp: getData('mvp', parseInt), // Assuming mvp is integer
+        kills: getData('kills', parseInt),
+        deaths: getData('deaths', parseInt),
+        assists: getData('assists', parseInt),
+        hs: getData('headshot_kills', parseInt),
+        hs_ratio: getData('headshot_killratio'),
+        first_kill: getData('first_kill_count', parseInt),
+        first_death: getData('first_death_count', parseInt),
+        bomb_planted: getData('bomb_planted', parseInt),
+        bomb_defused: getData('bomb_defused', parseInt),
+        hltv: getData('hltv'),
+        kast: getData('kast'),
+        utl_dmg: getData('utl_dmg'),
+        two_kills: getData('two_kills', parseInt),
+        three_kills: getData('three_kills', parseInt),
+        four_kills: getData('four_kills', parseInt),
+        five_kills: getData('five_kills', parseInt),
+        matches: getData('matches_in_interval', parseInt),
+        win_rate: getData('win_rate_percentage'),
+        avg_clutches: getData('avg_clutches'),
+        avg_clutches_won: getData('avg_clutches_won'),
+        clutch_success: getData('successful_clutch_percentage')
+      };
+    });
     
     // Write the result to season_avg.json
     const dataDir = path.join(__dirname, '..', 'data');
