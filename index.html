@@ -381,7 +381,8 @@
                 </button>
             </div>
 
-            <nav id="main-nav-links" class="sm:hidden md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2" aria-label="Main navigation">
+            <nav id="main-nav-links" class="hidden md:flex md:flex-wrap md:items-center md:border-b md:border-gray-300 md:-mb-px md:mt-2" aria-label="Main navigation">
+        <a class="tab-nav-item" data-page="home" href="#">Home</a> <!-- Added Home Link -->
         <a class="tab-nav-item" data-page="attendance" href="#">Attendance</a>
         <a class="tab-nav-item" data-page="batak_domination" href="#">Batak Domination</a>
         <a class="tab-nav-item" data-page="sonmac" href="#">Son Maç</a>
@@ -396,7 +397,43 @@
 
         <div id="page-content-area">
 
-            <div id="page-attendance" class="page-content">
+            <!-- Landing Page Section -->
+            <div id="page-home" class="page-content">
+                <h2 class="text-3xl font-semibold text-blue-600 mb-6 text-center">CS Bataği Sitesine Hoş Geldiniz!</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                     <a href="#" data-page-target="attendance" class="landing-tile group block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg hover:border-blue-500 transition duration-200 ease-in-out transform hover:-translate-y-1">
+                        <h3 class="mb-2 text-2xl font-bold tracking-tight text-blue-700 group-hover:text-blue-800">Katılım</h3>
+                        <p class="font-normal text-gray-600 group-hover:text-gray-800">Oyuncu katılım durumunu görüntüleyin ve güncelleyin.</p>
+                    </a>
+                     <a href="#" data-page-target="batak_domination" class="landing-tile group block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg hover:border-blue-500 transition duration-200 ease-in-out transform hover:-translate-y-1">
+                        <h3 class="mb-2 text-2xl font-bold tracking-tight text-blue-700 group-hover:text-blue-800">Batak Domination</h3>
+                        <p class="font-normal text-gray-600 group-hover:text-gray-800">Domination haritasını kontrol edin.</p>
+                    </a>
+                     <a href="#" data-page-target="sonmac" class="landing-tile group block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg hover:border-blue-500 transition duration-200 ease-in-out transform hover:-translate-y-1">
+                        <h3 class="mb-2 text-2xl font-bold tracking-tight text-blue-700 group-hover:text-blue-800">Son Maç</h3>
+                        <p class="font-normal text-gray-600 group-hover:text-gray-800">Son maçın detaylı istatistikleri.</p>
+                    </a>
+                     <a href="#" data-page-target="duello_son_mac" class="landing-tile group block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg hover:border-blue-500 transition duration-200 ease-in-out transform hover:-translate-y-1">
+                        <h3 class="mb-2 text-2xl font-bold tracking-tight text-blue-700 group-hover:text-blue-800">Düello Son Maç</h3>
+                        <p class="font-normal text-gray-600 group-hover:text-gray-800">Oyuncu vs Oyuncu düello istatistikleri.</p>
+                    </a>
+                     <a href="#" data-page-target="gece_ortalama" class="landing-tile group block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg hover:border-blue-500 transition duration-200 ease-in-out transform hover:-translate-y-1">
+                        <h3 class="mb-2 text-2xl font-bold tracking-tight text-blue-700 group-hover:text-blue-800">Gece Ortalaması</h3>
+                        <p class="font-normal text-gray-600 group-hover:text-gray-800">Gecelik ortalama performans.</p>
+                    </a>
+                    <a href="#" data-page-target="last10" class="landing-tile group block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg hover:border-blue-500 transition duration-200 ease-in-out transform hover:-translate-y-1">
+                        <h3 class="mb-2 text-2xl font-bold tracking-tight text-blue-700 group-hover:text-blue-800">Son 10 Ortalaması</h3>
+                        <p class="font-normal text-gray-600 group-hover:text-gray-800">Son 10 oyunun ortalamaları.</p>
+                    </a>
+                     <a href="#" data-page-target="season_avg" class="landing-tile group block p-6 bg-white rounded-lg border border-gray-200 shadow-md hover:shadow-lg hover:border-blue-500 transition duration-200 ease-in-out transform hover:-translate-y-1">
+                        <h3 class="mb-2 text-2xl font-bold tracking-tight text-blue-700 group-hover:text-blue-800">Sezon Ortalaması</h3>
+                        <p class="font-normal text-gray-600 group-hover:text-gray-800">Genel sezon ortalama istatistikleri.</p>
+                    </a>
+                </div>
+            </div>
+            <!-- End Landing Page Section -->
+
+            <div id="page-attendance" class="page-content hidden">
                 <div class="text-center mb-6">
                     <button id="update-stats-button" class="action-button">
                         Update Attendance from Sheet
@@ -404,47 +441,47 @@
                     </button>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    <div class="lg:col-span-2 page-content-container overflow-x-auto"> <h2 class="text-2xl font-semibold mb-1 text-blue-600">Player Status</h2>
-                        <div id="attendance-summary" class="text-lg font-semibold mb-4 flex items-center justify-center text-center px-4 py-2 rounded-md transition-colors duration-300">
-                            <span id="summary-text">Loading summary...</span>
-                            <span id="teker-dondu-indicator" class="wheel-spinner hidden" title="Teker Döndü!">
-                                <svg 
-                                height="40px" width="40px" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <style type="text/css"> .st0{fill:#000000;} </style> <g> <path class="st0" d="M498.842,256c0-1.092-0.065-2.169-0.08-3.277c4.418-1.182,8.836-2.436,13.238-3.739 c-0.348-12.057-1.489-24.098-3.52-36.002c-4.556-0.445-9.136-0.809-13.708-1.124c-3.318-18.046-8.594-35.411-15.666-51.838 c3.609-2.768,7.186-5.632,10.762-8.529c-4.96-11.013-10.657-21.687-17.099-31.882c-4.369,1.343-8.731,2.767-13.085,4.232 c-9.913-15.253-21.476-29.318-34.463-41.941c2.274-3.965,4.636-7.858,6.821-11.896c-8.764-8.286-18.11-15.949-27.934-22.957 c-3.544,2.929-6.886,6.004-10.325,8.999c-14.841-10.254-30.904-18.871-47.889-25.628c0.599-4.548,1.125-9.112,1.594-13.676 c-11.272-4.322-22.884-7.818-34.65-10.504c-2.153,4.079-4.224,8.133-6.24,12.219c-16.33-3.456-33.25-5.308-50.599-5.308 c-1.158,0-2.29,0.065-3.447,0.097C251.355,8.82,250.279,4.394,248.968,0c-12.041,0.348-24.082,1.489-35.985,3.52 c-0.445,4.564-0.81,9.127-1.125,13.708c-18.069,3.318-35.41,8.594-51.837,15.65c-2.792-3.601-5.632-7.178-8.529-10.746 c-11.013,4.952-21.678,10.649-31.883,17.099c1.343,4.369,2.768,8.731,4.232,13.085C108.596,62.22,94.516,73.792,81.9,86.779 c-3.965-2.282-7.857-4.653-11.895-6.821c-8.286,8.755-15.949,18.102-22.957,27.934c2.921,3.544,6.004,6.894,8.998,10.342 c-10.252,14.841-18.87,30.871-25.635,47.864c-4.54-0.574-9.096-1.108-13.652-1.578c-4.337,11.297-7.833,22.876-10.52,34.634 c4.078,2.152,8.14,4.232,12.227,6.247c-3.464,16.33-5.316,33.25-5.316,50.599c0,1.092,0.064,2.193,0.072,3.277 c-4.402,1.182-8.828,2.428-13.222,3.754c0.348,12.033,1.482,24.074,3.513,35.977c4.556,0.438,9.135,0.818,13.715,1.134 c3.318,18.045,8.594,35.41,15.65,51.837c-3.601,2.776-7.17,5.624-10.746,8.521c4.944,11.03,10.641,21.695,17.098,31.891 c4.37-1.336,8.731-2.744,13.069-4.233c9.92,15.27,21.492,29.302,34.48,41.942c-2.282,3.965-4.653,7.848-6.821,11.878 c8.747,8.303,18.101,15.974,27.934,22.974c3.544-2.937,6.886-6.012,10.325-9.006c14.841,10.252,30.888,18.878,47.881,25.643 c-0.591,4.556-1.134,9.112-1.586,13.676c11.272,4.322,22.876,7.809,34.65,10.496c2.136-4.078,4.224-8.149,6.238-12.227 c16.33,3.464,33.25,5.309,50.6,5.309c1.157,0,2.29-0.065,3.439-0.073c1.206,4.402,2.266,8.828,3.577,13.23 c12.041-0.347,24.09-1.481,35.985-3.512c0.445-4.564,0.825-9.136,1.141-13.716c18.046-3.317,35.412-8.577,51.838-15.666 c2.768,3.617,5.616,7.186,8.512,10.762c11.03-4.944,21.687-10.648,31.899-17.098c-1.335-4.362-2.743-8.731-4.232-13.085 c15.245-9.913,29.326-21.469,41.941-34.464c3.965,2.29,7.85,4.644,11.888,6.821c8.294-8.764,15.965-18.101,22.957-27.934 c-2.937-3.544-5.996-6.886-8.99-10.326c10.252-14.841,18.846-30.895,25.636-47.889c4.556,0.599,9.112,1.117,13.667,1.57 c4.321-11.248,7.801-22.86,10.504-34.626c-4.079-2.136-8.149-4.224-12.228-6.238C496.998,290.27,498.842,273.357,498.842,256z M256,410.793c-85.501,0-154.809-69.292-154.809-154.793c0-85.5,69.308-154.8,154.809-154.8c85.484,0,154.809,69.3,154.809,154.8 C410.809,341.501,341.485,410.793,256,410.793z"></path> <path class="st0" d="M256,270.962c8.262,0,14.962-6.692,14.962-14.962c0-8.27-6.7-14.97-14.962-14.97 c-8.278,0-14.978,6.7-14.978,14.97C241.022,264.27,247.722,270.962,256,270.962z"></path> <path class="st0" d="M156.136,199.687c1.044,2.808,3.31,4.977,6.15,5.907l53.367,17.342c4.968,1.602,10.406,0.752,14.623-2.323 c4.232-3.075,6.724-7.979,6.724-13.206v-56.062c0-2.994-1.376-5.826-3.714-7.671c-2.347-1.861-5.406-2.541-8.327-1.861 c0,0,0.802-0.606-4.588,1.085c-25.191,7.938-46.756,24.042-61.572,45.218c-3.035,4.354-1.861,3.107-1.861,3.107 C155.384,193.772,155.092,196.887,156.136,199.687z"></path> <path class="st0" d="M214.391,269.53c-1.61-4.977-5.51-8.877-10.463-10.479l-53.327-17.325c-2.865-0.931-5.956-0.494-8.448,1.157 c-2.5,1.659-4.094,4.369-4.329,7.347c0,0-0.34-0.946-0.388,4.71c-0.251,26.396,8.407,51.878,23.96,72.52 c3.204,4.241,2.379,2.744,2.379,2.744c1.95,2.25,4.823,3.496,7.801,3.374c2.994-0.13,5.762-1.602,7.517-4.03l32.967-45.396 C215.152,279.936,216.001,274.482,214.391,269.53z"></path> <path class="st0" d="M269.198,306.47c-3.074-4.216-7.978-6.716-13.198-6.716c-5.22,0-10.123,2.5-13.206,6.716l-32.943,45.356 c-1.764,2.42-2.314,5.51-1.513,8.399c0.818,2.889,2.889,5.228,5.656,6.393c0,0-1.011,0.025,4.346,1.82 c25.044,8.392,51.951,8.028,76.388-0.396c5.025-1.724,3.334-1.4,3.334-1.4c2.752-1.158,4.823-3.512,5.616-6.385 c0.817-2.889,0.251-5.98-1.506-8.392L269.198,306.47z"></path> <path class="st0" d="M361.448,241.709l-53.375,17.342c-4.952,1.602-8.853,5.502-10.471,10.479 c-1.611,4.953-0.752,10.407,2.323,14.614l32.958,45.356c1.748,2.436,4.515,3.893,7.509,4.038c2.995,0.122,5.868-1.141,7.826-3.406 c0,0-0.283,0.963,3.084-3.576c15.706-21.218,23.685-46.934,23.224-72.764c-0.089-5.3-0.307-3.593-0.307-3.593 c-0.235-2.986-1.846-5.697-4.338-7.348C367.395,241.216,364.28,240.779,361.448,241.709z"></path> <path class="st0" d="M281.708,220.613c4.233,3.059,9.67,3.924,14.63,2.323l53.327-17.342c2.848-0.922,5.114-3.099,6.15-5.907 c1.036-2.8,0.744-5.923-0.818-8.488c0,0,0.834,0.567-2.452-4.03c-15.318-21.508-37.288-37.038-62.025-44.596 c-5.065-1.537-3.528-0.809-3.528-0.809c-2.905-0.68-5.956,0.008-8.31,1.877c-2.331,1.837-3.69,4.669-3.69,7.656v56.11 C274.984,212.634,277.492,217.538,281.708,220.613z"></path> </g> </g><
-                                /svg>     
+                     <div class="lg:col-span-2 page-content-container overflow-x-auto"> <h2 class="text-2xl font-semibold mb-1 text-blue-600">Player Status</h2>
+                         <div id="attendance-summary" class="text-lg font-semibold mb-4 flex items-center justify-center text-center px-4 py-2 rounded-md transition-colors duration-300">
+                             <span id="summary-text">Loading summary...</span>
+                             <span id="teker-dondu-indicator" class="wheel-spinner hidden" title="Teker Döndü!">
+                                 <svg 
+                                 height="40px" width="40px" version="1.1" id="_x32_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" xml:space="preserve" fill="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <style type="text/css"> .st0{fill:#000000;} </style> <g> <path class="st0" d="M498.842,256c0-1.092-0.065-2.169-0.08-3.277c4.418-1.182,8.836-2.436,13.238-3.739 c-0.348-12.057-1.489-24.098-3.52-36.002c-4.556-0.445-9.136-0.809-13.708-1.124c-3.318-18.046-8.594-35.411-15.666-51.838 c3.609-2.768,7.186-5.632,10.762-8.529c-4.96-11.013-10.657-21.687-17.099-31.882c-4.369,1.343-8.731,2.767-13.085,4.232 c-9.913-15.253-21.476-29.318-34.463-41.941c2.274-3.965,4.636-7.858,6.821-11.896c-8.764-8.286-18.11-15.949-27.934-22.957 c-3.544,2.929-6.886,6.004-10.325,8.999c-14.841-10.254-30.904-18.871-47.889-25.628c0.599-4.548,1.125-9.112,1.594-13.676 c-11.272-4.322-22.884-7.818-34.65-10.504c-2.153,4.079-4.224,8.133-6.24,12.219c-16.33-3.456-33.25-5.308-50.599-5.308 c-1.158,0-2.29,0.065-3.447,0.097C251.355,8.82,250.279,4.394,248.968,0c-12.041,0.348-24.082,1.489-35.985,3.52 c-0.445,4.564-0.81,9.127-1.125,13.708c-18.069,3.318-35.41,8.594-51.837,15.65c-2.792-3.601-5.632-7.178-8.529-10.746 c-11.013,4.952-21.678,10.649-31.883,17.099c1.343,4.369,2.768,8.731,4.232,13.085C108.596,62.22,94.516,73.792,81.9,86.779 c-3.965-2.282-7.857-4.653-11.895-6.821c-8.286,8.755-15.949,18.102-22.957,27.934c2.921,3.544,6.004,6.894,8.998,10.342 c-10.252,14.841-18.87,30.871-25.635,47.864c-4.54-0.574-9.096-1.108-13.652-1.578c-4.337,11.297-7.833,22.876-10.52,34.634 c4.078,2.152,8.14,4.232,12.227,6.247c-3.464,16.33-5.316,33.25-5.316,50.599c0,1.092,0.064,2.193,0.072,3.277 c-4.402,1.182-8.828,2.428-13.222,3.754c0.348,12.033,1.482,24.074,3.513,35.977c4.556,0.438,9.135,0.818,13.715,1.134 c3.318,18.045,8.594,35.41,15.65,51.837c-3.601,2.776-7.17,5.624-10.746,8.521c4.944,11.03,10.641,21.695,17.098,31.891 c4.37-1.336,8.731-2.744,13.069-4.233c9.92,15.27,21.492,29.302,34.48,41.942c-2.282,3.965-4.653,7.848-6.821,11.878 c8.747,8.303,18.101,15.974,27.934,22.974c3.544-2.937,6.886-6.012,10.325-9.006c14.841,10.252,30.888,18.878,47.881,25.643 c-0.591,4.556-1.134,9.112-1.586,13.676c11.272,4.322,22.876,7.809,34.65,10.496c2.136-4.078,4.224-8.149,6.238-12.227 c16.33,3.464,33.25,5.309,50.6,5.309c1.157,0,2.29-0.065,3.439-0.073c1.206,4.402,2.266,8.828,3.577,13.23 c12.041-0.347,24.09-1.481,35.985-3.512c0.445-4.564,0.825-9.136,1.141-13.716c18.046-3.317,35.412-8.577,51.838-15.666 c2.768,3.617,5.616,7.186,8.512,10.762c11.03-4.944,21.687-10.648,31.899-17.098c-1.335-4.362-2.743-8.731-4.232-13.085 c15.245-9.913,29.326-21.469,41.941-34.464c3.965,2.29,7.85,4.644,11.888,6.821c8.294-8.764,15.965-18.101,22.957-27.934 c-2.937-3.544-5.996-6.886-8.99-10.326c10.252-14.841,18.846-30.895,25.636-47.889c4.556,0.599,9.112,1.117,13.667,1.57 c4.321-11.248,7.801-22.86,10.504-34.626c-4.079-2.136-8.149-4.224-12.228-6.238C496.998,290.27,498.842,273.357,498.842,256z M256,410.793c-85.501,0-154.809-69.292-154.809-154.793c0-85.5,69.308-154.8,154.809-154.8c85.484,0,154.809,69.3,154.809,154.8 C410.809,341.501,341.485,410.793,256,410.793z"></path> <path class="st0" d="M256,270.962c8.262,0,14.962-6.692,14.962-14.962c0-8.27-6.7-14.97-14.962-14.97 c-8.278,0-14.978,6.7-14.978,14.97C241.022,264.27,247.722,270.962,256,270.962z"></path> <path class="st0" d="M156.136,199.687c1.044,2.808,3.31,4.977,6.15,5.907l53.367,17.342c4.968,1.602,10.406,0.752,14.623-2.323 c4.232-3.075,6.724-7.979,6.724-13.206v-56.062c0-2.994-1.376-5.826-3.714-7.671c-2.347-1.861-5.406-2.541-8.327-1.861 c0,0,0.802-0.606-4.588,1.085c-25.191,7.938-46.756,24.042-61.572,45.218c-3.035,4.354-1.861,3.107-1.861,3.107 C155.384,193.772,155.092,196.887,156.136,199.687z"></path> <path class="st0" d="M214.391,269.53c-1.61-4.977-5.51-8.877-10.463-10.479l-53.327-17.325c-2.865-0.931-5.956-0.494-8.448,1.157 c-2.5,1.659-4.094,4.369-4.329,7.347c0,0-0.34-0.946-0.388,4.71c-0.251,26.396,8.407,51.878,23.96,72.52 c3.204,4.241,2.379,2.744,2.379,2.744c1.95,2.25,4.823,3.496,7.801,3.374c2.994-0.13,5.762-1.602,7.517-4.03l32.967-45.396 C215.152,279.936,216.001,274.482,214.391,269.53z"></path> <path class="st0" d="M269.198,306.47c-3.074-4.216-7.978-6.716-13.198-6.716c-5.22,0-10.123,2.5-13.206,6.716l-32.943,45.356 c-1.764,2.42-2.314,5.51-1.513,8.399c0.818,2.889,2.889,5.228,5.656,6.393c0,0-1.011,0.025,4.346,1.82 c25.044,8.392,51.951,8.028,76.388-0.396c5.025-1.724,3.334-1.4,3.334-1.4c2.752-1.158,4.823-3.512,5.616-6.385 c0.817-2.889,0.251-5.98-1.506-8.392L269.198,306.47z"></path> <path class="st0" d="M361.448,241.709l-53.375,17.342c-4.952,1.602-8.853,5.502-10.471,10.479 c-1.611,4.953-0.752,10.407,2.323,14.614l32.958,45.356c1.748,2.436,4.515,3.893,7.509,4.038c2.995,0.122,5.868-1.141,7.826-3.406 c0,0-0.283,0.963,3.084-3.576c15.706-21.218,23.685-46.934,23.224-72.764c-0.089-5.3-0.307-3.593-0.307-3.593 c-0.235-2.986-1.846-5.697-4.338-7.348C367.395,241.216,364.28,240.779,361.448,241.709z"></path> <path class="st0" d="M281.708,220.613c4.233,3.059,9.67,3.924,14.63,2.323l53.327-17.342c2.848-0.922,5.114-3.099,6.15-5.907 c1.036-2.8,0.744-5.923-0.818-8.488c0,0,0.834,0.567-2.452-4.03c-15.318-21.508-37.288-37.038-62.025-44.596 c-5.065-1.537-3.528-0.809-3.528-0.809c-2.905-0.68-5.956,0.008-8.31,1.877c-2.331,1.837-3.69,4.669-3.69,7.656v56.11 C274.984,212.634,277.492,217.538,281.708,220.613z"></path> </g> </g><
+                                 /svg>     
                              </span>
-                             </div>
-                        <table class="min-w-full divide-y divide-gray-200"> <colgroup> <col style="width: 30%;">
-                                <col style="width: 30%;">
-                                <col style="width: 40%;">
-                            </colgroup>
-                            <thead class="player-status-header">
-                                <tr>
-                                    <th scope="col">Player</th>
-                                    <th scope="col" class="text-center">Status</th>
-                                    <th scope="col" class="text-center">Attendance</th>
-                                </tr>
-                            </thead>
-                            <tbody id="player-list" class="bg-white divide-y divide-gray-200">
-                                <tr><td colspan="3" class="text-center py-4 text-gray-500">Loading players...</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="info-panel lg:col-span-1">
-                         <h3 class="text-xl font-semibold">Schedule & Info</h3>
-                         <p><strong>Confirmation Deadline:</strong> 21:00</p>
-                         <p><strong>Team Setup:</strong> 21:15 - 21:45</p>
-                         <p><strong>Be Online By:</strong> 21:45</p>
-                         <p><strong>Match Start:</strong> 22:00</p>
+                         </div>
+                         <table class="min-w-full divide-y divide-gray-200"> <colgroup> <col style="width: 30%;">
+                                 <col style="width: 30%;">
+                                 <col style="width: 40%;">
+                             </colgroup>
+                             <thead class="player-status-header">
+                                 <tr>
+                                     <th scope="col">Player</th>
+                                     <th scope="col" class="text-center">Status</th>
+                                     <th scope="col" class="text-center">Attendance</th>
+                                 </tr>
+                             </thead>
+                             <tbody id="player-list" class="bg-white divide-y divide-gray-200">
+                                 <tr><td colspan="3" class="text-center py-4 text-gray-500">Loading players...</td></tr>
+                             </tbody>
+                         </table>
+                     </div>
+                     <div class="info-panel lg:col-span-1">
+                         <h3 class="text-xl font-semibold">Program & Bilgi</h3>
+                         <p><strong>Katılım bildirme deadline:</strong> 21:00</p>
+                         <p><strong>Takım alışma:</strong> 21:15 - 21:45</p>
+                         <p><strong>Online olma saati:</strong> 21:45</p>
+                         <p><strong>Maç Başlangıcı:</strong> 22:00</p>
                          <hr class="border-gray-200 my-4">
-                         <h4 class="text-lg font-semibold mb-2 text-blue-600">Drafting Rules</h4>
+                         <h4 class="text-lg font-semibold mb-2 text-blue-600">Drafting nasıl oluyor</h4>
                          <ul class="list-disc list-inside text-sm space-y-1 text-gray-600">
-                             <li>Coin toss winner chooses first pick OR gives first pick away.</li>
-                             <li>Picks follow 1-2-2-2-2-1 format.</li>
-                             <li>Reroll if teams seem unbalanced.</li>
-                             <li>Coin toss loser picks 2nd & 3rd map bans.</li>
-                             <li>Coin toss winner picks 1st map ban.</li>
-                             <li>Coin toss winner chooses side on Map 1 & 3.</li>
-                             <li>Coin toss loser chooses side on Map 2.</li>
+                             <li>Yazı turayı KAZANAN "ilk adamı mı alacağım yoksa ilk adamı karşıya bırakıp peşi sıra 2 adam mı alacağım" sorusuna cevap veriyor</li>
+                             <li>Yukarıdaki soruya cevap verildikten sonra 1 - 2 - 2 - 2 - 2 -....- 1 şeklinde adam alınıyor</li>
+                             <li>"Takımlar dengesiz oldu yaaaaa" gibi bir durum oluştuysa son ayarlar çekiliyor</li>
+                             <li>Yazı turayı KAZANAMAYAN birinci ve üçüncü haritayı seçiyor</li>
+                             <li>Yazı turayı KAZANAN ikinci haritayı seçiyor</li>
+                             <li>Yazı turayı KAZANAN 1 ve 3 nolu haritalarda hangi taraf olarak başlayacağını seçiyor</li>
+                             <li>Yazı turayı KAYBEDEN 2. haritada hangi taraf olarak başlayacağını seçiyor</li>
                          </ul>
                     </div>
                 </div>
@@ -614,7 +651,7 @@
         // --- Constants ---
         const APPS_SCRIPT_URL = 'https://royal-flower-aa89.onur1atak.workers.dev/'; // Replace with your actual URL
         const ATTENDANCE_STATES = ["not_coming", "no_response", "coming"]; // Order matters for cycling
-        const DEFAULT_PAGE = 'season_avg';
+        const DEFAULT_PAGE = 'home'; // <<<<< CHANGED
         const TEKER_DONDU_THRESHOLD = 10; // Number of players needed for the wheel
         const SEASON_AVG_JSON_URL = 'data/season_avg.json';
         const LAST10_JSON_URL = 'data/last10.json';
@@ -2248,6 +2285,22 @@
         }
 
         // --- End Duello Son Maç Logic ---
+
+        // --- NEW: Landing page tile click listener ---
+        const homePageContainer = document.getElementById('page-home');
+        if (homePageContainer) {
+            homePageContainer.addEventListener('click', (event) => {
+                const tile = event.target.closest('.landing-tile');
+                if (tile && tile.dataset.pageTarget) {
+                    event.preventDefault(); // Prevent default link behavior
+                    const targetPageId = tile.dataset.pageTarget;
+                    showPage(targetPageId);
+                    // Optionally load data for the target page if needed
+                    // loadTabDataIfNeeded(targetPageId);
+                }
+            });
+        }
+        // --- END NEW ---
 
     </script>
 </body>
