@@ -1459,7 +1459,25 @@
                     
                     // Show corresponding content
                     const contentId = tab.getAttribute('aria-controls');
-                    document.getElementById(contentId).classList.remove('hidden');
+                    const contentDiv = document.getElementById(contentId);
+                    contentDiv.classList.remove('hidden');
+
+                    // --- Re-apply heatmaps for both teams in this map ---
+                    // Find both tbody ids for this map (team1-blue, team2-green)
+                    const teamDivs = contentDiv.querySelectorAll('div.mb-6');
+                    teamDivs.forEach(teamDiv => {
+                        const tbody = teamDiv.querySelector('tbody');
+                        if (tbody && tbody.id) {
+                            const gradient = [
+                                { percent: 0, color: '#EF4444' },
+                                { percent: 0.5, color: '#FDE68A' },
+                                { percent: 1, color: '#22C55E' }
+                            ];
+                            applyHeatmapToColumn(tbody.id, 1, gradient);
+                            applyHeatmapToColumn(tbody.id, 2, gradient);
+                            applyHeatmapToColumn(tbody.id, 3, gradient);
+                        }
+                    });
                 });
             });
         }

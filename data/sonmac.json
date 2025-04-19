@@ -370,6 +370,33 @@
             "score": 53,
             "clutches": 2,
             "clutches_won": 0
+          },          
+          {
+            "name": "darbe",
+            "steam_id": "76561198031411056",
+            "hltv_2": 1.21,
+            "adr": 80.76,
+            "kd": 1.15,
+            "kills": 15,
+            "deaths": 13,
+            "assists": 3,
+            "hs": 7,
+            "hs_ratio": 46,
+            "first_kill": 0,
+            "first_death": 1,
+            "bomb_planted": 1,
+            "bomb_defused": 0,
+            "hltv": 1.17,
+            "mvp": 1,
+            "kast": 70.59,
+            "utl_dmg": 12,
+            "two_kills": 4,
+            "three_kills": 1,
+            "four_kills": 0,
+            "five_kills": 0,
+            "score": 36,
+            "clutches": 2,
+            "clutches_won": 0
           }
         ]
       },
@@ -403,6 +430,33 @@
             "score": 73,
             "clutches": 2,
             "clutches_won": 1
+          },
+          {
+            "name": "darbe",
+            "steam_id": "76561198031411056",
+            "hltv_2": 1.21,
+            "adr": 80.76,
+            "kd": 1.15,
+            "kills": 15,
+            "deaths": 13,
+            "assists": 3,
+            "hs": 7,
+            "hs_ratio": 46,
+            "first_kill": 0,
+            "first_death": 1,
+            "bomb_planted": 1,
+            "bomb_defused": 0,
+            "hltv": 1.17,
+            "mvp": 1,
+            "kast": 70.59,
+            "utl_dmg": 12,
+            "two_kills": 4,
+            "three_kills": 1,
+            "four_kills": 0,
+            "five_kills": 0,
+            "score": 36,
+            "clutches": 2,
+            "clutches_won": 0
           }
         ]
       }
