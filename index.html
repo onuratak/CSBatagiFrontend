@@ -1936,9 +1936,10 @@
         pageContentArea.addEventListener('click', handleSortClick);
 
         // Add event listener for Duello circle clicks (for mobile tooltips)
-        const duelloTableBody = document.getElementById('duello-grid');
-        if (duelloTableBody) { // Ensure the element exists before adding listener
-            duelloTableBody.addEventListener('click', (event) => {
+        // Corrected the target element ID to '#duello-table'
+        const duelloTable = document.getElementById('duello-table'); 
+        if (duelloTable) { // Ensure the element exists before adding listener
+            duelloTable.addEventListener('click', (event) => {
                 const clickedCircle = event.target.closest('.duello-circle');
                 if (clickedCircle) {
                     const killer = clickedCircle.dataset.killer;
