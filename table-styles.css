@@ -38,6 +38,46 @@
     border-bottom: 1px solid #e5e7eb; /* Match the attendance table border */
 }
 
+/* Sortable header styles */
+.sortable-header {
+    cursor: pointer;
+    position: relative; /* Needed for absolute positioning of arrows */
+    padding-right: 24px; /* Add space for potential sort arrow */
+}
+
+.sortable-header:hover {
+    background-color: #e5e7eb; /* Slightly darker hover */
+}
+
+/* Style for the currently active sort column header */
+.sortable-header.sort-active {
+    background-color: #d1d5db; /* Even darker gray for active */
+    /* Optionally add other styles like slightly bolder text */
+    /* font-weight: 700; */ 
+}
+
+/* Sort direction indicators (using ::after pseudo-element) */
+.sortable-header::after {
+    content: '';
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    margin-top: -6px; /* Adjust vertically */
+    border: 5px solid transparent;
+    opacity: 0.3;
+}
+
+.sortable-header.sort-asc::after {
+    border-bottom-color: #374151;
+    opacity: 1;
+}
+
+.sortable-header.sort-desc::after {
+    border-top-color: #374151;
+    opacity: 1;
+    margin-top: -4px; /* Fine-tune desc arrow position */
+}
+
 /* Center align ADR and K/D columns */
 .styled-table th:nth-child(3),  /* ADR column (3rd) */
 .styled-table td:nth-child(3),  /* ADR cells */
