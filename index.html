@@ -88,8 +88,8 @@
         /* Info panel styles are now in table-styles.css */
 
         /* --- Tab Navigation Styles (Light Theme) --- */
-        .tab-nav-item {
-            padding: 0.75rem 1rem; /* Adjusted padding slightly */
+        .tab-nav-item { /* Base style for ALL nav items */
+            padding: 0.75rem 1rem; /* Default padding */
             cursor: pointer;
             border-bottom: 3px solid transparent;
             transition: all 0.3s ease;
@@ -97,16 +97,28 @@
             font-weight: 500;
             white-space: nowrap; /* Prevent wrapping */
             display: inline-block; /* Ensure proper spacing and border */
+            border-radius: 0.375rem 0.375rem 0 0; /* Add top rounding */
         }
-        .tab-nav-item:hover {
+        .tab-nav-item:hover:not(.active) { /* Hover for NON-MAP tabs */
             color: #1f2937; /* Darker color on hover */
-            border-bottom-color: #d1d5db; /* Subtle border on hover */
+            /* background-color: #f9fafb; */ /* Removed general hover background */
         }
-        .tab-nav-item.active {
-            color: #2563eb; /* Active tab color (blue) */
+        .tab-nav-item.active { /* Style for ANY active tab */
+            color: #1e40af; /* Darker blue text for better contrast */
             border-bottom-color: #2563eb; /* Active tab border color */
             font-weight: 600;
+            background-color: #eff6ff; /* Light blue background (blue-50) */
         }
+
+        /* Specific styles for SonMac map tabs */
+        .map-tab-button {
+             background-color: #f3f4f6; /* Default light gray background */
+        }
+        .map-tab-button:hover:not(.active) {
+            color: #1f2937; /* Darker text on hover */
+            background-color: #e5e7eb; /* Slightly darker gray background on hover */
+        }
+        /* The .tab-nav-item.active style above will handle the active state */
 
         /* --- Mobile Navigation Styles --- */
         /* Container when mobile menu is active */
@@ -330,6 +342,8 @@
                                 <th>HLTV2</th>
                                 <th>ADR</th>
                                 <th>K/D</th>
+                                <th>HLTV2 DIFF</th>
+                                <th>ADR DIFF</th>
                                 <th>MVP</th>
                                 <th>Kills</th>
                                 <th>Deaths</th>
@@ -348,10 +362,8 @@
                                 <th>4 kills</th>
                                 <th>5 kills</th>
                                 <th>Nr of Matches</th>
-                                <th>WIN RATE (%)</th>
-                                <th>Nr of clutches per game</th>
+                                <th>Clutch Opportunity</th>
                                 <th>Clutches Won</th>
-                                <th>Successful Clutch (%)</th>
                             </tr>
                         </thead>
                         <tbody id="night-avg-table-body">
@@ -1120,31 +1132,31 @@
                 // Apply ONLY stat-badge class to spans in the HTML string
                 tr.innerHTML = `
                     <td class="font-medium text-gray-900 whitespace-nowrap">${row.name || 'N/A'}</td>
-                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.hltv_2)}</span></td>
-                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.adr, 0)}</span></td>
-                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row.kd)}</span></td>
-                    <td class="text-center">${formatNum(row.mvp)}</td>
-                    <td class="text-center">${formatNum(row.kills)}</td>
-                    <td class="text-center">${formatNum(row.deaths)}</td>
-                    <td class="text-center">${formatNum(row.assists)}</td>
-                    <td class="text-center">${formatNum(row.hs)}</td>
-                    <td class="text-center">${formatPercent(row.hs_ratio)}</td>
-                    <td class="text-center">${formatNum(row.first_kill)}</td>
-                    <td class="text-center">${formatNum(row.first_death)}</td>
-                    <td class="text-center">${formatNum(row.bomb_planted)}</td>
-                    <td class="text-center">${formatNum(row.bomb_defused)}</td>
-                    <td class="text-center">${formatNum(row.hltv)}</td>
-                    <td class="text-center">${formatPercent(row.kast)}</td>
-                    <td class="text-center">${formatNum(row.utl_dmg)}</td>
-                    <td class="text-center">${formatNum(row.two_kills)}</td>
-                    <td class="text-center">${formatNum(row.three_kills)}</td>
-                    <td class="text-center">${formatNum(row.four_kills)}</td>
-                    <td class="text-center">${formatNum(row.five_kills)}</td>
-                    <td class="text-center">${row.matches ?? 'N/A'}</td>
-                    <td class="text-center">${formatPercent(row.win_rate)}</td>
-                    <td class="text-center">${formatNum(row.avg_clutches)}</td>
-                    <td class="text-center">${formatNum(row.avg_clutches_won)}</td>
-                    <td class="text-center">${formatPercent(row.clutch_success)}</td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row["HLTV 2"])}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row["ADR"], 0)}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row["K/D"])}</span></td>
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row["HLTV2 DIFF"])}</span></td> 
+                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(row["ADR DIFF"])}</span></td> 
+                    <td class="text-center">${formatNum(row["MVP"])}</td>
+                    <td class="text-center">${formatNum(row["Kills"])}</td>
+                    <td class="text-center">${formatNum(row["Deaths"])}</td>
+                    <td class="text-center">${formatNum(row["Assists"])}</td>
+                    <td class="text-center">${formatNum(row["HS"])}</td>
+                    <td class="text-center">${formatPercent(row["HS/Kill ratio"])}</td>
+                    <td class="text-center">${formatNum(row["First Kill"])}</td>
+                    <td class="text-center">${formatNum(row["First Death"])}</td>
+                    <td class="text-center">${formatNum(row["Bomb Planted"])}</td>
+                    <td class="text-center">${formatNum(row["Bomb Defused"])}</td>
+                    <td class="text-center">${formatNum(row["HLTV"])}</td>
+                    <td class="text-center">${formatPercent(row["KAST"])}</td>
+                    <td class="text-center">${formatNum(row["Utility Damage"])}</td>
+                    <td class="text-center">${formatNum(row["2 kills"])}</td>
+                    <td class="text-center">${formatNum(row["3 kills"])}</td>
+                    <td class="text-center">${formatNum(row["4 kills"])}</td>
+                    <td class="text-center">${formatNum(row["5 kills"])}</td>
+                    <td class="text-center">${row["Nr of Matches"] ?? 'N/A'}</td>
+                    <td class="text-center">${formatNum(row["Clutch Opportunity"], 0)}</td> 
+                    <td class="text-center">${formatNum(row["Clutches Won"], 0)}</td> 
                 `;
                 tbody.appendChild(tr);
             });
@@ -1159,6 +1171,8 @@
             applyHeatmapToColumn('night-avg-table-body', 1, gradient); // HLTV2 (index 1)
             applyHeatmapToColumn('night-avg-table-body', 2, gradient); // ADR (index 2)
             applyHeatmapToColumn('night-avg-table-body', 3, gradient); // K/D (index 3)
+            applyHeatmapToColumn('night-avg-table-body', 4, gradient); // HLTV2 DIFF (new index 4)
+            applyHeatmapToColumn('night-avg-table-body', 5, gradient); // ADR DIFF (new index 5)
         }
 
         /**
@@ -1187,6 +1201,33 @@
             const matchData = await fetchSonMacData();
             if (matchData) {
                 populateSonMacData(matchData);
+                initSonMacTabs(); // Initialize tab click listeners
+
+                // --- Apply heatmap to the initially active tab ---
+                const firstActiveTab = document.querySelector('#map-tabs button.active');
+                if (firstActiveTab) {
+                    const contentId = firstActiveTab.getAttribute('aria-controls');
+                    const contentDiv = document.getElementById(contentId);
+                    if (contentDiv) {
+                         // Find both tbody ids within the active content
+                        const teamDivs = contentDiv.querySelectorAll('div.mb-6');
+                        teamDivs.forEach(teamDiv => {
+                            const tbody = teamDiv.querySelector('tbody');
+                            if (tbody && tbody.id) {
+                                // Apply heatmap (no need for setTimeout here)
+                                const gradient = [
+                                    { percent: 0, color: '#EF4444' },
+                                    { percent: 0.5, color: '#FDE68A' },
+                                    { percent: 1, color: '#22C55E' }
+                                ];
+                                applyHeatmapToColumn(tbody.id, 1, gradient); // HLTV2
+                                applyHeatmapToColumn(tbody.id, 2, gradient); // ADR
+                                applyHeatmapToColumn(tbody.id, 3, gradient); // K/D
+                            }
+                        });
+                    }
+                }
+                // --- End initial heatmap application ---
             }
         }
 
@@ -1207,7 +1248,8 @@
                 
                 const button = document.createElement('button');
                 button.id = `${mapName}-tab`;
-                button.className = `inline-block p-4 border-b-2 ${isFirst ? 'border-blue-500 active' : 'border-transparent'} rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
+                // Add the base class and the specific map tab class
+                button.className = `tab-nav-item map-tab-button inline-block p-4 border-b-2 ${isFirst ? 'border-blue-500 active' : 'border-transparent'} rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
                 button.setAttribute('aria-controls', mapName);
                 button.textContent = mapName;
                 
@@ -1241,30 +1283,31 @@
             
             // Create scoreboard
             const scoreboardDiv = document.createElement('div');
-            scoreboardDiv.className = 'flex justify-between items-center mb-6 px-4 py-3 bg-gray-100 rounded-lg';
+            // Add overflow-x-auto to enable horizontal scroll if needed
+            scoreboardDiv.className = 'flex justify-between md:justify-center md:gap-16 items-center mb-6 px-4 py-3 bg-gray-100 rounded-lg overflow-x-auto';
             scoreboardDiv.innerHTML = `
-                <div class="text-center">
-                    <h3 class="text-lg font-bold">${mapData.team1.name}</h3>
+                <div class="text-center whitespace-nowrap"> 
+                    <h3 class="text-lg font-bold">${mapData.team1.name}</h3> 
                     <div class="text-3xl font-extrabold text-blue-600">${mapData.team1.score}</div>
                 </div>
-                <div class="text-xl font-semibold text-gray-500">vs</div>
-                <div class="text-center">
-                    <h3 class="text-lg font-bold">${mapData.team2.name}</h3>
+                <div class="text-xl md:text-3xl font-semibold text-gray-500">vs</div> 
+                <div class="text-center whitespace-nowrap"> 
+                    <h3 class="text-lg font-bold">${mapData.team2.name}</h3> 
                     <div class="text-3xl font-extrabold text-green-600">${mapData.team2.score}</div>
                 </div>
             `;
             mapDiv.appendChild(scoreboardDiv);
             
             // Create team1 section
-            const team1Div = createTeamSection(mapData.team1, 'blue');
+            const team1Div = createTeamSection(mapName, mapData.team1, 'blue');
             mapDiv.appendChild(team1Div);
             
             // Create team2 section
-            const team2Div = createTeamSection(mapData.team2, 'green');
+            const team2Div = createTeamSection(mapName, mapData.team2, 'green');
             mapDiv.appendChild(team2Div);
         }
 
-        function createTeamSection(teamData, color) {
+        function createTeamSection(mapName, teamData, color) {
             const teamDiv = document.createElement('div');
             teamDiv.className = 'mb-6';
             
@@ -1316,7 +1359,7 @@
             
             // Table body
             // Assign a unique id to tbody for heatmap targeting
-            const tbodyId = `sonmac-${teamData.name.replace(/\s+/g, '_').toLowerCase()}-${color}`;
+            const tbodyId = `sonmac-${mapName}-${teamData.name.replace(/\s+/g, '_').toLowerCase()}-${color}`;
             const tbody = document.createElement('tbody');
             tbody.id = tbodyId;
             
@@ -1343,7 +1386,7 @@
                     <td class="text-center">${formatNum(player.first_death, 0)}</td>
                     <td class="text-center">${formatNum(player.bomb_planted, 0)}</td>
                     <td class="text-center">${formatNum(player.bomb_defused, 0)}</td>
-                    <td class="stat-badge-cell"><span class="stat-badge">${formatNum(player.hltv)}</span></td>
+                    <td class="text-center">${formatNum(player.hltv)}</td> 
                     <td class="text-center">${formatPercent(player.kast)}</td>
                     <td class="text-center">${formatNum(player.utl_dmg, 0)}</td>
                     <td class="text-center">${formatNum(player.two_kills, 0)}</td>
@@ -1361,18 +1404,6 @@
             table.appendChild(tbody);
             tableContainer.appendChild(table);
             teamDiv.appendChild(tableContainer);
-            // Apply heatmap to HLTV2, ADR, K/D columns (after DOM is updated)
-            setTimeout(() => {
-                const gradient = [
-                    { percent: 0, color: '#EF4444' },
-                    { percent: 0.5, color: '#FDE68A' },
-                    { percent: 1, color: '#22C55E' }
-                ];
-                // HLTV2: 1, ADR: 2, K/D: 3 (0-based)
-                applyHeatmapToColumn(tbodyId, 1, gradient);
-                applyHeatmapToColumn(tbodyId, 2, gradient);
-                applyHeatmapToColumn(tbodyId, 3, gradient);
-            }, 0);
             return teamDiv;
         }
 
@@ -1446,6 +1477,7 @@
             
             mapTabs.forEach(tab => {
                 tab.addEventListener('click', () => {
+
                     // Remove active classes from all tabs and contents
                     mapTabs.forEach(t => {
                         t.classList.remove('active', 'border-blue-500');
@@ -1460,41 +1492,35 @@
                     // Show corresponding content
                     const contentId = tab.getAttribute('aria-controls');
                     const contentDiv = document.getElementById(contentId);
-                    contentDiv.classList.remove('hidden');
+                    if (contentDiv) {
+                        contentDiv.classList.remove('hidden');
 
-                    // --- Re-apply heatmaps for both teams in this map ---
-                    // Find both tbody ids for this map (team1-blue, team2-green)
-                    const teamDivs = contentDiv.querySelectorAll('div.mb-6');
-                    teamDivs.forEach(teamDiv => {
-                        const tbody = teamDiv.querySelector('tbody');
-                        if (tbody && tbody.id) {
-                            const gradient = [
-                                { percent: 0, color: '#EF4444' },
-                                { percent: 0.5, color: '#FDE68A' },
-                                { percent: 1, color: '#22C55E' }
-                            ];
-                            applyHeatmapToColumn(tbody.id, 1, gradient);
-                            applyHeatmapToColumn(tbody.id, 2, gradient);
-                            applyHeatmapToColumn(tbody.id, 3, gradient);
-                        }
-                    });
+                        // --- Re-apply heatmaps for both teams in this map ---
+                        // Find both tbody ids for this map (team1-blue, team2-green)
+                        const teamDivs = contentDiv.querySelectorAll('div.mb-6');
+
+                        teamDivs.forEach(teamDiv => {
+                            const tbody = teamDiv.querySelector('tbody');
+                            if (tbody && tbody.id) {
+                                // Apply heatmap directly (removed setTimeout)
+                                const gradient = [
+                                    { percent: 0, color: '#EF4444' },
+                                    { percent: 0.5, color: '#FDE68A' },
+                                    { percent: 1, color: '#22C55E' }
+                                ];
+                                applyHeatmapToColumn(tbody.id, 1, gradient); // HLTV2
+                                applyHeatmapToColumn(tbody.id, 2, gradient); // ADR
+                                applyHeatmapToColumn(tbody.id, 3, gradient); // K/D
+                            } else {
+                                console.error(`Could not find tbody or tbody.id in a teamDiv within ${contentId}`);
+                            }
+                        });
+                    } else {
+                        console.error(`Content div with ID ${contentId} not found!`);
+                    }
                 });
             });
         }
-
-        // Modify the DOMContentLoaded event listener to initialize the Son Maç tabs
-        document.addEventListener('DOMContentLoaded', () => {
-            showPage(DEFAULT_PAGE); // Show the initial page
-            fetchStatsFromSheet(); // Fetch initial data
-            loadAndRenderSeasonAvgTable(); // Fetch and render season average stats
-            loadAndRenderLast10Table(); // Fetch and render last 10 games stats
-            loadAndRenderNightAvgTable(); // Fetch and render nightly average stats
-            loadAndRenderSonMacData(); // Fetch and render Son Maç data
-            initSonMacTabs(); // Initialize tabs for Son Maç page
-            
-            // Set initial navigation visibility based on screen size
-            // ... existing code ...
-        });
 
         /**
          * Interpolates between two hex colors.
@@ -1607,14 +1633,14 @@
             // Select the SPAN inside the TD at the correct index (nth-child is 1-based)
             const spans = tbody.querySelectorAll(`tr td:nth-child(${columnIndex + 1}) span.stat-badge`);
             if (spans.length === 0) {
-                 // console.warn(`applyHeatmapToColumn: No spans found in column ${columnIndex} of tbody '${tbodyId}'.`);
                  return; // No spans to color
             }
 
             const values = [];
             spans.forEach(span => {
-                const value = parseFloat(span.textContent);
-                if (!isNaN(value)) {
+                const textContent = span.textContent; // Get text content first
+                const value = parseFloat(textContent);
+                 if (!isNaN(value)) {
                     values.push(value);
                     // Store value on span for easy retrieval later, avoiding re-parsing
                     span.dataset.value = value;
@@ -1633,12 +1659,14 @@
                 if (!isNaN(value)) {
                     const bgColor = calculateColor(value, minVal, maxVal, gradientStops);
                     const textColor = calculateTextColor(bgColor);
-                    span.style.backgroundColor = bgColor;
-                    span.style.color = textColor;
+                    // Add !important to override potential stylesheet rules
+                    span.style.setProperty('background-color', bgColor, 'important');
+                    span.style.setProperty('color', textColor, 'important');
                 } else {
                     // Optional: Style invalid values differently (e.g., gray)
-                    span.style.backgroundColor = '#e5e7eb'; // Light gray
-                    span.style.color = '#4b5563';      // Darker gray text
+                    // Add !important here too for consistency if needed
+                    span.style.setProperty('background-color', '#e5e7eb', 'important'); // Light gray
+                    span.style.setProperty('color', '#4b5563', 'important');      // Darker gray text
                 }
             });
         }
