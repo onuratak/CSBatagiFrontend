@@ -130,7 +130,7 @@
             left: 0;
             right: 0;
             background-color: white;
-            z-index: 20;
+            z-index: 30; /* Increased z-index from 20 */
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
             border-radius: 0 0 0.375rem 0.375rem; /* rounded-b-md */
         }
@@ -218,6 +218,145 @@
 
         /* --- Player Status Table Styles --- */
         /* Player status table styles are now in table-styles.css */
+
+        /* --- Duello Son Maç Grid Styles --- */
+        /* Updated with table-specific styles */
+        #duello-table {
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 1200px;
+            width: auto;
+            border: 1px solid #e5e7eb;
+            background-color: white;
+        }
+        
+        #duello-grid-container {
+            max-width: 100%;
+            overflow-x: auto;
+            max-height: 75vh;
+            overflow-y: auto;
+            border-radius: 0.375rem;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+        }
+        
+        /* Fix for sticky headers in webkit browsers */
+        #duello-table thead th {
+            position: -webkit-sticky; /* Safari */
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #f9fafb;
+        }
+        
+        /* Fix for sticky first column */
+        #duello-table th:first-child {
+            position: -webkit-sticky; /* Safari */
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: #f9fafb;
+        }
+        
+        /* Fix for sticky corner */
+        #duello-table thead th:first-child {
+            position: -webkit-sticky; /* Safari */
+            position: sticky;
+            left: 0;
+            top: 0;
+            z-index: 20; /* Above other sticky elements */
+            background-color: #f9fafb;
+        }
+        
+        /* Border styling for cells */
+        #duello-table th, 
+        #duello-table td {
+            border: 1px solid #e5e7eb;
+        }
+        
+        /* Fix for last table elements border radius */
+        #duello-table tr:last-child td:first-child {
+            border-bottom-left-radius: 0.375rem;
+        }
+        
+        #duello-table tr:last-child td:last-child {
+            border-bottom-right-radius: 0.375rem;
+        }
+
+        .duello-header-cell {
+            background-color: #f9fafb; /* bg-gray-50 */
+            font-weight: 600; /* font-semibold */
+            padding: 0.75rem; /* p-3 */
+            text-align: center;
+            vertical-align: middle;
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            position: relative;
+        }
+        
+        /* Make first column sticky on horizontal scroll */
+        #duello-table th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: #f9fafb; /* Match header background */
+            box-shadow: 2px 0 5px -2px rgba(0,0,0,0.1); /* Subtle shadow to indicate stickiness */
+        }
+
+        .duello-data-cell {
+            padding: 0.5rem; /* p-2 */
+            border: 1px solid #e5e7eb; /* border-gray-200 */
+            text-align: center;
+            min-height: 50px; /* Ensure cells have some height */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative; /* For potential future additions like tooltips */
+        }
+
+        /* Specific styling for kill/death numbers */
+        .duello-kill {
+            color: #16a34a; /* text-green-600 */
+            font-weight: 700; /* font-bold */
+            font-size: 1.125rem; /* text-lg */
+            line-height: 1.2; /* Adjust line height for tighter packing */
+        }
+
+        .duello-death {
+            color: #dc2626; /* text-red-600 */
+            font-weight: 700; /* font-bold */
+            font-size: 1.125rem; /* text-lg */
+            line-height: 1.2; /* Adjust line height for tighter packing */
+        }
+
+        /* Style for the diagonal (self vs self) cells */
+        .duello-data-cell.bg-gray-100 {
+            background-color: #f3f4f6; /* bg-gray-100 */
+        }
+
+        /* Style for empty/zero cells */
+        .duello-data-cell.text-gray-400 {
+            color: #9ca3af; /* text-gray-400 */
+            font-size: 1.25rem; /* text-xl */
+        }
+
+        /* Ensure grid container handles overflow */
+        #duello-grid-container {
+           max-width: 100%;
+           overflow-x: auto; /* Enable horizontal scrolling */
+           max-height: 75vh; /* Limit height to 75% of viewport height */
+           overflow-y: auto; /* Enable vertical scrolling */
+           padding-bottom: 1rem; /* Add padding for scrollbar */
+           display: block; /* Ensure the container is block-level */
+           position: relative; /* Position context for absolute elements if needed */
+        }
+
+        /* Styles for the grid itself (mostly set by JS, but can refine here) */
+        #duello-grid {
+            min-width: 1200px; /* Force a minimum width to ensure container scrolls */
+            width: auto; /* Let the grid expand naturally based on its content */
+            box-sizing: border-box; /* Include padding and border in the element's width and height */
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -249,6 +388,7 @@
         <a class="tab-nav-item" data-page="gece_ortalama" href="#">Gece Ortalaması</a>
         <a class="tab-nav-item" data-page="last10" href="#">Son 10 Ortalaması</a>
         <a class="tab-nav-item" data-page="season_avg" href="#">Sezon Ortalaması</a>
+        <a class="tab-nav-item" data-page="duello_son_mac" href="#">Düello Son Maç</a>
     </nav>
         </header>
 
@@ -453,6 +593,21 @@
                 </div>
             </div>
 
+            <div id="page-duello_son_mac" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Düello Son Maç</h2>
+                <div id="duello-grid-container" class="overflow-x-auto w-full">
+                    <table id="duello-table" class="table-fixed border-collapse" style="min-width: 1200px;">
+                        <!-- Table content will be dynamically generated by JS -->
+                        <thead>
+                            <tr>
+                                <th class="w-32 p-3 border bg-gray-50 font-semibold text-gray-700"></th>
+                                <th colspan="20" class="text-center p-4 text-gray-500">Loading duels...</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+
         </div> </div>
 
     <script>
@@ -465,6 +620,7 @@
         const LAST10_JSON_URL = 'data/last10.json';
         const NIGHT_AVG_JSON_URL = 'data/night_avg.json';
         const SONMAC_JSON_URL = 'data/sonmac.json';
+        const DUELLO_JSON_URL = 'data/duello_son_mac.json'; // Added Duello JSON URL
 
         // --- State ---
         let players = []; // Initialize empty, will be filled by fetch
@@ -1346,6 +1502,7 @@
             loadAndRenderNightAvgTable(); // Fetch and render nightly average stats
             loadAndRenderSonMacData(); // Fetch and render Son Maç data
             initSonMacTabs(); // Initialize tabs for Son Maç page
+            loadAndRenderDuelloGrid(); // Added call to load Duello grid
             
             // Set initial navigation visibility based on screen size
             if (window.innerWidth >= 768) { // Tailwind's md breakpoint is 768px
@@ -1778,6 +1935,24 @@
         // Add ONE event listener to the main content area for all table sorts
         pageContentArea.addEventListener('click', handleSortClick);
 
+        // Add event listener for Duello circle clicks (for mobile tooltips)
+        const duelloTableBody = document.getElementById('duello-grid');
+        if (duelloTableBody) { // Ensure the element exists before adding listener
+            duelloTableBody.addEventListener('click', (event) => {
+                const clickedCircle = event.target.closest('.duello-circle');
+                if (clickedCircle) {
+                    const killer = clickedCircle.dataset.killer;
+                    const killed = clickedCircle.dataset.killed;
+                    const count = clickedCircle.dataset.count;
+                    if (killer && killed && count) {
+                        const message = `${killer} killed ${killed} ${count} times`;
+                        // Use a neutral/info style if available, otherwise success
+                        showMessage(message, 'success', 3000); 
+                    }
+                }
+            });
+        }
+
         // Add JavaScript for tab functionality at the end of the script section
 
         // Function to fetch and render the nightly average table
@@ -1871,6 +2046,208 @@
             applyHeatmapToColumn(tbody.id, 4, gradient); // HLTV2 DIFF (new index 4)
             applyHeatmapToColumn(tbody.id, 5, gradient); // ADR DIFF (new index 5)
         }
+
+        // --- Duello Son Maç Logic --- NEW SECTION
+
+        /**
+         * Fetches Duello Son Maç data from the local JSON file.
+         */
+        async function fetchDuelloSonMacData() {
+            try {
+                const response = await fetch(DUELLO_JSON_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data = await response.json();
+                // Basic validation
+                if (!data || !data.playerRows || !data.playerCols || !data.duels) {
+                    throw new Error("Invalid data format received from Duello JSON file.");
+                }
+                return data;
+            } catch (err) {
+                console.error('Failed to fetch Duello Son Maç data:', err);
+                showMessage(`Error loading Duello data: ${err.message}`, 'error');
+                return null; // Return null on error
+            }
+        }
+
+        /**
+         * Renders the Duello Son Maç grid.
+         * @param {object} data - The duel data object containing playerRows, playerCols, and duels.
+         */
+        function renderDuelloSonMacGrid(data) {
+            const table = document.getElementById('duello-table');
+            
+            if (!table) {
+                console.error("Duello table not found!");
+                return;
+            }
+            if (!data) {
+                table.innerHTML = '<thead><tr><th></th><th colspan="12" class="text-center p-4 text-red-500">Failed to load Duello data.</th></tr></thead>';
+                return;
+            }
+            
+            // Clear previous content
+            table.innerHTML = '';
+            
+            const { playerRows, playerCols, duels } = data;
+            
+            // Create table header
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            
+            // Add empty corner cell
+            const cornerCell = document.createElement('th');
+            cornerCell.className = 'border bg-gray-50 p-3 font-semibold text-center';
+            cornerCell.style.position = 'sticky';
+            cornerCell.style.left = '0';
+            cornerCell.style.top = '0';
+            cornerCell.style.zIndex = '20';
+            cornerCell.style.minWidth = '120px';
+            // cornerCell.textContent = 'Kill \\ Death'; // Text removed as requested
+            headerRow.appendChild(cornerCell);
+            
+            // Add column headers
+            playerCols.forEach(colName => {
+                const th = document.createElement('th');
+                th.className = 'border bg-gray-50 p-3 font-semibold text-center';
+                th.style.position = 'sticky';
+                th.style.top = '0';
+                th.style.zIndex = '10';
+                th.style.minWidth = '100px';
+                th.textContent = colName;
+                headerRow.appendChild(th);
+            });
+            
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+            
+            // Create table body
+            const tbody = document.createElement('tbody');
+            
+            // Create rows
+            playerRows.forEach(rowName => {
+                const tr = document.createElement('tr');
+                
+                // Add row header (player name)
+                const th = document.createElement('th');
+                th.className = 'border bg-gray-50 p-3 font-semibold text-left';
+                th.style.position = 'sticky';
+                th.style.left = '0';
+                th.style.zIndex = '10';
+                th.textContent = rowName;
+                tr.appendChild(th);
+                
+                // Add data cells
+                playerCols.forEach(colName => {
+                    const td = document.createElement('td');
+                    td.className = 'border p-2 text-center';
+                    td.style.height = '70px';
+                    td.style.verticalAlign = 'middle';
+                    
+                    const duelData = duels[rowName]?.[colName];
+                    
+                    if (rowName === colName) {
+                        // Self vs self - gray background
+                        td.style.backgroundColor = '#f3f4f6';
+                    } else if (duelData && (duelData.kills > 0 || duelData.deaths > 0)) {
+                        // Set td properties - enforce perfect square shape
+                        const cellSize = 90; // Fixed size for all cells
+                        td.style.width = `${cellSize}px`;
+                        td.style.height = `${cellSize}px`;
+                        td.style.minWidth = `${cellSize}px`;
+                        td.style.maxWidth = `${cellSize}px`;
+                        td.style.minHeight = `${cellSize}px`;
+                        td.style.maxHeight = `${cellSize}px`;
+                        td.style.padding = '0';
+                        td.style.position = 'relative';
+                        td.style.overflow = 'hidden';
+                        td.style.backgroundColor = '#fff';
+                        td.style.boxSizing = 'border-box'; // Ensure padding/border are included in size
+                        
+                        // Calculate diagonal length using Pythagorean theorem
+                        const diagonalLength = Math.ceil(Math.sqrt(2 * cellSize * cellSize));
+                        
+                        // Create actual diagonal line element
+                        const diagonalLine = document.createElement('div');
+                        diagonalLine.style.position = 'absolute';
+                        diagonalLine.style.width = `${diagonalLength}px`; // Dynamic length based on cell size
+                        diagonalLine.style.height = '1px';
+                        diagonalLine.style.backgroundColor = '#ccc';
+                        diagonalLine.style.top = '50%';
+                        diagonalLine.style.left = '50%';
+                        diagonalLine.style.transform = 'translate(-50%, -50%) rotate(45deg)';
+                        diagonalLine.style.transformOrigin = 'center center'; // Explicitly set origin
+                        diagonalLine.style.zIndex = '1';
+                        td.appendChild(diagonalLine);
+                        
+                        // Determine circle colors based on K/D (original comparison)
+                        let topColorClass = 'bg-yellow-500'; // Default to yellow
+                        let bottomColorClass = 'bg-yellow-500';
+                        
+                        if (duelData.kills > duelData.deaths) { // rowPlayer killed colPlayer more
+                            topColorClass = 'bg-red-600';   // colPlayer's kills (deaths for rowPlayer) - Red
+                            bottomColorClass = 'bg-green-600'; // rowPlayer's kills - Green
+                        } else if (duelData.deaths > duelData.kills) { // colPlayer killed rowPlayer more
+                            topColorClass = 'bg-green-600'; // colPlayer's kills (deaths for rowPlayer) - Green
+                            bottomColorClass = 'bg-red-600';   // rowPlayer's kills - Red
+                        }
+                        
+                        // Create the Top-Right Circle (Represents colPlayer killing rowPlayer)
+                        const topRightCircle = document.createElement('div');
+                        topRightCircle.className = `${topColorClass} duello-circle text-white font-bold rounded-full flex items-center justify-center cursor-pointer`;
+                        topRightCircle.style.position = 'absolute';
+                        topRightCircle.style.top = '10px';
+                        topRightCircle.style.right = '15px';
+                        topRightCircle.style.width = '36px';
+                        topRightCircle.style.height = '36px';
+                        topRightCircle.textContent = duelData.deaths; // Show deaths count (colPlayer kills)
+                        // Add data attributes and title
+                        topRightCircle.dataset.killer = colName;
+                        topRightCircle.dataset.killed = rowName;
+                        topRightCircle.dataset.count = duelData.deaths;
+                        topRightCircle.title = `${colName} killed ${rowName} ${duelData.deaths} times`;
+                        td.appendChild(topRightCircle);
+                        
+                        // Create the Bottom-Left Circle (Represents rowPlayer killing colPlayer)
+                        const bottomLeftCircle = document.createElement('div');
+                        bottomLeftCircle.className = `${bottomColorClass} duello-circle text-white font-bold rounded-full flex items-center justify-center cursor-pointer`;
+                        bottomLeftCircle.style.position = 'absolute';
+                        bottomLeftCircle.style.bottom = '10px';
+                        bottomLeftCircle.style.left = '15px';
+                        bottomLeftCircle.style.width = '36px';
+                        bottomLeftCircle.style.height = '36px';
+                        bottomLeftCircle.textContent = duelData.kills; // Show kills count (rowPlayer kills)
+                        // Add data attributes and title
+                        bottomLeftCircle.dataset.killer = rowName;
+                        bottomLeftCircle.dataset.killed = colName;
+                        bottomLeftCircle.dataset.count = duelData.kills;
+                        bottomLeftCircle.title = `${rowName} killed ${colName} ${duelData.kills} times`;
+                        td.appendChild(bottomLeftCircle);
+                    } else {
+                        td.className += ' text-gray-400';
+                        td.textContent = '-';
+                    }
+                    
+                    tr.appendChild(td);
+                });
+                
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(tbody);
+        }
+
+        /**
+         * Loads and renders the Duello Son Maç grid.
+         */
+        async function loadAndRenderDuelloGrid() {
+            const duelloData = await fetchDuelloSonMacData();
+            renderDuelloSonMacGrid(duelloData);
+        }
+
+        // --- End Duello Son Maç Logic ---
+
     </script>
 </body>
 </html>
