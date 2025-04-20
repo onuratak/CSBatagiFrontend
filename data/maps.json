@@ -1,0 +1,14 @@
+[
+  {"id": "anubis", "name": "Anubis"},
+  {"id": "ancient", "name": "Ancient"},
+  {"id": "cache", "name": "Cache"},
+  {"id": "cobble", "name": "Cobblestone"},
+  {"id": "dust2", "name": "Dust II"},
+  {"id": "inferno", "name": "Inferno"},
+  {"id": "mirage", "name": "Mirage"},
+  {"id": "nuke", "name": "Nuke"},
+  {"id": "train", "name": "Train"},
+  {"id": "tuscan", "name": "Tuscan"},
+  {"id": "overpass", "name": "Overpass"},
+  {"id": "vertigo", "name": "Vertigo"}
+] 

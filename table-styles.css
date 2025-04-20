@@ -306,3 +306,9 @@
         height: 25px;
     }
 }
+
+/* Extra small text size for compact tables */
+.text-xxs {
+    font-size: 0.625rem; /* 10px */
+    line-height: 1rem; /* 16px */
+}
