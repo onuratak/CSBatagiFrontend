@@ -675,6 +675,7 @@ const TeamPicker = {
 
     /**
      * Calculates and displays the difference between Team A and Team B averages.
+     * REVISED: Calculates averages directly from current team lists to avoid potential async issues.
      */
     updateStatsDifferenceDisplay: function() {
         const diffContainer = document.getElementById('team-stats-diff');
@@ -682,37 +683,80 @@ const TeamPicker = {
 
         const statsToCompare = ['L10_HLTV2', 'L10_ADR', 'L10_KD', 'S_HLTV2', 'S_ADR', 'S_KD'];
 
+        // Helper function to calculate averages for a given team list
+        const calculateAverages = (teamPlayers) => {
+            const averages = {};
+            if (!teamPlayers || teamPlayers.length === 0) {
+                return averages; // Return empty object if no players
+            }
+
+            const teamPlayersWithStats = teamPlayers.map(p => TeamPicker.mergePlayerWithStats(p));
+            const sums = {};
+            const counts = {};
+
+            statsToCompare.forEach(stat => {
+                sums[stat] = 0;
+                counts[stat] = 0;
+            });
+
+            teamPlayersWithStats.forEach(player => {
+                statsToCompare.forEach(stat => {
+                    const value = player.stats?.[stat];
+                    if (value !== undefined && value !== null && !isNaN(value)) {
+                        sums[stat] += value;
+                        counts[stat]++;
+                    }
+                });
+            });
+
+            statsToCompare.forEach(statKey => {
+                if (counts[statKey] > 0) {
+                    averages[statKey] = sums[statKey] / counts[statKey];
+                }
+            });
+            return averages;
+        };
+
+        // Calculate current averages directly
+        const currentTeamAAverages = calculateAverages(TeamPicker.teamAPlayers);
+        const currentTeamBAverages = calculateAverages(TeamPicker.teamBPlayers);
+
+
         statsToCompare.forEach(statKey => {
             const diffCell = diffContainer.querySelector(`div[data-diff-stat="${statKey}"]`);
             if (!diffCell) return;
 
-            const avgA = this.teamAAverages[statKey];
-            const avgB = this.teamBAverages[statKey];
+            // Use the freshly calculated averages
+            const avgA = currentTeamAAverages[statKey];
+            const avgB = currentTeamBAverages[statKey];
             const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('KD') ? 1 : 2);
 
             if (avgA !== undefined && avgB !== undefined) {
                 const diff = avgA - avgB;
-                const formattedDiff = diff.toFixed(decimals);
+                // Format with explicit plus sign for positive differences
+                const formattedDiff = (diff > 0 ? '+' : '') + diff.toFixed(decimals); 
                 let displayVal = '';
                 let textColor = 'text-gray-700'; // Default color
 
                 if (diff > 0) {
-                    displayVal = `+${formattedDiff} (A)`;
-                    textColor = 'text-blue-600'; // Team A higher
+                     // Include "(A)" to indicate Team A is higher
+                    displayVal = `${formattedDiff} (A)`;
+                    textColor = 'text-blue-600'; 
                 } else if (diff < 0) {
-                    displayVal = `${formattedDiff} (B)`; // Negative sign is already included
-                    textColor = 'text-green-600'; // Team B higher
+                     // Include "(B)" to indicate Team B is higher
+                    displayVal = `${formattedDiff} (B)`; // Negative sign included by toFixed
+                    textColor = 'text-green-600';
                 } else {
-                    displayVal = `${formattedDiff}`; // Difference is zero
+                    displayVal = diff.toFixed(decimals); // Just "0.0" or "0.00"
                     textColor = 'text-gray-500';
                 }
                 diffCell.textContent = displayVal;
-                diffCell.className = `text-center ${textColor}`; // Removed font-mono
+                diffCell.className = `text-center ${textColor}`; // Apply text color
 
             } else {
-                // If either average is missing, display '-' 
+                // If either average is missing, display '-'
                 diffCell.textContent = '-';
-                diffCell.className = 'text-center text-gray-500'; // Removed font-mono
+                diffCell.className = 'text-center text-gray-500'; // Reset color
             }
         });
     },
