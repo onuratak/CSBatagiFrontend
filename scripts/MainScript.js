@@ -1,3 +1,8 @@
+// Initialize Firebase
+// const firebaseApp = firebase.initializeApp(firebaseConfig); // MOVED to DOMContentLoaded
+// const database = firebase.database(); // MOVED to DOMContentLoaded
+// --- End Firebase Initialization ---
+
 // --- Constants ---
 const APPS_SCRIPT_URL = 'https://royal-flower-aa89.onur1atak.workers.dev/'; // Replace with your actual URL
 const DEFAULT_PAGE = 'home'; 
@@ -11,6 +16,7 @@ const NIGHT_AVG_JSON_URL = 'data/night_avg.json';
 // const MAPS_JSON_URL = 'data/maps.json'; // MOVED to TeamPicker.js
 
 // --- Global State (Shared or needs wider access) ---
+let database; // Firebase database reference (initialized in DOMContentLoaded)
 let players = []; // Populated by fetchStatsFromSheet, used by Attendance and TeamPicker
 let currentTimeoutId = null; // For showMessage
 
@@ -450,6 +456,28 @@ function handleSortClick(event) {
 
 // --- Event Listeners & Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Firebase Initialization (Moved Here) ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAJpmATHX2Zugnm4c1WhU5Kg9iMOruiZBU",
+      authDomain: "csbatagirealtimedb.firebaseapp.com",
+      databaseURL: "https://csbatagirealtimedb-default-rtdb.europe-west1.firebasedatabase.app", 
+      projectId: "csbatagirealtimedb",
+      storageBucket: "csbatagirealtimedb.firebasestorage.app",
+      messagingSenderId: "408840223663",
+      appId: "1:408840223663:web:bdcf576d64b3a1fb6c4d5a"
+    };
+    try {
+        const firebaseApp = firebase.initializeApp(firebaseConfig);
+        database = firebase.database(); // Assign to the globally declared variable
+        console.log("Firebase initialized successfully.");
+    } catch (error) {
+        console.error("Firebase initialization failed:", error);
+        showMessage("Critical Error: Could not connect to Firebase.", 'error', 10000);
+        // Optionally disable features that depend on Firebase
+        return; // Stop further initialization if Firebase fails
+    }
+    // --- End Firebase Initialization ---
+    
     showPage(DEFAULT_PAGE); // Show the initial page
     Attendance.init(); // Initialize Attendance module
     StatsTables.init(); // Initialize StatsTables module

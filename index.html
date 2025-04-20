@@ -144,9 +144,9 @@
             </div>
 
             <div id="page-team_picker" class="page-content hidden">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
                     <!-- Available Players Section -->
-                    <div class="lg:col-span-1 page-content-container">
+                    <div class="lg:col-span-2 page-content-container">
                         <h2 class="text-lg font-semibold mb-2 text-blue-600">Available Players</h2>
                         <div id="available-players" class="space-y-2 max-h-[500px] overflow-y-auto">
                             <!-- Available players will be populated here -->
@@ -155,13 +155,13 @@
                     </div>
                     
                     <!-- Team Selection Section -->
-                    <div class="lg:col-span-2 page-content-container">
+                    <div class="lg:col-span-3 page-content-container">
                         <h2 class="text-2xl font-semibold mb-4 text-blue-600">Team Selection</h2>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <!-- Team A -->
                             <div class="team-container">
-                                <div class="bg-blue-100 p-4 rounded-lg mb-4">
+                                <div class="bg-blue-100 p-2 rounded-lg mb-4">
                                     <h3 class="text-xl font-semibold text-blue-600 mb-2">Team A</h3>
                                     
                                     <div class="mb-3">
@@ -172,15 +172,16 @@
                                         </select>
                                     </div>
                                     
-                                    <div id="team-a-players" class="mt-4 space-y-2 overflow-x-auto">
-                                        <!-- Player slots will be dynamically added here -->
+                                    <!-- Team A Players -->
+                                    <div id="team-a-players" class="team-list bg-blue-50 border border-blue-200 rounded shadow-sm min-h-[100px] overflow-y-auto">
+                                        <!-- Player rows will be added here -->
                                     </div>
                                 </div>
                             </div>
                             
                             <!-- Team B -->
                             <div class="team-container">
-                                <div class="bg-green-100 p-4 rounded-lg mb-4">
+                                <div class="bg-green-100 p-2 rounded-lg mb-4">
                                     <h3 class="text-xl font-semibold text-green-600 mb-2">Team B</h3>
                                     
                                     <div class="mb-3">
@@ -191,39 +192,61 @@
                                         </select>
                                     </div>
                                     
-                                    <div id="team-b-players" class="mt-4 space-y-2 overflow-x-auto">
-                                        <!-- Player slots will be dynamically added here -->
+                                    <!-- Team B Players -->
+                                    <div id="team-b-players" class="team-list bg-green-50 border border-green-200 rounded shadow-sm min-h-[100px] overflow-y-auto">
+                                        <!-- Player rows will be added here -->
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Maps and Side Selection -->
-                        <div class="mt-6">
-                            <h3 class="text-xl font-semibold mb-3 text-blue-600">Maps & Side Selection</h3>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- NEW: Team Stats Difference Section -->
+                        <div id="team-stats-diff" class="mt-4 p-3 border border-gray-300 rounded bg-gray-50 text-xs shadow-sm">
+                            <h4 class="font-semibold mb-2 text-center text-sm text-gray-700">Stat Difference (A vs B)</h4>
+                            <div class="grid grid-cols-3 sm:grid-cols-6 gap-x-2 gap-y-1">
+                                <!-- Headers -->
+                                <div class="text-center font-medium text-gray-600">L10 HLT</div>
+                                <div class="text-center font-medium text-gray-600">L10 ADR</div>
+                                <div class="text-center font-medium text-gray-600">L10 K/D</div>
+                                <div class="text-center font-medium text-gray-600">S HLT</div>
+                                <div class="text-center font-medium text-gray-600">S ADR</div>
+                                <div class="text-center font-medium text-gray-600">S K/D</div>
+                                <!-- Values -->
+                                <div class="text-center" data-diff-stat="L10_HLTV2">-</div>
+                                <div class="text-center" data-diff-stat="L10_ADR">-</div>
+                                <div class="text-center" data-diff-stat="L10_KD">-</div>
+                                <div class="text-center" data-diff-stat="S_HLTV2">-</div>
+                                <div class="text-center" data-diff-stat="S_ADR">-</div>
+                                <div class="text-center" data-diff-stat="S_KD">-</div>
+                            </div>
+                        </div>
+                        <!-- End Team Stats Difference Section -->
+
+                        <!-- Map Selection -->
+                        <div class="mt-6 pt-4 border-t border-gray-200 map-container">
+                            <h3 class="text-lg font-semibold mb-3 text-gray-800">Map Selection</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <!-- Map 1 -->
-                                <div class="map-container p-3 border rounded-lg">
-                                    <h4 class="font-medium mb-2">Map 1</h4>
-                                    <div class="mb-3">
-                                        <select id="map-1" class="form-select w-full rounded-md border-gray-300 shadow-sm mb-2">
+                                <div class="map-container p-3 border rounded-lg bg-gray-50 text-sm">
+                                    <h4 class="font-medium mb-2 text-base">Map 1</h4>
+                                    <div class="mb-2">
+                                        <select id="map-1" class="form-select w-full rounded-md border-gray-300 shadow-sm text-sm">
                                             <option value="">Select Map</option>
                                             <!-- Options will be populated from JSON data -->
                                         </select>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2 mt-3">
+                                    <div class="grid grid-cols-2 gap-2 mt-2">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">T Side</label>
-                                            <select id="map1-t-team" class="form-select w-full rounded-md border-gray-300 shadow-sm">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">T Side</label>
+                                            <select id="map1-t-team" class="form-select w-full rounded-md border-gray-300 shadow-sm text-xs">
                                                 <option value="">Select Team</option>
                                                 <option value="A" class="text-blue-600">Team A</option>
                                                 <option value="B" class="text-green-600">Team B</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">CT Side</label>
-                                            <select id="map1-ct-team" class="form-select w-full rounded-md border-gray-300 shadow-sm">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">CT Side</label>
+                                            <select id="map1-ct-team" class="form-select w-full rounded-md border-gray-300 shadow-sm text-xs">
                                                 <option value="">Select Team</option>
                                                 <option value="A" class="text-blue-600">Team A</option>
                                                 <option value="B" class="text-green-600">Team B</option>
@@ -233,26 +256,26 @@
                                 </div>
                                 
                                 <!-- Map 2 -->
-                                <div class="map-container p-3 border rounded-lg">
-                                    <h4 class="font-medium mb-2">Map 2</h4>
-                                    <div class="mb-3">
-                                        <select id="map-2" class="form-select w-full rounded-md border-gray-300 shadow-sm mb-2">
+                                <div class="map-container p-3 border rounded-lg bg-gray-50 text-sm">
+                                    <h4 class="font-medium mb-2 text-base">Map 2</h4>
+                                    <div class="mb-2">
+                                        <select id="map-2" class="form-select w-full rounded-md border-gray-300 shadow-sm text-sm">
                                             <option value="">Select Map</option>
                                             <!-- Options will be populated from JSON data -->
                                         </select>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2 mt-3">
+                                    <div class="grid grid-cols-2 gap-2 mt-2">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">T Side</label>
-                                            <select id="map2-t-team" class="form-select w-full rounded-md border-gray-300 shadow-sm">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">T Side</label>
+                                            <select id="map2-t-team" class="form-select w-full rounded-md border-gray-300 shadow-sm text-xs">
                                                 <option value="">Select Team</option>
                                                 <option value="A" class="text-blue-600">Team A</option>
                                                 <option value="B" class="text-green-600">Team B</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">CT Side</label>
-                                            <select id="map2-ct-team" class="form-select w-full rounded-md border-gray-300 shadow-sm">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">CT Side</label>
+                                            <select id="map2-ct-team" class="form-select w-full rounded-md border-gray-300 shadow-sm text-xs">
                                                 <option value="">Select Team</option>
                                                 <option value="A" class="text-blue-600">Team A</option>
                                                 <option value="B" class="text-green-600">Team B</option>
@@ -262,26 +285,26 @@
                                 </div>
                                 
                                 <!-- Map 3 -->
-                                <div class="map-container p-3 border rounded-lg">
-                                    <h4 class="font-medium mb-2">Map 3</h4>
-                                    <div class="mb-3">
-                                        <select id="map-3" class="form-select w-full rounded-md border-gray-300 shadow-sm mb-2">
+                                <div class="map-container p-3 border rounded-lg bg-gray-50 text-sm">
+                                    <h4 class="font-medium mb-2 text-base">Map 3</h4>
+                                    <div class="mb-2">
+                                        <select id="map-3" class="form-select w-full rounded-md border-gray-300 shadow-sm text-sm">
                                             <option value="">Select Map</option>
                                             <!-- Options will be populated from JSON data -->
                                         </select>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-2 mt-3">
+                                    <div class="grid grid-cols-2 gap-2 mt-2">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">T Side</label>
-                                            <select id="map3-t-team" class="form-select w-full rounded-md border-gray-300 shadow-sm">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">T Side</label>
+                                            <select id="map3-t-team" class="form-select w-full rounded-md border-gray-300 shadow-sm text-xs">
                                                 <option value="">Select Team</option>
                                                 <option value="A" class="text-blue-600">Team A</option>
                                                 <option value="B" class="text-green-600">Team B</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 mb-1">CT Side</label>
-                                            <select id="map3-ct-team" class="form-select w-full rounded-md border-gray-300 shadow-sm">
+                                            <label class="block text-xs font-medium text-gray-700 mb-1">CT Side</label>
+                                            <select id="map3-ct-team" class="form-select w-full rounded-md border-gray-300 shadow-sm text-xs">
                                                 <option value="">Select Team</option>
                                                 <option value="A" class="text-blue-600">Team A</option>
                                                 <option value="B" class="text-green-600">Team B</option>
@@ -476,5 +499,10 @@
     <script src="scripts/sonMac.js" defer></script>
     <script src="scripts/duello.js" defer></script>
     <script src="scripts/teamPicker.js" defer></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script>
+
 </body>
 </html>

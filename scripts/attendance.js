@@ -5,68 +5,55 @@
 const Attendance = {
     ATTENDANCE_STATES: ["not_coming", "no_response", "coming"], // Order matters for cycling
     TEKER_DONDU_THRESHOLD: 10, // Number of players needed for the wheel
+    ATTENDANCE_DB_PATH: 'attendanceState', // Firebase path for attendance
+    attendanceListenersAttached: false, // Flag for Firebase listener
 
     /**
-     * Initializes the attendance module (e.g., fetches initial data)
+     * Initializes the attendance module (e.g., fetches initial data, attaches listeners)
      */
     init: function() {
-        this.fetchStatsFromSheet();
-        // Add other initialization if needed
+        // Fetch initial data from sheet (which also syncs to Firebase)
+        this.fetchStatsFromSheet(); 
+
+        // Attach Firebase listener only once
+        if (!this.attendanceListenersAttached) {
+            this.attachFirebaseListener();
+            this.attendanceListenersAttached = true;
+        }
     },
 
     /**
-     * Renders the player list in the attendance table and updates the summary.
-     * Relies on global `players` array and DOM elements fetched in MainScript.js
+     * Attaches the Firebase listener for attendance state changes.
      */
-    renderPlayers: function() {
-        // Ensure required DOM elements exist (fetched globally)
+    attachFirebaseListener: function() {
+        if (typeof database === 'undefined' || database === null || !this.ATTENDANCE_DB_PATH) {
+            console.error('Firebase database not available for attendance listener.');
+            return;
+        }
+        const attendanceRef = database.ref(this.ATTENDANCE_DB_PATH);
+
+        attendanceRef.on('value', (snapshot) => {
+            const attendanceData = snapshot.val() || {};
+            console.log("Firebase attendance listener triggered."); // Debug log
+            // Update the entire UI based on the latest data from Firebase
+            this.updateAttendanceUIFromFirebase(attendanceData);
+        }, (error) => {
+            console.error("Firebase attendance listener error:", error);
+            showMessage("Error syncing attendance state.", "error");
+        });
+    },
+
+    /**
+     * Rebuilds the attendance table and summary based on Firebase data.
+     * @param {object} attendanceData - The object containing { playerName: status } from Firebase.
+     */
+    updateAttendanceUIFromFirebase: function(attendanceData) {
+         // Ensure required DOM elements exist 
         if (!playerListBody || !attendanceSummaryDiv || !summaryTextSpan || !tekerDonduIndicator) {
             console.error("Required DOM elements for rendering players/summary are missing.");
             return;
         }
         playerListBody.innerHTML = ''; // Clear existing rows
-
-        // Define default summary state
-        let summaryBgClass = 'bg-red-100';
-        let summaryTextClass = 'text-red-800';
-        let wheelColorClass = 'text-red-800'; // Match wheel color to text
-
-        // Handle case where player data is not available (uses global players)
-        if (players.length === 0) {
-             playerListBody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-500">No player data available. Try updating.</td></tr>';
-             summaryTextSpan.textContent = 'Gelen oyuncu: 0  Belirsiz: 0';
-             tekerDonduIndicator.classList.add('hidden'); // Ensure indicator is hidden
-        } else {
-            // Calculate counts (uses global players)
-            let countComing = 0;
-            let countNoResponse = 0;
-            players.forEach(player => {
-                if (player.attendance === 'coming') countComing++;
-                if (player.attendance === 'no_response') countNoResponse++;
-            });
-
-            // Update summary text
-            summaryTextSpan.textContent = `Gelen oyuncu: ${countComing}  Belirsiz: ${countNoResponse}`;
-
-            // Determine background/text colors and Show/hide the "Teker Döndü" indicator
-            if (countComing >= this.TEKER_DONDU_THRESHOLD) { // Use this.TEKER_DONDU_THRESHOLD
-                summaryBgClass = 'bg-green-100';
-                summaryTextClass = 'text-green-800';
-                wheelColorClass = 'text-green-800'; // Match wheel color
-                tekerDonduIndicator.classList.remove('hidden');
-            } else {
-                // Keep default red colors defined above
-                tekerDonduIndicator.classList.add('hidden');
-            }
-        }
-
-        // Apply summary styles
-        attendanceSummaryDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'text-gray-700');
-        tekerDonduIndicator.classList.remove('text-green-800', 'text-red-800', 'text-gray-600'); 
-        attendanceSummaryDiv.classList.add(summaryBgClass, summaryTextClass);
-        if (!tekerDonduIndicator.classList.contains('hidden')) {
-             tekerDonduIndicator.classList.add(wheelColorClass);
-        }
 
         // Define attendance state configurations (styles and text)
         const stateConfigs = {
@@ -75,84 +62,109 @@ const Attendance = {
             no_response: { text: 'Belirsiz', bgColor: 'bg-gray-300', textColor: 'text-gray-900' }
         };
 
-        // Create and append rows for each player (only if players exist - uses global players)
-        if (players.length > 0) {
-            players.forEach((player) => {
-                const row = document.createElement('tr');
-                row.setAttribute('data-player-name', player.name);
+        let countComing = 0;
+        let countNoResponse = 0;
 
-                // Name cell
-                const nameCell = document.createElement('td');
-                nameCell.className = 'font-medium text-gray-900 whitespace-nowrap';
-                nameCell.textContent = player.name;
-                row.appendChild(nameCell);
+        // --- Render Table Rows --- 
+        // Iterate through the players fetched from the sheet (for names/status)
+        players.forEach((player) => {
+            const playerName = player.name;
+            // Get current attendance from Firebase data, default to no_response
+            const currentAttendance = attendanceData[playerName] || 'no_response';
 
-                // Status cell
-                const statusCell = document.createElement('td');
-                statusCell.className = 'text-center'; 
-                const statusBadge = document.createElement('span');
-                statusBadge.className = 'status-badge px-2 py-1 text-xs font-medium rounded-md';
+             // Recalculate counts based on Firebase data
+            if (currentAttendance === 'coming') countComing++;
+            if (currentAttendance === 'no_response') countNoResponse++;
 
-                let displayStatus = 'Unknown'; 
-                const originalStatus = (player.status || '').toLowerCase();
-                if (originalStatus.includes('aktif')) {
-                    displayStatus = 'Aktif Oyuncu';
-                } else if (originalStatus === 'adam evde yok') {
-                    displayStatus = 'Evde Yok';
-                } else if (player.status) {
-                    displayStatus = player.status;
-                }
-                statusBadge.textContent = displayStatus;
+            const row = document.createElement('tr');
+            row.setAttribute('data-player-name', playerName);
 
-                if (originalStatus.includes('aktif')) {
-                    statusBadge.classList.add('bg-green-100', 'text-green-800');
-                } else if (originalStatus === 'adam evde yok' || originalStatus.includes('inactive')) { 
-                    statusBadge.classList.add('bg-red-100', 'text-red-800');
-                } else {
-                    statusBadge.classList.add('bg-gray-100', 'text-gray-800');
-                }
-                statusCell.appendChild(statusBadge);
-                row.appendChild(statusCell);
+            // Name cell (from global players array)
+            const nameCell = document.createElement('td');
+            nameCell.className = 'font-medium text-gray-900 whitespace-nowrap';
+            nameCell.textContent = playerName;
+            row.appendChild(nameCell);
 
-                // Attendance cell
-                const attendanceCell = document.createElement('td');
-                attendanceCell.className = 'text-center'; 
+            // Status cell (from global players array)
+            const statusCell = document.createElement('td');
+            statusCell.className = 'text-center'; 
+            const statusBadge = document.createElement('span');
+            statusBadge.className = 'status-badge px-2 py-1 text-xs font-medium rounded-md';
+            let displayStatus = 'Unknown'; 
+            const originalStatus = (player.status || '').toLowerCase();
+            if (originalStatus.includes('aktif')) displayStatus = 'Aktif Oyuncu';
+            else if (originalStatus === 'adam evde yok') displayStatus = 'Evde Yok';
+            else if (player.status) displayStatus = player.status;
+            statusBadge.textContent = displayStatus;
+            if (originalStatus.includes('aktif')) statusBadge.classList.add('bg-green-100', 'text-green-800');
+            else if (originalStatus === 'adam evde yok' || originalStatus.includes('inactive')) statusBadge.classList.add('bg-red-100', 'text-red-800');
+            else statusBadge.classList.add('bg-gray-100', 'text-gray-800');
+            statusCell.appendChild(statusBadge);
+            row.appendChild(statusCell);
 
-                const currentState = player.attendance || 'no_response';
-                const config = stateConfigs[currentState];
+            // Attendance cell (state determined by Firebase)
+            const attendanceCell = document.createElement('td');
+            attendanceCell.className = 'text-center'; 
+            const config = stateConfigs[currentAttendance];
+            const container = document.createElement('div');
+            container.className = 'attendance-control-container'; 
+            const leftArrowBtn = document.createElement('button');
+            leftArrowBtn.className = 'attendance-arrow';
+            leftArrowBtn.setAttribute('aria-label', `Previous status for ${playerName}`);
+            leftArrowBtn.setAttribute('data-direction', 'left');
+            leftArrowBtn.setAttribute('data-player', playerName);
+            leftArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>`;
+            const labelSpan = document.createElement('span');
+            labelSpan.className = `attendance-label ${config.bgColor} ${config.textColor}`;
+            labelSpan.textContent = config.text;
+            labelSpan.setAttribute('data-state', currentAttendance);
+            labelSpan.setAttribute('data-player', playerName);
+            const rightArrowBtn = document.createElement('button');
+            rightArrowBtn.className = 'attendance-arrow';
+            rightArrowBtn.setAttribute('aria-label', `Next status for ${playerName}`);
+            rightArrowBtn.setAttribute('data-direction', 'right');
+            rightArrowBtn.setAttribute('data-player', playerName);
+            rightArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>`;
+            container.appendChild(leftArrowBtn);
+            container.appendChild(labelSpan);
+            container.appendChild(rightArrowBtn);
+            attendanceCell.appendChild(container);
+            row.appendChild(attendanceCell);
 
-                const container = document.createElement('div');
-                container.className = 'attendance-control-container'; 
+            playerListBody.appendChild(row);
+        });
 
-                const leftArrowBtn = document.createElement('button');
-                leftArrowBtn.className = 'attendance-arrow';
-                leftArrowBtn.setAttribute('aria-label', `Previous status for ${player.name}`);
-                leftArrowBtn.setAttribute('data-direction', 'left');
-                leftArrowBtn.setAttribute('data-player', player.name);
-                leftArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>`;
+        // --- Update Summary --- 
+        summaryTextSpan.textContent = `Gelen oyuncu: ${countComing}  Belirsiz: ${countNoResponse}`;
+        let summaryBgClass = 'bg-red-100';
+        let summaryTextClass = 'text-red-800';
+        let wheelColorClass = 'text-red-800'; 
+        
+        if (countComing >= this.TEKER_DONDU_THRESHOLD) { 
+            summaryBgClass = 'bg-green-100';
+            summaryTextClass = 'text-green-800';
+            wheelColorClass = 'text-green-800';
+            tekerDonduIndicator.classList.remove('hidden');
+        } else {
+            tekerDonduIndicator.classList.add('hidden');
+        }
 
-                const labelSpan = document.createElement('span');
-                labelSpan.className = `attendance-label ${config.bgColor} ${config.textColor}`;
-                labelSpan.textContent = config.text;
-                labelSpan.setAttribute('data-state', currentState);
-                labelSpan.setAttribute('data-player', player.name);
+        attendanceSummaryDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'text-gray-700');
+        tekerDonduIndicator.classList.remove('text-green-800', 'text-red-800', 'text-gray-600'); 
+        attendanceSummaryDiv.classList.add(summaryBgClass, summaryTextClass);
+        if (!tekerDonduIndicator.classList.contains('hidden')) {
+             tekerDonduIndicator.classList.add(wheelColorClass);
+        }
+    },
 
-                const rightArrowBtn = document.createElement('button');
-                rightArrowBtn.className = 'attendance-arrow';
-                rightArrowBtn.setAttribute('aria-label', `Next status for ${player.name}`);
-                rightArrowBtn.setAttribute('data-direction', 'right');
-                rightArrowBtn.setAttribute('data-player', player.name);
-                rightArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>`;
-
-                container.appendChild(leftArrowBtn);
-                container.appendChild(labelSpan);
-                container.appendChild(rightArrowBtn);
-                attendanceCell.appendChild(container);
-                row.appendChild(attendanceCell);
-
-                playerListBody.appendChild(row);
-            });
-        } 
+    /**
+     * Renders the player list - Now just a placeholder, Firebase listener handles rendering.
+     * Kept for potential future use or if direct rendering is needed elsewhere.
+     */
+    renderPlayers: function() {
+        // console.log("renderPlayers called, but UI update is now handled by Firebase listener.");
+        // The actual rendering logic is now in updateAttendanceUIFromFirebase
+        // If needed, could potentially trigger an update by fetching latest FB state here?
     },
 
     /**
@@ -183,12 +195,39 @@ const Attendance = {
                 throw new Error("Invalid data format received from server.");
             }
             players = data; // Update the global players array
-            this.renderPlayers(); // Call the module's render function
-            // showMessage('Attendance data loaded!', 'success'); // Uses global showMessage
+
+            // --- Write Initial State to Firebase --- 
+            if (typeof database !== 'undefined' && database !== null && this.ATTENDANCE_DB_PATH) {
+                try {
+                    const initialFirebaseState = {};
+                    players.forEach(player => {
+                        initialFirebaseState[player.name] = player.attendance || 'no_response';
+                    });
+                    const attendanceRef = database.ref(this.ATTENDANCE_DB_PATH);
+                    await attendanceRef.set(initialFirebaseState);
+                    console.log("Initial attendance state synced to Firebase.");
+                } catch (firebaseError) {
+                    console.error("Failed to sync initial attendance state to Firebase:", firebaseError);
+                    // Show a message? Maybe not critical if render still works.
+                }
+            } else {
+                 console.error('Firebase database not available or ATTENDANCE_DB_PATH not set. Skipping initial Firebase sync.');
+            }
+            // --- End Firebase Initial Sync --- 
+
+            // Initial Render: Call the UI update function AFTER fetch and initial sync are complete
+            // Pass the state we just synced to Firebase for consistency
+            const initialFirebaseState = {};
+            players.forEach(player => {
+                initialFirebaseState[player.name] = player.attendance || 'no_response';
+            });
+            this.updateAttendanceUIFromFirebase(initialFirebaseState);
+            
+            // showMessage('Attendance data loaded!', 'success');
         } catch (err) {
             console.error('Failed to fetch stats:', err);
-            showMessage(`Error loading data: ${err.message}`, 'error'); // Uses global showMessage
-            this.renderPlayers(); // Render even on error
+            showMessage(`Error loading data: ${err.message}`, 'error');
+            // REMOVED: this.renderPlayers(); // Render even on error - Listener handles UI
         } finally {
             spinner.classList.add('hidden');
             updateButton.disabled = false;
@@ -201,8 +240,25 @@ const Attendance = {
      * @param {string} playerName - The name of the player to update.
      * @param {string} newAttendance - The new attendance status ('coming', 'not_coming', 'no_response').
      */
-    updateAttendanceInSheet: async function(playerName, newAttendance) {
-        console.log(`Attempting to update ${playerName} to ${newAttendance}`);
+    syncAttendanceUpdate: async function(playerName, newAttendance) {
+        console.log(`Syncing update for ${playerName} to ${newAttendance} (Firebase & Sheet)`);
+
+        // --- 1. Update Firebase --- 
+        if (typeof database !== 'undefined' && database !== null && this.ATTENDANCE_DB_PATH) {
+            try {
+                const playerRef = database.ref(this.ATTENDANCE_DB_PATH).child(playerName);
+                await playerRef.set(newAttendance);
+                console.log(`Attendance updated successfully in Firebase for ${playerName}`);
+            } catch (firebaseError) {
+                console.error(`Failed to update attendance in Firebase for ${playerName}:`, firebaseError);
+                // Don't necessarily show a message here, as the sheet update might still succeed,
+                // but log the error for debugging.
+            }
+        } else {
+            console.error('Firebase database not available or ATTENDANCE_DB_PATH not set. Skipping Firebase update.');
+        }
+
+        // --- 2. Update Google Sheet (Existing Logic) --- 
         try {
             const response = await fetch(APPS_SCRIPT_URL, { // Uses global constant
                 method: 'POST',
@@ -245,45 +301,47 @@ const Attendance = {
     handlePlayerListClick: async function(event) {
         const targetArrow = event.target.closest('.attendance-arrow');
         const targetLabel = event.target.closest('.attendance-label');
-        let playerName = null;
-        let direction = null; 
-        let playerIndex = -1;
+        let clickedElement = targetArrow || targetLabel;
+        
+        if (!clickedElement) return; // Exit if click wasn't on a relevant element
 
+        const playerName = clickedElement.getAttribute('data-player');
+        if (!playerName) return; // Exit if player name not found
+
+        const controlContainer = clickedElement.closest('.attendance-control-container');
+        if (!controlContainer) return; // Exit if container not found
+
+        const labelSpan = controlContainer.querySelector('.attendance-label');
+        if (!labelSpan) return; // Exit if label span not found
+
+        // --- Get current state FROM THE UI (data-state attribute) --- 
+        const currentState = labelSpan.getAttribute('data-state') || 'no_response';
+        // --- End getting state from UI ---
+        
+        let direction = null; 
         if (targetArrow) {
-            playerName = targetArrow.getAttribute('data-player');
             direction = targetArrow.getAttribute('data-direction');
         } else if (targetLabel) {
-             playerName = targetLabel.getAttribute('data-player');
              const rect = targetLabel.getBoundingClientRect();
              const clickX = event.clientX - rect.left;
              direction = (clickX < rect.width / 2) ? 'left' : 'right'; 
         }
 
-        if (playerName) {
-            playerIndex = players.findIndex(p => p.name === playerName); // Find in global players array
-        }
-
-        if (playerIndex > -1 && direction) {
-            const currentState = players[playerIndex].attendance || 'no_response';
-            let currentIndex = this.ATTENDANCE_STATES.indexOf(currentState); // Use this.ATTENDANCE_STATES
+        if (direction) {
+            let currentIndex = this.ATTENDANCE_STATES.indexOf(currentState); 
 
             if (direction === 'left') {
                 currentIndex = (currentIndex - 1 + this.ATTENDANCE_STATES.length) % this.ATTENDANCE_STATES.length;
-            } else { 
+            } else { // Right arrow or label click
                 currentIndex = (currentIndex + 1) % this.ATTENDANCE_STATES.length;
             }
             const newState = this.ATTENDANCE_STATES[currentIndex];
 
-            // Optimistic UI Update
-            players[playerIndex].attendance = newState; // Update global players array
-            this.renderPlayers(); // Render changes
+            // Call the combined update function (runs in background)
+            this.syncAttendanceUpdate(playerName, newState);
 
-            // Asynchronously update the backend
-            await this.updateAttendanceInSheet(playerName, newState);
-        } else if (playerName && !direction) {
+        } else {
              console.warn(`Could not determine click direction for player ${playerName}`);
-        } else if (targetArrow || targetLabel) {
-             console.warn(`Player data not found for clicked element.`);
         }
     }
 
