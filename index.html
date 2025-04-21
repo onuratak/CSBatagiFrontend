@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="table-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" defer></script>
 </head>
 <body class="p-4 md:p-8">
 
@@ -42,6 +43,7 @@
         <a class="tab-nav-item" data-page="season_avg" href="#">Sezon Ortalaması</a>
         <a class="tab-nav-item" data-page="duello_son_mac" href="#">Düello Son Maç</a>
         <a class="tab-nav-item" data-page="duello_sezon" href="#">Düello Sezon</a>
+        <a class="tab-nav-item" data-page="players" href="#">Players</a>
     </nav>
         </header>
 
@@ -491,6 +493,18 @@
                 </div>
             </div>
 
+            <!-- Players Page Section -->
+            <div id="page-players" class="page-content hidden page-content-container">
+                <h2 class="text-2xl font-semibold text-blue-600 mb-4">Player Profiles</h2>
+
+                <!-- Player Card Grid -->
+                <div id="player-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                    <!-- Player cards will be populated here by JS -->
+                </div>
+
+            </div>
+            <!-- End Players Page Section -->
+
         </div> </div>
 
     <script src="scripts/MainScript.js" defer></script>
@@ -499,6 +513,7 @@
     <script src="scripts/sonMac.js" defer></script>
     <script src="scripts/duello.js" defer></script>
     <script src="scripts/teamPicker.js" defer></script>
+    <script src="scripts/players.js" defer></script>
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>

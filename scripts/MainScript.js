@@ -113,8 +113,13 @@ function showPage(pageId) {
     });
 
     // Call TeamPicker initializer when showing team picker page
-    if (pageId === 'team_picker') {
+    if (pageId === 'team_picker' && typeof TeamPicker !== 'undefined' && typeof TeamPicker.init === 'function') {
         TeamPicker.init();
+    }
+
+    // Call Players page initializer when showing players page
+    if (pageId === 'players' && typeof window.initializePlayersPage === 'function') {
+        window.initializePlayersPage(); // Initialize if not already done (check is inside the function)
     }
 
      // Close mobile menu after selecting an item (optional but good UX)
