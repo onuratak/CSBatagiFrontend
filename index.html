@@ -344,82 +344,168 @@
             </div>
             <div id="page-gece_ortalama" class="page-content hidden page-content-container">
                 <h2 class="text-2xl font-semibold text-blue-600 mb-4">Gece Ortalaması</h2>
-                <div class="overflow-x-auto">
-                    <table class="styled-table min-w-full text-sm">
-                        <thead>
-                            <tr>
-                                <th class="sortable-header" data-sort-key="name">Oyuncu</th>
-                                <th class="sortable-header" data-sort-key="HLTV 2">HLTV2</th>
-                                <th class="sortable-header" data-sort-key="ADR">ADR</th>
-                                <th class="sortable-header" data-sort-key="K/D">K/D</th>
-                                <th class="sortable-header" data-sort-key="HLTV2 DIFF">HLTV2 DIFF</th>
-                                <th class="sortable-header" data-sort-key="ADR DIFF">ADR DIFF</th>
-                                <th class="sortable-header" data-sort-key="MVP">MVP</th>
-                                <th class="sortable-header" data-sort-key="Kills">Kills</th>
-                                <th class="sortable-header" data-sort-key="Deaths">Deaths</th>
-                                <th class="sortable-header" data-sort-key="Assists">Assists</th>
-                                <th class="sortable-header" data-sort-key="HS">HS</th>
-                                <th class="sortable-header" data-sort-key="HS/Kill ratio">HS/Kill ratio</th>
-                                <th class="sortable-header" data-sort-key="First Kill">First Kill</th>
-                                <th class="sortable-header" data-sort-key="First Death">First Death</th>
-                                <th class="sortable-header" data-sort-key="Bomb Planted">Bomb Planted</th>
-                                <th class="sortable-header" data-sort-key="Bomb Defused">Bomb Defused</th>
-                                <th class="sortable-header" data-sort-key="HLTV">HLTV</th>
-                                <th class="sortable-header" data-sort-key="KAST">KAST</th>
-                                <th class="sortable-header" data-sort-key="Utility Damage">Utility Damage</th>
-                                <th class="sortable-header" data-sort-key="2 kills">2 kills</th>
-                                <th class="sortable-header" data-sort-key="3 kills">3 kills</th>
-                                <th class="sortable-header" data-sort-key="4 kills">4 kills</th>
-                                <th class="sortable-header" data-sort-key="5 kills">5 kills</th>
-                                <th class="sortable-header" data-sort-key="Nr of Matches">Nr of Matches</th>
-                                <th class="sortable-header" data-sort-key="Clutch Opportunity">Clutch Opportunity</th>
-                                <th class="sortable-header" data-sort-key="Clutches Won">Clutches Won</th>
-                            </tr>
-                        </thead>
-                        <tbody id="night-avg-table-body">
-                            <!-- Data rows will be injected here by JS -->
-                        </tbody>
-                    </table>
+
+                <!-- Sub Tab Navigation -->
+                <div class="mb-4 border-b border-gray-200">
+                    <ul id="night-avg-sub-tabs" class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+                        <li class="mr-2" role="presentation">
+                            <button class="map-tab-button tab-nav-item inline-block p-4 border-b-2 rounded-t-lg active" id="night-avg-table-tab" data-tabs-target="#night-avg-tab-table" type="button" role="tab" aria-controls="night-avg-tab-table" aria-selected="true">Table</button>
+                        </li>
+                        <li class="mr-2" role="presentation">
+                            <button class="map-tab-button tab-nav-item inline-block p-4 border-b-2 rounded-t-lg" id="night-avg-graph-tab" data-tabs-target="#night-avg-tab-graph" type="button" role="tab" aria-controls="night-avg-tab-graph" aria-selected="false">Graph</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="night-avg-tab-content">
+                    <!-- Table Content -->
+                    <div id="night-avg-tab-table" class="night-avg-tab-pane active" role="tabpanel" aria-labelledby="night-avg-table-tab">
+                        <div class="overflow-x-auto">
+                            <table class="styled-table min-w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable-header" data-sort-key="name">Oyuncu</th>
+                                        <th class="sortable-header" data-sort-key="HLTV 2">HLTV2</th>
+                                        <th class="sortable-header" data-sort-key="ADR">ADR</th>
+                                        <th class="sortable-header" data-sort-key="K/D">K/D</th>
+                                        <th class="sortable-header" data-sort-key="HLTV2 DIFF">HLTV2 DIFF</th>
+                                        <th class="sortable-header" data-sort-key="ADR DIFF">ADR DIFF</th>
+                                        <th class="sortable-header" data-sort-key="MVP">MVP</th>
+                                        <th class="sortable-header" data-sort-key="Kills">Kills</th>
+                                        <th class="sortable-header" data-sort-key="Deaths">Deaths</th>
+                                        <th class="sortable-header" data-sort-key="Assists">Assists</th>
+                                        <th class="sortable-header" data-sort-key="HS">HS</th>
+                                        <th class="sortable-header" data-sort-key="HS/Kill ratio">HS/Kill ratio</th>
+                                        <th class="sortable-header" data-sort-key="First Kill">First Kill</th>
+                                        <th class="sortable-header" data-sort-key="First Death">First Death</th>
+                                        <th class="sortable-header" data-sort-key="Bomb Planted">Bomb Planted</th>
+                                        <th class="sortable-header" data-sort-key="Bomb Defused">Bomb Defused</th>
+                                        <th class="sortable-header" data-sort-key="HLTV">HLTV</th>
+                                        <th class="sortable-header" data-sort-key="KAST">KAST</th>
+                                        <th class="sortable-header" data-sort-key="Utility Damage">Utility Damage</th>
+                                        <th class="sortable-header" data-sort-key="2 kills">2 kills</th>
+                                        <th class="sortable-header" data-sort-key="3 kills">3 kills</th>
+                                        <th class="sortable-header" data-sort-key="4 kills">4 kills</th>
+                                        <th class="sortable-header" data-sort-key="5 kills">5 kills</th>
+                                        <th class="sortable-header" data-sort-key="Nr of Matches">Nr of Matches</th>
+                                        <th class="sortable-header" data-sort-key="Clutch Opportunity">Clutch Opportunity</th>
+                                        <th class="sortable-header" data-sort-key="Clutches Won">Clutches Won</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="night-avg-table-body">
+                                    <!-- Data rows will be injected here by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Graph Content (Initially Hidden) -->
+                    <div id="night-avg-tab-graph" class="night-avg-tab-pane hidden" role="tabpanel" aria-labelledby="night-avg-graph-tab">
+                        <!-- Stat Selection for Pentagon -->
+                        <div id="night-avg-stat-selector" class="mb-6 p-4 border rounded-lg bg-gray-50 shadow-sm">
+                             <div class="flex justify-between items-center cursor-pointer" id="night-avg-stat-selector-toggle">
+                                <h3 class="text-lg font-semibold text-gray-800">Customize Pentagon Stats</h3>
+                                <svg id="night-avg-stat-arrow" class="w-5 h-5 text-gray-500 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                           <div id="night-avg-stat-selector-content" class="mt-3 hidden"> <!-- Content initially hidden -->
+                                <p class="text-sm text-gray-600 mb-3">Select exactly 5 stats to display on the player graphs:</p>
+                                <div id="night-avg-pentagon-stat-checkboxes" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2 mb-4">
+                                    <div class="text-gray-500 text-sm col-span-full">Loading stat options...</div>
+                                </div>
+                                <div id="night-avg-stat-validation-msg" class="text-sm text-red-600 h-4 mb-3"></div>
+                                <button id="update-night-avg-graphs-btn" class="action-button" disabled>Update Graphs</button>
+                           </div>
+                        </div>
+                        <!-- Player card grid -->
+                        <div id="night-avg-player-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                            <div class="text-center py-8 text-gray-500 col-span-full">Select 5 stats and click "Update Graphs".</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div id="page-last10" class="page-content hidden page-content-container">
                 <h2 class="text-2xl font-semibold text-blue-600 mb-4">Son 10 Ortalaması</h2>
-                <div class="overflow-x-auto">
-                    <table class="styled-table min-w-full text-sm">
-                        <thead>
-                            <tr>
-                                <th class="sortable-header" data-sort-key="name">Oyuncu</th>
-                                <th class="sortable-header" data-sort-key="hltv_2">HLTV2</th>
-                                <th class="sortable-header" data-sort-key="adr">ADR</th>
-                                <th class="sortable-header" data-sort-key="kd">K/D</th>
-                                <th class="sortable-header" data-sort-key="mvp">MVP</th>
-                                <th class="sortable-header" data-sort-key="kills">Kills</th>
-                                <th class="sortable-header" data-sort-key="deaths">Deaths</th>
-                                <th class="sortable-header" data-sort-key="assists">Assists</th>
-                                <th class="sortable-header" data-sort-key="hs">HS</th>
-                                <th class="sortable-header" data-sort-key="hs_ratio">HS/Kill ratio</th>
-                                <th class="sortable-header" data-sort-key="first_kill">First Kill</th>
-                                <th class="sortable-header" data-sort-key="first_death">First Death</th>
-                                <th class="sortable-header" data-sort-key="bomb_planted">Bomb Planted</th>
-                                <th class="sortable-header" data-sort-key="bomb_defused">Bomb Defused</th>
-                                <th class="sortable-header" data-sort-key="hltv">HLTV</th>
-                                <th class="sortable-header" data-sort-key="kast">KAST</th>
-                                <th class="sortable-header" data-sort-key="utl_dmg">Utility Damage</th>
-                                <th class="sortable-header" data-sort-key="two_kills">2 kills</th>
-                                <th class="sortable-header" data-sort-key="three_kills">3 kills</th>
-                                <th class="sortable-header" data-sort-key="four_kills">4 kills</th>
-                                <th class="sortable-header" data-sort-key="five_kills">5 kills</th>
-                                <th class="sortable-header" data-sort-key="matches">Nr of Matches</th>
-                                <th class="sortable-header" data-sort-key="win_rate">WIN RATE (%)</th>
-                                <th class="sortable-header" data-sort-key="avg_clutches">Nr of clutches per game</th>
-                                <th class="sortable-header" data-sort-key="avg_clutches_won">Clutches Won</th>
-                                <th class="sortable-header" data-sort-key="clutch_success">Successful Clutch (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="last10-table-body">
-                            <!-- Data rows will be injected here by JS -->
-                        </tbody>
-                    </table>
+
+                <!-- Sub Tab Navigation -->
+                <div class="mb-4 border-b border-gray-200">
+                    <ul id="last10-sub-tabs" class="flex flex-wrap -mb-px text-sm font-medium text-center" role="tablist">
+                        <li class="mr-2" role="presentation">
+                            <button class="map-tab-button tab-nav-item inline-block p-4 border-b-2 rounded-t-lg active" id="last10-table-tab" data-tabs-target="#last10-tab-table" type="button" role="tab" aria-controls="last10-tab-table" aria-selected="true">Table</button>
+                        </li>
+                        <li class="mr-2" role="presentation">
+                            <button class="map-tab-button tab-nav-item inline-block p-4 border-b-2 rounded-t-lg" id="last10-graph-tab" data-tabs-target="#last10-tab-graph" type="button" role="tab" aria-controls="last10-tab-graph" aria-selected="false">Graph</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="last10-tab-content">
+                    <!-- Table Content -->
+                    <div id="last10-tab-table" class="last10-tab-pane active" role="tabpanel" aria-labelledby="last10-table-tab">
+                        <div class="overflow-x-auto">
+                            <table class="styled-table min-w-full text-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable-header" data-sort-key="name">Oyuncu</th>
+                                        <th class="sortable-header" data-sort-key="hltv_2">HLTV2</th>
+                                        <th class="sortable-header" data-sort-key="adr">ADR</th>
+                                        <th class="sortable-header" data-sort-key="kd">K/D</th>
+                                        <th class="sortable-header" data-sort-key="mvp">MVP</th>
+                                        <th class="sortable-header" data-sort-key="kills">Kills</th>
+                                        <th class="sortable-header" data-sort-key="deaths">Deaths</th>
+                                        <th class="sortable-header" data-sort-key="assists">Assists</th>
+                                        <th class="sortable-header" data-sort-key="hs">HS</th>
+                                        <th class="sortable-header" data-sort-key="hs_ratio">HS/Kill ratio</th>
+                                        <th class="sortable-header" data-sort-key="first_kill">First Kill</th>
+                                        <th class="sortable-header" data-sort-key="first_death">First Death</th>
+                                        <th class="sortable-header" data-sort-key="bomb_planted">Bomb Planted</th>
+                                        <th class="sortable-header" data-sort-key="bomb_defused">Bomb Defused</th>
+                                        <th class="sortable-header" data-sort-key="hltv">HLTV</th>
+                                        <th class="sortable-header" data-sort-key="kast">KAST</th>
+                                        <th class="sortable-header" data-sort-key="utl_dmg">Utility Damage</th>
+                                        <th class="sortable-header" data-sort-key="two_kills">2 kills</th>
+                                        <th class="sortable-header" data-sort-key="three_kills">3 kills</th>
+                                        <th class="sortable-header" data-sort-key="four_kills">4 kills</th>
+                                        <th class="sortable-header" data-sort-key="five_kills">5 kills</th>
+                                        <th class="sortable-header" data-sort-key="matches">Nr of Matches</th>
+                                        <th class="sortable-header" data-sort-key="win_rate">WIN RATE (%)</th>
+                                        <th class="sortable-header" data-sort-key="avg_clutches">Nr of clutches per game</th>
+                                        <th class="sortable-header" data-sort-key="avg_clutches_won">Clutches Won</th>
+                                        <th class="sortable-header" data-sort-key="clutch_success">Successful Clutch (%)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="last10-table-body">
+                                    <!-- Data rows will be injected here by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Graph Content (Initially Hidden) -->
+                    <div id="last10-tab-graph" class="last10-tab-pane hidden" role="tabpanel" aria-labelledby="last10-graph-tab">
+                        <!-- Stat Selection for Pentagon -->
+                        <div id="last10-stat-selector" class="mb-6 p-4 border rounded-lg bg-gray-50 shadow-sm">
+                             <div class="flex justify-between items-center cursor-pointer" id="last10-stat-selector-toggle">
+                                <h3 class="text-lg font-semibold text-gray-800">Customize Pentagon Stats</h3>
+                                <svg id="last10-stat-arrow" class="w-5 h-5 text-gray-500 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                           <div id="last10-stat-selector-content" class="mt-3 hidden"> <!-- Content initially hidden -->
+                                <p class="text-sm text-gray-600 mb-3">Select exactly 5 stats to display on the player graphs:</p>
+                                <div id="last10-pentagon-stat-checkboxes" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2 mb-4">
+                                    <div class="text-gray-500 text-sm col-span-full">Loading stat options...</div>
+                                </div>
+                                <div id="last10-stat-validation-msg" class="text-sm text-red-600 h-4 mb-3"></div>
+                                <button id="update-last10-graphs-btn" class="action-button" disabled>Update Graphs</button>
+                           </div>
+                        </div>
+                        <!-- Player card grid -->
+                        <div id="last10-player-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+                            <div class="text-center py-8 text-gray-500 col-span-full">Select 5 stats and click "Update Graphs".</div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div id="page-season_avg" class="page-content hidden page-content-container">

@@ -28,16 +28,31 @@ const PlayerCharts = {
      * @param {Array<string>} statsToProcess - Array of stat keys (e.g., ['adr', 'kd']).
      * @returns {Object.<string, {min: number, max: number}>} Calculated ranges.
      */
-    calculateStatRanges: function(playersData, statsToProcess) { // Modified to accept stats list
+    calculateStatRanges: function(playersData, statsToProcess) {
         const ranges = {};
 
         statsToProcess.forEach(stat => {
             ranges[stat] = { min: Infinity, max: -Infinity };
         });
 
-        const activePlayers = Object.values(playersData).filter(p => p && typeof p.matches === 'number' && p.matches > 0);
+        const allPlayers = Object.values(playersData);
 
-        activePlayers.forEach(player => {
+        // Conditionally filter players: Only filter by matches > 0 if the 'matches' property exists
+        const playersToConsider = allPlayers.length > 0 && allPlayers[0].hasOwnProperty('matches')
+            ? allPlayers.filter(p => p && typeof p.matches === 'number' && p.matches > 0)
+            : allPlayers; // If no 'matches' property, consider all players
+
+        // Handle case where no players meet criteria or input was empty
+        if (playersToConsider.length === 0) {
+             console.warn("No players found to calculate ranges from after filtering (or initial data empty).");
+             // Return ranges with default 0-1 values to avoid errors, though charts might be blank
+             statsToProcess.forEach(stat => {
+                 ranges[stat] = { min: 0, max: 1 };
+             });
+             return ranges;
+        }
+
+        playersToConsider.forEach(player => {
             statsToProcess.forEach(stat => {
                 const value = player[stat];
                 if (typeof value === 'number' && !isNaN(value)) {
@@ -83,19 +98,19 @@ const PlayerCharts = {
      * Renders the pentagon chart on a specific canvas using selected stats.
      * @param {object} playerData - The player's stats.
      * @param {string} canvasId - The ID of the canvas element.
-     * @param {Object.<string, string>} selectedStats - Object of selected stats {key: label, ...}.
+     * @param {Object.<string, {label: string, format: string, default?: boolean}>} selectedStatsConfig - Config object for the 5 selected stats.
      * @param {Object.<string, {min: number, max: number}>} allStatRanges - Pre-calculated ranges for ALL selectable stats.
      */
-    renderPentagonChart: function(playerData, canvasId, selectedStats, allStatRanges) { // Added selectedStats param
+    renderPentagonChart: function(playerData, canvasId, selectedStatsConfig, allStatRanges) { // Changed param name
         const ctx = document.getElementById(canvasId)?.getContext('2d');
         if (!ctx) {
             console.error(`Pentagon chart canvas with id '${canvasId}' not found!`);
             return;
         }
 
-        const labels = Object.values(selectedStats); // Use labels from selected stats
+        const labels = Object.values(selectedStatsConfig).map(config => config.label); // Get labels from config
         // Normalize data for the selected stats using the comprehensive ranges
-        const data = Object.keys(selectedStats).map(statKey =>
+        const data = Object.keys(selectedStatsConfig).map(statKey =>
             this.normalizeStat(playerData[statKey], statKey, allStatRanges)
         );
 
@@ -136,19 +151,26 @@ const PlayerCharts = {
                     callbacks: {
                         label: (context) => {
                             // Get the stat key corresponding to the hovered point
-                            const statKey = Object.keys(selectedStats)[context.dataIndex];
+                            const statKey = Object.keys(selectedStatsConfig)[context.dataIndex];
                             const originalValueRaw = playerData[statKey];
                             let originalValueFormatted = 'N/A';
-                            // Check SELECTABLE_STATS for formatting hints
-                            const statConfig = SELECTABLE_STATS[statKey];
-                            if (statKey === 'kd') {
-                                originalValueFormatted = originalValueRaw.toFixed(2);
-                            } else if (statConfig && statConfig.format === 'percent') {
-                                originalValueFormatted = originalValueRaw.toFixed(1) + '%';
-                            } else {
-                                originalValueFormatted = originalValueRaw.toFixed(1);
+
+                            // Use format hint from the passed-in config
+                            const statConfig = selectedStatsConfig[statKey];
+
+                            if (typeof originalValueRaw === 'number' && !isNaN(originalValueRaw)) {
+                                if (statConfig && statConfig.format === 'percent') {
+                                    originalValueFormatted = originalValueRaw.toFixed(1) + '%';
+                                } else if (statConfig && statConfig.format === 'decimal2') {
+                                    originalValueFormatted = originalValueRaw.toFixed(2);
+                                } else if (statConfig && statConfig.format === 'decimal1') {
+                                    originalValueFormatted = originalValueRaw.toFixed(1);
+                                } else { // Default to decimal 0 or raw if no specific format
+                                     originalValueFormatted = originalValueRaw.toFixed(0);
+                                }
                             }
-                            return `${context.label}: ${originalValueFormatted}`; // Show actual formatted value on hover
+
+                            return `${context.label}: ${originalValueFormatted}`;
                         }
                     }
                 }
@@ -161,7 +183,7 @@ const PlayerCharts = {
             this.playerChartInstances[canvasId].destroy();
         }
 
-        // Create new chart instance and store it using the PlayerCharts scope
+        // Create new chart instance and store it
         this.playerChartInstances[canvasId] = new Chart(ctx, {
             type: 'radar',
             data: chartData,

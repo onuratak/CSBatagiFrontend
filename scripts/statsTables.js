@@ -24,6 +24,36 @@ const StatsTables = (() => {
     let seasonAvgSelectorContent = null;
     let seasonAvgSelectorArrow = null;
 
+    // --- State specific to Last 10 Graph View ---
+    let last10GraphPopulated = false;
+    let last10SelectableStats = {};
+    let last10AllStatRanges = {};
+    let last10InitialRenderDone = false;
+
+    // --- DOM Element References (Last 10 Graph Tab) ---
+    let last10CheckboxContainer = null;
+    let last10UpdateButton = null;
+    let last10ValidationMsg = null;
+    let last10PlayerGrid = null;
+    let last10SelectorToggle = null;
+    let last10SelectorContent = null;
+    let last10SelectorArrow = null;
+
+    // --- State specific to Night Avg Graph View ---
+    let nightAvgGraphPopulated = false;
+    let nightAvgSelectableStats = {};
+    let nightAvgAllStatRanges = {};
+    let nightAvgInitialRenderDone = false;
+
+    // --- DOM Element References (Night Avg Graph Tab) ---
+    let nightAvgCheckboxContainer = null;
+    let nightAvgUpdateButton = null;
+    let nightAvgValidationMsg = null;
+    let nightAvgPlayerGrid = null;
+    let nightAvgSelectorToggle = null;
+    let nightAvgSelectorContent = null;
+    let nightAvgSelectorArrow = null;
+
     const DEFAULT_SORT_KEY_SEASON = 'hltv_2';
     const DEFAULT_SORT_KEY_LAST10 = 'hltv_2';
     const DEFAULT_SORT_KEY_NIGHT = 'HLTV 2';
@@ -282,7 +312,7 @@ const StatsTables = (() => {
                 return; // Stop further processing for this tab
             }
 
-            // Generate selectable stats config (only needs to be done once)
+            // Generate selectable stats config using the correct columns
             seasonAvgSelectableStats = generateSelectableStatsConfig(commonColumns);
 
             // Populate checkboxes
@@ -415,29 +445,49 @@ const StatsTables = (() => {
     // --- Helper: Generate Selectable Stats from Columns ---
     function generateSelectableStatsConfig(columns) {
         const config = {};
-        const defaultSelected = ['hltv_2', 'adr', 'kd', 'hs_ratio', 'win_rate']; // Default 5
+        let defaultCount = 0;
+        const PENTAGON_LIMIT = 5; // Use local constant
+
+        // First pass: identify potential candidates and assign defaults
         columns.forEach(col => {
-            // Exclude non-numeric/non-relevant columns for pentagon
-            if (col.key && col.label && col.key !== 'name' && !col.isDiff) { // Allow decimals=0, check other props if needed
+            // Exclude only the name column
+            if (col.key && col.label && col.key !== 'name') { // REMOVED !col.isDiff check
+                // Determine if it should be a default selection
+                // Prioritize non-diff columns for defaults if possible, but check only first 5 suitable overall
+                const isDefaultCandidate = defaultCount < PENTAGON_LIMIT; // Still limit defaults to 5
+                // Let's keep the simple logic: first 5 suitable stats are default
+                const isDefault = isDefaultCandidate;
+
                 config[col.key] = {
                     label: col.label,
-                    default: defaultSelected.includes(col.key),
-                    format: col.isPercentage ? 'percent' : (col.decimals === 2 ? 'decimal2' : 'decimal1') // Basic format hint
+                    default: isDefault,
+                    // Assign format, handle potential missing decimals for DIFF columns if necessary
+                    format: col.isPercentage ? 'percent' : (col.decimals === 2 ? 'decimal2' : (col.decimals === 1 ? 'decimal1' : 'decimal0'))
                 };
+                if (isDefault) {
+                    defaultCount++;
+                }
             }
         });
+
+        // If fewer than 5 defaults were found (e.g., very few numeric columns),
+        // this logic doesn't automatically select more. The user must choose 5.
+        console.log(`Generated selectable stats config for columns:`, columns, config);
         return config;
     }
 
     // --- Season Avg Graph View Specific Helpers ---
     function getSelectedSeasonAvgStats() {
-        const selected = {};
-        if (!seasonAvgCheckboxContainer) return selected;
+        const selectedConfig = {};
+        if (!seasonAvgCheckboxContainer) return selectedConfig;
         const checkboxes = seasonAvgCheckboxContainer.querySelectorAll('.season-avg-pentagon-stat-option:checked');
         checkboxes.forEach(cb => {
-            selected[cb.dataset.statKey] = cb.dataset.statLabel;
+            const key = cb.dataset.statKey;
+            if (seasonAvgSelectableStats[key]) { // Get the full config for the selected key
+                selectedConfig[key] = seasonAvgSelectableStats[key];
+            }
         });
-        return selected;
+        return selectedConfig;
     }
 
     function updateSeasonAvgStatSelectionUI() {
@@ -465,9 +515,9 @@ const StatsTables = (() => {
 
     function handleUpdateSeasonAvgGraphsClick() {
         console.log("Updating Season Avg graphs...");
-        const selectedStats = getSelectedSeasonAvgStats();
+        const selectedStatsConfig = getSelectedSeasonAvgStats(); // Get the rich config object
 
-        if (Object.keys(selectedStats).length !== PENTAGON_STAT_LIMIT_STATS) {
+        if (Object.keys(selectedStatsConfig).length !== PENTAGON_STAT_LIMIT_STATS) {
             seasonAvgValidationMsg.textContent = `Error: Select exactly ${PENTAGON_STAT_LIMIT_STATS} stats.`;
             return;
         }
@@ -491,7 +541,8 @@ const StatsTables = (() => {
             createPlayerCardInternal(playerData, seasonAvgPlayerGrid, canvasId); // Create card structure
             // Render with the NEW selected stats and the initially calculated ranges for ALL stats
             setTimeout(() => {
-                 PlayerCharts.renderPentagonChart(playerData, canvasId, selectedStats, seasonAvgAllStatRanges);
+                 // Pass the rich config object
+                 PlayerCharts.renderPentagonChart(playerData, canvasId, selectedStatsConfig, seasonAvgAllStatRanges);
             }, 0);
         });
 
@@ -525,6 +576,345 @@ const StatsTables = (() => {
          updateSeasonAvgStatSelectionUI(); // Set initial state after populating
     }
 
+    // --- Last 10 Graph View Specific Helpers ---
+    function getSelectedLast10Stats() {
+        const selectedConfig = {};
+        if (!last10CheckboxContainer) return selectedConfig;
+        const checkboxes = last10CheckboxContainer.querySelectorAll('.last10-pentagon-stat-option:checked');
+        checkboxes.forEach(cb => {
+            const key = cb.dataset.statKey;
+            if (last10SelectableStats[key]) { // Get the full config
+                 selectedConfig[key] = last10SelectableStats[key];
+            }
+        });
+        return selectedConfig;
+    }
+
+    function updateLast10StatSelectionUI() {
+        if (!last10CheckboxContainer || !last10ValidationMsg || !last10UpdateButton) return;
+        const selectedCount = Object.keys(getSelectedLast10Stats()).length;
+        const checkboxes = last10CheckboxContainer.querySelectorAll('.last10-pentagon-stat-option');
+        if (selectedCount === PENTAGON_STAT_LIMIT_STATS) {
+            last10ValidationMsg.textContent = '';
+            last10UpdateButton.disabled = false;
+            last10UpdateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            checkboxes.forEach(cb => { cb.disabled = !cb.checked; });
+        } else {
+            last10ValidationMsg.textContent = `Select ${PENTAGON_STAT_LIMIT_STATS} stats (${selectedCount} selected)`;
+            last10UpdateButton.disabled = true;
+            last10UpdateButton.classList.add('opacity-50', 'cursor-not-allowed');
+            checkboxes.forEach(cb => { cb.disabled = false; });
+        }
+    }
+
+    function handleLast10CheckboxChange() {
+        updateLast10StatSelectionUI();
+    }
+
+    function handleUpdateLast10GraphsClick() {
+        console.log("Updating Last 10 graphs...");
+        const selectedStatsConfig = getSelectedLast10Stats(); // Get the rich config object
+        if (Object.keys(selectedStatsConfig).length !== PENTAGON_STAT_LIMIT_STATS) {
+            last10ValidationMsg.textContent = `Error: Select exactly ${PENTAGON_STAT_LIMIT_STATS} stats.`;
+            return;
+        }
+        if (!last10Stats || !last10PlayerGrid) {
+            console.error("Cannot update graphs: Last 10 data or grid container missing.");
+            last10ValidationMsg.textContent = "Error: Data or container missing.";
+            return;
+        }
+        const allPlayersLast10Data = convertStatsArrayToObject(last10Stats);
+        const activePlayersData = Object.values(allPlayersLast10Data)
+            .filter(p => p && typeof p.matches === 'number' && p.matches > 0)
+            .sort((a, b) => a.name.localeCompare(b.name));
+        last10PlayerGrid.innerHTML = '';
+        activePlayersData.forEach(playerData => {
+            const canvasId = `last10-chart-${playerData.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            createPlayerCardInternal(playerData, last10PlayerGrid, canvasId);
+            setTimeout(() => {
+                // Pass the rich config object
+                PlayerCharts.renderPentagonChart(playerData, canvasId, selectedStatsConfig, last10AllStatRanges);
+            }, 0);
+        });
+        last10ValidationMsg.textContent = 'Graphs updated!';
+        setTimeout(() => { last10ValidationMsg.textContent = ''; }, 2000);
+    }
+
+    function populateLast10StatCheckboxes() {
+        if (!last10CheckboxContainer) return;
+        last10CheckboxContainer.innerHTML = '';
+        Object.entries(last10SelectableStats).forEach(([key, config]) => {
+            const div = document.createElement('div');
+            const label = document.createElement('label');
+            label.className = 'inline-flex items-center';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 last10-pentagon-stat-option'; // Unique class
+            input.dataset.statKey = key;
+            input.dataset.statLabel = config.label;
+            input.checked = config.default;
+            input.addEventListener('change', handleLast10CheckboxChange);
+            const span = document.createElement('span');
+            span.className = 'ml-2 text-sm text-gray-700';
+            span.textContent = config.label;
+            label.appendChild(input);
+            label.appendChild(span);
+            div.appendChild(label);
+            last10CheckboxContainer.appendChild(div);
+        });
+        updateLast10StatSelectionUI();
+    }
+
+    // --- Main Rendering Logic for Last 10 Graph ---
+    function renderLast10GraphView() {
+        if (!last10InitialRenderDone) {
+            console.log("Performing initial setup for Last 10 Graph View...");
+            last10CheckboxContainer = document.getElementById('last10-pentagon-stat-checkboxes');
+            last10UpdateButton = document.getElementById('update-last10-graphs-btn');
+            last10ValidationMsg = document.getElementById('last10-stat-validation-msg');
+            last10PlayerGrid = document.getElementById('last10-player-grid');
+            last10SelectorToggle = document.getElementById('last10-stat-selector-toggle');
+            last10SelectorContent = document.getElementById('last10-stat-selector-content');
+            last10SelectorArrow = document.getElementById('last10-stat-arrow');
+
+            if (!last10CheckboxContainer || !last10UpdateButton || !last10ValidationMsg || !last10PlayerGrid || !last10SelectorToggle || !last10SelectorContent || !last10SelectorArrow) {
+                console.error("Missing required elements for Last 10 graph tab setup!");
+                const graphTab = document.getElementById('last10-tab-graph');
+                if(graphTab) graphTab.innerHTML = '<p class="text-red-500 p-4">Error: UI elements missing for graph view.</p>';
+                return;
+            }
+            // Generate selectable stats config using the correct columns
+            last10SelectableStats = generateSelectableStatsConfig(commonColumns);
+            populateLast10StatCheckboxes();
+            last10UpdateButton.addEventListener('click', handleUpdateLast10GraphsClick);
+            last10SelectorToggle.addEventListener('click', () => {
+                last10SelectorContent.classList.toggle('hidden');
+                last10SelectorArrow.classList.toggle('rotate-180');
+            });
+            last10InitialRenderDone = true;
+        }
+
+        if (!last10Stats) {
+            console.warn("Last 10 stats not loaded yet for graph view.");
+            last10PlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Last 10 data is still loading. Please wait...</div>';
+            return;
+        }
+
+        if (Object.keys(last10AllStatRanges).length === 0) {
+            const allPlayersLast10Data = convertStatsArrayToObject(last10Stats);
+            const allSelectableStatKeys = Object.keys(last10SelectableStats);
+            last10AllStatRanges = PlayerCharts.calculateStatRanges(allPlayersLast10Data, allSelectableStatKeys);
+            console.log("Calculated all stat ranges for Last 10:", last10AllStatRanges);
+        }
+
+        if (!last10GraphPopulated) {
+            if (Object.keys(getSelectedLast10Stats()).length === PENTAGON_STAT_LIMIT_STATS) {
+                 console.log("Triggering initial graph render for Last 10.");
+                 handleUpdateLast10GraphsClick();
+                 last10GraphPopulated = true;
+            } else {
+                last10PlayerGrid.innerHTML = '<div class="text-center py-8 text-gray-500 col-span-full">Select 5 stats and click "Update Graphs".</div>';
+            }
+        }
+    }
+
+    // --- NEW Event Handler for Last 10 Tabs ---
+    function handleLast10SubTabClick(event) {
+        const clickedTab = event.target.closest('.map-tab-button');
+        if (!clickedTab || !clickedTab.closest('#last10-sub-tabs')) return;
+        event.preventDefault();
+        const targetPaneSelector = clickedTab.dataset.tabsTarget;
+        const targetPane = document.querySelector(targetPaneSelector);
+        const tabContainer = clickedTab.closest('ul');
+        const allTabs = tabContainer.querySelectorAll('.map-tab-button');
+        const contentContainer = document.getElementById('last10-tab-content');
+        const allPanes = contentContainer ? contentContainer.querySelectorAll('.last10-tab-pane') : [];
+        allTabs.forEach(tab => { tab.classList.remove('active'); tab.setAttribute('aria-selected', 'false'); });
+        clickedTab.classList.add('active');
+        clickedTab.setAttribute('aria-selected', 'true');
+        allPanes.forEach(pane => { pane.classList.add('hidden'); pane.classList.remove('active'); });
+        if (targetPane) {
+            targetPane.classList.remove('hidden');
+            targetPane.classList.add('active');
+        } else {
+            console.error(`Target pane not found for selector: ${targetPaneSelector}`);
+        }
+        if (targetPaneSelector === '#last10-tab-graph') {
+            renderLast10GraphView(); // Call specific render function
+        }
+    }
+
+    // --- Night Avg Graph View Specific Helpers ---
+    function getSelectedNightAvgStats() {
+        const selectedConfig = {};
+        if (!nightAvgCheckboxContainer) return selectedConfig;
+        const checkboxes = nightAvgCheckboxContainer.querySelectorAll('.night-avg-pentagon-stat-option:checked');
+        checkboxes.forEach(cb => {
+            const key = cb.dataset.statKey;
+            if (nightAvgSelectableStats[key]) { // Get the full config
+                 selectedConfig[key] = nightAvgSelectableStats[key];
+            }
+        });
+        return selectedConfig;
+    }
+
+    function updateNightAvgStatSelectionUI() {
+        if (!nightAvgCheckboxContainer || !nightAvgValidationMsg || !nightAvgUpdateButton) return;
+        const selectedCount = Object.keys(getSelectedNightAvgStats()).length;
+        const checkboxes = nightAvgCheckboxContainer.querySelectorAll('.night-avg-pentagon-stat-option');
+        if (selectedCount === PENTAGON_STAT_LIMIT_STATS) {
+            nightAvgValidationMsg.textContent = '';
+            nightAvgUpdateButton.disabled = false;
+            nightAvgUpdateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            checkboxes.forEach(cb => { cb.disabled = !cb.checked; });
+        } else {
+            nightAvgValidationMsg.textContent = `Select ${PENTAGON_STAT_LIMIT_STATS} stats (${selectedCount} selected)`;
+            nightAvgUpdateButton.disabled = true;
+            nightAvgUpdateButton.classList.add('opacity-50', 'cursor-not-allowed');
+            checkboxes.forEach(cb => { cb.disabled = false; });
+        }
+    }
+
+    function handleNightAvgCheckboxChange() {
+        updateNightAvgStatSelectionUI();
+    }
+
+    function handleUpdateNightAvgGraphsClick() {
+        console.log("Updating Night Avg graphs...");
+        const selectedStatsConfig = getSelectedNightAvgStats(); // Get the rich config object
+        if (Object.keys(selectedStatsConfig).length !== PENTAGON_STAT_LIMIT_STATS) {
+            nightAvgValidationMsg.textContent = `Error: Select exactly ${PENTAGON_STAT_LIMIT_STATS} stats.`;
+            return;
+        }
+        if (!nightAvgStats || !nightAvgPlayerGrid) {
+            console.error("Cannot update graphs: Night Avg data or grid container missing.");
+            nightAvgValidationMsg.textContent = "Error: Data or container missing.";
+            return;
+        }
+        // Convert Night Avg data (keys might have spaces, need to handle)
+        const allPlayersNightAvgData = convertStatsArrayToObject(nightAvgStats);
+        const activePlayersData = Object.values(allPlayersNightAvgData)
+            // Night avg data doesn't have matches, assume all players shown are 'active' for the night
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        nightAvgPlayerGrid.innerHTML = '';
+        activePlayersData.forEach(playerData => {
+            const canvasId = `night-avg-chart-${playerData.name.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            createPlayerCardInternal(playerData, nightAvgPlayerGrid, canvasId);
+            setTimeout(() => {
+                // Pass the rich config object
+                PlayerCharts.renderPentagonChart(playerData, canvasId, selectedStatsConfig, nightAvgAllStatRanges);
+            }, 0);
+        });
+        nightAvgValidationMsg.textContent = 'Graphs updated!';
+        setTimeout(() => { nightAvgValidationMsg.textContent = ''; }, 2000);
+    }
+
+    function populateNightAvgStatCheckboxes() {
+        if (!nightAvgCheckboxContainer) return;
+        nightAvgCheckboxContainer.innerHTML = '';
+        Object.entries(nightAvgSelectableStats).forEach(([key, config]) => {
+            const div = document.createElement('div');
+            const label = document.createElement('label');
+            label.className = 'inline-flex items-center';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 night-avg-pentagon-stat-option'; // Unique class
+            input.dataset.statKey = key;
+            input.dataset.statLabel = config.label;
+            input.checked = config.default;
+            input.addEventListener('change', handleNightAvgCheckboxChange);
+            const span = document.createElement('span');
+            span.className = 'ml-2 text-sm text-gray-700';
+            span.textContent = config.label;
+            label.appendChild(input);
+            label.appendChild(span);
+            div.appendChild(label);
+            nightAvgCheckboxContainer.appendChild(div);
+        });
+        updateNightAvgStatSelectionUI();
+    }
+
+    // --- Main Rendering Logic for Night Avg Graph ---
+    function renderNightAvgGraphView() {
+        if (!nightAvgInitialRenderDone) {
+            console.log("Performing initial setup for Night Avg Graph View...");
+            nightAvgCheckboxContainer = document.getElementById('night-avg-pentagon-stat-checkboxes');
+            nightAvgUpdateButton = document.getElementById('update-night-avg-graphs-btn');
+            nightAvgValidationMsg = document.getElementById('night-avg-stat-validation-msg');
+            nightAvgPlayerGrid = document.getElementById('night-avg-player-grid');
+            nightAvgSelectorToggle = document.getElementById('night-avg-stat-selector-toggle');
+            nightAvgSelectorContent = document.getElementById('night-avg-stat-selector-content');
+            nightAvgSelectorArrow = document.getElementById('night-avg-stat-arrow');
+
+            if (!nightAvgCheckboxContainer || !nightAvgUpdateButton || !nightAvgValidationMsg || !nightAvgPlayerGrid || !nightAvgSelectorToggle || !nightAvgSelectorContent || !nightAvgSelectorArrow) {
+                console.error("Missing required elements for Night Avg graph tab setup!");
+                const graphTab = document.getElementById('night-avg-tab-graph');
+                if(graphTab) graphTab.innerHTML = '<p class="text-red-500 p-4">Error: UI elements missing.</p>';
+                return;
+            }
+            // Generate selectable stats using nightAvgColumns definition
+            nightAvgSelectableStats = generateSelectableStatsConfig(nightAvgColumns);
+            populateNightAvgStatCheckboxes();
+            nightAvgUpdateButton.addEventListener('click', handleUpdateNightAvgGraphsClick);
+            nightAvgSelectorToggle.addEventListener('click', () => {
+                nightAvgSelectorContent.classList.toggle('hidden');
+                nightAvgSelectorArrow.classList.toggle('rotate-180');
+            });
+            nightAvgInitialRenderDone = true;
+        }
+
+        if (!nightAvgStats) {
+            console.warn("Night Avg stats not loaded yet for graph view.");
+            nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Night Avg data is still loading...</div>';
+            return;
+        }
+
+        if (Object.keys(nightAvgAllStatRanges).length === 0) {
+            const allPlayersNightAvgData = convertStatsArrayToObject(nightAvgStats);
+            const allSelectableStatKeys = Object.keys(nightAvgSelectableStats);
+            // Calculate ranges using the correct data and keys
+            nightAvgAllStatRanges = PlayerCharts.calculateStatRanges(allPlayersNightAvgData, allSelectableStatKeys);
+            console.log("Calculated all stat ranges for Night Avg:", nightAvgAllStatRanges);
+        }
+
+        if (!nightAvgGraphPopulated) {
+            if (Object.keys(getSelectedNightAvgStats()).length === PENTAGON_STAT_LIMIT_STATS) {
+                 console.log("Triggering initial graph render for Night Avg.");
+                 handleUpdateNightAvgGraphsClick();
+                 nightAvgGraphPopulated = true;
+            } else {
+                nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-gray-500 col-span-full">Select 5 stats and click "Update Graphs".</div>';
+            }
+        }
+    }
+
+    // --- NEW Event Handler for Night Avg Tabs ---
+    function handleNightAvgSubTabClick(event) {
+        const clickedTab = event.target.closest('.map-tab-button');
+        if (!clickedTab || !clickedTab.closest('#night-avg-sub-tabs')) return;
+        event.preventDefault();
+        const targetPaneSelector = clickedTab.dataset.tabsTarget;
+        const targetPane = document.querySelector(targetPaneSelector);
+        const tabContainer = clickedTab.closest('ul');
+        const allTabs = tabContainer.querySelectorAll('.map-tab-button');
+        const contentContainer = document.getElementById('night-avg-tab-content');
+        const allPanes = contentContainer ? contentContainer.querySelectorAll('.night-avg-tab-pane') : [];
+        allTabs.forEach(tab => { tab.classList.remove('active'); tab.setAttribute('aria-selected', 'false'); });
+        clickedTab.classList.add('active');
+        clickedTab.setAttribute('aria-selected', 'true');
+        allPanes.forEach(pane => { pane.classList.add('hidden'); pane.classList.remove('active'); });
+        if (targetPane) {
+            targetPane.classList.remove('hidden');
+            targetPane.classList.add('active');
+        } else {
+            console.error(`Target pane not found for selector: ${targetPaneSelector}`);
+        }
+        if (targetPaneSelector === '#night-avg-tab-graph') {
+            renderNightAvgGraphView(); // Call specific render function
+        }
+    }
+
     // --- Initialization ---
     function init() {
         loadAndRenderSeasonAvgTable();
@@ -535,19 +925,28 @@ const StatsTables = (() => {
         const seasonAvgTabsContainer = document.getElementById('season-avg-sub-tabs');
         if (seasonAvgTabsContainer) {
             seasonAvgTabsContainer.addEventListener('click', handleSeasonAvgSubTabClick);
-        } else {
-            // Only log warning if the page is expected to have these tabs
-            // console.warn("Season average sub-tabs container not found.");
+        }
+
+        // Add event listener for last 10 sub-tabs
+        const last10TabsContainer = document.getElementById('last10-sub-tabs');
+        if (last10TabsContainer) {
+            last10TabsContainer.addEventListener('click', handleLast10SubTabClick);
+        }
+
+        // Add event listener for night average sub-tabs
+        const nightAvgTabsContainer = document.getElementById('night-avg-sub-tabs');
+        if (nightAvgTabsContainer) {
+            nightAvgTabsContainer.addEventListener('click', handleNightAvgSubTabClick);
         }
     }
 
     // Public interface
     return {
         init: init,
-        fillSeasonAvgTable: fillSeasonAvgTable, // Expose for sorting
-        fillLast10Table: fillLast10Table,     // Expose for sorting
-        fillNightAvgTable: fillNightAvgTable,   // Expose for sorting
-        get seasonStats() { return seasonStats; }, // Getter for external use (like Players page)
+        fillSeasonAvgTable: fillSeasonAvgTable,
+        fillLast10Table: fillLast10Table,
+        fillNightAvgTable: fillNightAvgTable,
+        get seasonStats() { return seasonStats; },
         get last10Stats() { return last10Stats; },
         get nightAvgStats() { return nightAvgStats; }
     };
