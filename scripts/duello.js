@@ -165,20 +165,64 @@ const Duello = {
                     td.style.minWidth = `${cellSize}px`; td.style.maxWidth = `${cellSize}px`;
                     td.style.minHeight = `${cellSize}px`; td.style.maxHeight = `${cellSize}px`;
                     td.style.padding = '0'; td.style.position = 'relative'; td.style.overflow = 'hidden';
-                    td.style.backgroundColor = '#fff'; td.style.boxSizing = 'border-box';
+                    td.style.boxSizing = 'border-box';
 
-                    const diagonalLength = Math.ceil(Math.sqrt(2 * cellSize * cellSize));
-                    const diagonalLine = document.createElement('div');
-                    diagonalLine.style.position = 'absolute'; diagonalLine.style.width = `${diagonalLength}px`;
-                    diagonalLine.style.height = '1px'; diagonalLine.style.backgroundColor = '#ccc';
-                    diagonalLine.style.top = '50%'; diagonalLine.style.left = '50%';
-                    diagonalLine.style.transform = 'translate(-50%, -50%) rotate(45deg)';
-                    diagonalLine.style.transformOrigin = 'center center'; diagonalLine.style.zIndex = '1';
-                    td.appendChild(diagonalLine);
+                    // Define colors
+                    const lightGreen = '#e8f5e9'; // Background Winner (Row)
+                    const lightRed = '#ffebee';   // Background Loser (Row)
+                    const darkGreenClass = 'bg-green-600'; // Circle Winner (Row)
+                    const darkRedClass = 'bg-red-600';     // Circle Loser (Row)
+                    const grayBg = '#f3f4f6'; // Gray for 0 kills bg
+                    const grayCircleClass = 'bg-gray-400'; // Gray for 0 kills circle
 
-                    // Use module's circle creation function
-                    this.createDuelCircle(td, rowName, colName, duelData.kills, 'bottom-left');
-                    this.createDuelCircle(td, colName, rowName, duelData.deaths, 'top-right');
+                    // Determine winner and set colors accordingly
+                    let bottomLeftBackgroundColor, topRightBackgroundColor;
+                    let bottomLeftCircleColorClass, topRightCircleColorClass;
+
+                    if (duelData.kills > duelData.deaths) { // Row player wins
+                        bottomLeftBackgroundColor = lightGreen;
+                        topRightBackgroundColor = lightRed;
+                        bottomLeftCircleColorClass = darkGreenClass;
+                        topRightCircleColorClass = darkRedClass;
+                    } else if (duelData.deaths > duelData.kills) { // Column player wins
+                        bottomLeftBackgroundColor = lightRed;
+                        topRightBackgroundColor = lightGreen;
+                        bottomLeftCircleColorClass = darkRedClass;
+                        topRightCircleColorClass = darkGreenClass;
+                    } else { // Tie
+                        bottomLeftBackgroundColor = lightGreen; // Or gray, depending on preference
+                        topRightBackgroundColor = lightRed;
+                        bottomLeftCircleColorClass = darkGreenClass; // Or gray
+                        topRightCircleColorClass = darkRedClass; // Or gray
+                    }
+                    
+                    // Override with gray if kill count is zero for that specific circle/half
+                    if (duelData.kills === 0) {
+                        bottomLeftCircleColorClass = grayCircleClass;
+                        bottomLeftBackgroundColor = grayBg;
+                    }
+                    if (duelData.deaths === 0) {
+                        topRightCircleColorClass = grayCircleClass;
+                        topRightBackgroundColor = grayBg; // Ensure bg is also gray if no kills
+                    }
+
+
+                    // APPLY SVG Background with winner-based colored halves
+                    const svgBackground = `
+                    <svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 100 100' preserveAspectRatio='none'>
+                        <polygon points='0,0 0,100 100,100' fill='${bottomLeftBackgroundColor}'/>
+                        <polygon points='0,0 100,0 100,100' fill='${topRightBackgroundColor}'/>
+                        <line x1='0' y1='0' x2='100' y2='100' stroke='#cccccc' stroke-width='1'/>
+                    </svg>`;
+                    const encodedSvg = encodeURIComponent(svgBackground.replace(/\n\s*/g, ""));
+                    td.style.backgroundImage = `url("data:image/svg+xml;utf8,${encodedSvg}")`;
+                    td.style.backgroundRepeat = 'no-repeat';
+                    td.style.backgroundSize = '100% 100%';
+
+                    // Pass the determined color class to the circle function
+                    this.createDuelCircle(td, rowName, colName, duelData.kills, 'bottom-left', bottomLeftCircleColorClass);
+                    this.createDuelCircle(td, colName, rowName, duelData.deaths, 'top-right', topRightCircleColorClass);
+
                 } else {
                     td.className += ' text-gray-400';
                     td.textContent = '-';
@@ -193,14 +237,12 @@ const Duello = {
     /**
      * Creates and appends a colored circle representing duel kills to a table cell.
      */
-    createDuelCircle: function(cell, killerName, killedName, killCount, position) {
-        let colorClass = 'bg-gray-400'; // Default
-        if (killCount > 0) {
-            colorClass = position === 'bottom-left' ? 'bg-green-600' : 'bg-red-600';
-        }
+    createDuelCircle: function(cell, killerName, killedName, killCount, position, circleColorClass) {
+        // Use the passed color class, fallback to gray if killCount is 0
+        const finalColorClass = killCount > 0 ? circleColorClass : 'bg-gray-400';
 
         const circle = document.createElement('div');
-        circle.className = `${colorClass} duello-circle text-white font-bold rounded-full flex items-center justify-center cursor-pointer`;
+        circle.className = `${finalColorClass} duello-circle text-white font-bold rounded-full flex items-center justify-center cursor-pointer`;
         circle.style.position = 'absolute';
         circle.style.width = '36px'; circle.style.height = '36px';
         circle.textContent = killCount;

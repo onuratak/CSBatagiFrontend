@@ -501,6 +501,46 @@ function setupGlobalEventListeners() {
     pageContentArea.addEventListener('click', handleSortClick); // Table sorting
     // pageContentArea.addEventListener('click', handleDuelloClick); // REMOVED - Handled by Duello.init()
 
+    // --- Sub-Tab Switching Logic ---
+    pageContentArea.addEventListener('click', (event) => {
+        // Check if a sub-tab button was clicked
+        const tabButton = event.target.closest('button[data-tabs-target]');
+        if (!tabButton) return;
+
+        // Find the parent tab container and content area
+        const subTabNav = tabButton.closest('[role="tablist"]');
+        if (!subTabNav) return;
+        const subTabContent = subTabNav.parentElement.nextElementSibling; // Assumes content follows nav
+        if (!subTabContent) return;
+
+        // Get target pane ID from button
+        const targetPaneId = tabButton.getAttribute('data-tabs-target');
+        const targetPane = subTabContent.querySelector(targetPaneId);
+
+        if (targetPane) {
+            // Deactivate all buttons and hide all panes in this group
+            subTabNav.querySelectorAll('button[data-tabs-target]').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            subTabContent.querySelectorAll('.duello-tab-pane, .night-avg-tab-pane, .last10-tab-pane, .season-avg-tab-pane, .performance-tab-pane').forEach(pane => {
+                 // Make sure we only hide panes within the CURRENT sub-tab group
+                if (pane.closest('#' + subTabContent.id) === subTabContent) { 
+                    pane.classList.add('hidden');
+                    pane.classList.remove('active');
+                }
+            });
+
+            // Activate the clicked button and show the target pane
+            tabButton.classList.add('active');
+            tabButton.setAttribute('aria-selected', 'true');
+            targetPane.classList.remove('hidden');
+            targetPane.classList.add('active');
+        }
+    });
+    // --- End Sub-Tab Switching Logic ---
+
+
     // Landing page tile clicks
     const homePageContainer = document.getElementById('page-home');
     if (homePageContainer) {
