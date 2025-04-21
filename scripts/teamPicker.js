@@ -856,12 +856,12 @@ const TeamPicker = {
                     label: TeamPicker.teamBName || 'Team B',
                     data: normalizedDataB,
                     fill: true,
-                    backgroundColor: 'rgba(75, 192, 192, 0.2)', // Green (adjust color if needed)
-                    borderColor: 'rgb(75, 192, 192)',
-                    pointBackgroundColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(22, 163, 74, 0.2)', // NEW: Consistent Green (Tailwind Green 600)
+                    borderColor: 'rgb(22, 163, 74)', // NEW: Consistent Green
+                    pointBackgroundColor: 'rgb(22, 163, 74)', // NEW: Consistent Green
                     pointBorderColor: '#fff',
                     pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(75, 192, 192)',
+                    pointHoverBorderColor: 'rgb(22, 163, 74)', // NEW: Consistent Green
                     borderWidth: 1.5,
                     pointRadius: 3,
                     pointHoverRadius: 5
