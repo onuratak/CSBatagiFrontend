@@ -411,8 +411,8 @@ th {
     /* background-color: #f9fafb; */ /* Removed general hover background */
 }
 .tab-nav-item.active { /* Style for ANY active tab */
-    color: #1e40af; /* Darker blue text for better contrast */
-    border-bottom-color: #2563eb; /* Active tab border color */
+    color: #2563eb; /* Use text-blue-600 color */
+    border-bottom-color: #2563eb; /* Active tab border color (border-blue-600) */
     font-weight: 600;
     background-color: #eff6ff; /* Light blue background (blue-50) */
 }
