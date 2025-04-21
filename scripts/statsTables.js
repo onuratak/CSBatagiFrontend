@@ -203,18 +203,18 @@ const StatsTables = (() => {
         { key: 'five_kills', label: '5 kills', decimals: 1 },
         { key: 'matches', label: 'Nr of Matches', decimals: 0 },
         { key: 'win_rate', label: 'WIN RATE (%)', decimals: 1, isPercentage: true },
-        { key: 'avg_clutches', label: 'Nr of clutches per game', decimals: 2 }, // Note: key change for consistency?
-        { key: 'avg_clutches_won', label: 'Clutches Won', decimals: 1 }, // Note: key change?
-        { key: 'clutch_success', label: 'Successful Clutch (%)', decimals: 1, isPercentage: true }, // Note: key change?
+        { key: 'avg_clutches', label: 'Nr of clutches per game', decimals: 2 },
+        { key: 'avg_clutches_won', label: 'Clutches Won', decimals: 1 },
+        { key: 'clutch_success', label: 'Successful Clutch (%)', decimals: 1, isPercentage: true },
     ];
 
     const nightAvgColumns = [
         { key: 'name', label: 'Oyuncu' },
-        { key: 'HLTV 2', label: 'HLTV2', decimals: 2, isBadge: true, heatmapGradient: hltvGradient }, // Key matches JSON
-        { key: 'ADR', label: 'ADR', decimals: 1, isBadge: true, heatmapGradient: adrGradient }, // Key matches JSON
-        { key: 'K/D', label: 'K/D', decimals: 2, isBadge: true, heatmapGradient: kdGradient }, // Key matches JSON
-        { key: 'HLTV2 DIFF', label: 'HLTV2 DIFF', decimals: 2, isDiff: true }, // Key matches JSON
-        { key: 'ADR DIFF', label: 'ADR DIFF', decimals: 1, isDiff: true }, // Key matches JSON
+        { key: 'HLTV 2', label: 'HLTV2', decimals: 2, isBadge: true, heatmapGradient: hltvGradient },
+        { key: 'ADR', label: 'ADR', decimals: 1, isBadge: true, heatmapGradient: adrGradient },
+        { key: 'K/D', label: 'K/D', decimals: 2, isBadge: true, heatmapGradient: kdGradient },
+        { key: 'HLTV2 DIFF', label: 'HLTV2 DIFF', decimals: 2, isDiff: true },
+        { key: 'ADR DIFF', label: 'ADR DIFF', decimals: 1, isDiff: true },
         { key: 'MVP', label: 'MVP', decimals: 0 },
         { key: 'Kills', label: 'Kills', decimals: 0 },
         { key: 'Deaths', label: 'Deaths', decimals: 0 },

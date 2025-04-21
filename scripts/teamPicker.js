@@ -12,10 +12,10 @@ const TEAM_CHART_STATS = {
 };
 
 const TEAM_CHART_FIXED_RANGES = {
-    L10_HLTV2: { min: 0.7, max: 1.4 },
+    L10_HLTV2: { min: 0.70, max: 1.40 },
     L10_ADR: { min: 65, max: 100 },
-    L10_KD: { min: 0.7, max: 1.4 },
-    S_HLTV2: { min: 0.7, max: 1.4 },
+    L10_KD: { min: 0.70, max: 1.40 },
+    S_HLTV2: { min: 0.70, max: 1.40 },
     S_ADR: { min: 65, max: 100 },
 };
 // --- End Fixed Config ---
@@ -581,10 +581,10 @@ const TeamPicker = {
 
         row.innerHTML = `
             <td class="px-1 py-1 font-medium text-gray-900 whitespace-nowrap">${player.name}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_HLTV2)}</td>
+            <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_HLTV2, 2)}</td>
             <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_ADR, 0)}</td>
             <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_KD)}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_HLTV2)}</td>
+            <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_HLTV2, 2)}</td>
             <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_ADR, 0)}</td>
             <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_KD)}</td>
             <td class="player-team-cell px-1 py-1 text-center ${teamClass}">${teamText}</td>
@@ -651,10 +651,10 @@ const TeamPicker = {
 
                 row.innerHTML = `
                     <td class="px-1 py-1 font-medium text-gray-900">${player.name}</td>
-                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_HLTV2)}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_HLTV2, 2)}</td>
                     <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_ADR, 0)}</td>
                     <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_KD)}</td>
-                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_HLTV2)}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_HLTV2, 2)}</td>
                     <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_ADR, 0)}</td>
                     <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_KD)}</td>
                     <td class="px-1 py-1 text-center">
@@ -741,7 +741,7 @@ const TeamPicker = {
             if (counts[statKey] > 0) {
                 const average = sums[statKey] / counts[statKey];
                  // Format based on stat type (ADR = 0 decimals, others = 1 or 2)
-                const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('KD') ? 1 : 2);
+                const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('HLTV') || statKey.includes('KD')) ? 2 : 1;
                  cell.textContent = formatStat(average, decimals); // Use global formatStat
                  targetAvgObject[statKey] = average; // Store the raw average
             } else {
@@ -771,7 +771,7 @@ const TeamPicker = {
             if (typeof valA === 'number' && typeof valB === 'number' && !isNaN(valA) && !isNaN(valB)) {
                 const diff = valA - valB;
                 // Adjust formatting precision based on stat type
-                const decimals = (key === 'L10_KD' || key === 'S_KD') ? 2 : (key.includes('ADR') ? 0 : 1);
+                const decimals = key.includes('ADR') ? 0 : (key.includes('HLTV') || key.includes('KD')) ? 2 : 1;
                 el.textContent = diff.toFixed(decimals);
                 el.className = 'text-center '; // Reset classes
                 if (diff > 0.001) el.classList.add('text-green-600', 'font-medium'); // Add small tolerance for floating point
@@ -888,7 +888,7 @@ const TeamPicker = {
                             const statConfig = chartStatsConfig[statKey];
                             if (range && statConfig) {
                                 // Format based on stat type for range display
-                                const decimals = (statKey === 'L10_KD' || statKey === 'S_KD') ? 1 : (statKey.includes('ADR') ? 0 : 1);
+                                const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('HLTV') || statKey.includes('KD')) ? 2 : 1;
                                 return `${statConfig.label} (${range.min.toFixed(decimals)}-${range.max.toFixed(decimals)})`;
                             }
                             return statConfig ? statConfig.label : ''; // Fallback
@@ -921,7 +921,7 @@ const TeamPicker = {
 
                              // Format the original value based on stat type
                              if (typeof valueRaw === 'number' && !isNaN(valueRaw)) {
-                                const decimals = (statKey === 'L10_KD' || statKey === 'S_KD') ? 2 : (statKey.includes('ADR') ? 0 : 1);
+                                const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('HLTV') || statKey.includes('KD')) ? 2 : 1;
                                 originalValue = valueRaw.toFixed(decimals);
                              }
                             return `${datasetLabel} - ${statConfig.label}: ${originalValue}`;
