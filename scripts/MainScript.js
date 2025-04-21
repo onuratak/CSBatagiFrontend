@@ -117,13 +117,8 @@ function showPage(pageId) {
         TeamPicker.init();
     }
 
-    // Call Players page initializer when showing players page
-    if (pageId === 'players' && typeof window.initializePlayersPage === 'function') {
-        window.initializePlayersPage(); // Initialize if not already done (check is inside the function)
-    }
-
-     // Close mobile menu after selecting an item (optional but good UX)
-     if (navLinksContainer.classList.contains('mobile-menu-active')) {
+    // Close mobile menu after selecting an item (optional but good UX)
+    if (navLinksContainer.classList.contains('mobile-menu-active')) {
         toggleMobileMenu(false); // Force close - REVERTED
         // Explicitly close the menu - REMOVED
         // menuButton.setAttribute('aria-expanded', 'false');
@@ -131,7 +126,7 @@ function showPage(pageId) {
         // iconClose.classList.add('hidden');
         // navLinksContainer.classList.add('hidden');
         // navLinksContainer.classList.remove('mobile-menu-active');
-     }
+    }
 }
 
 /**
