@@ -2,6 +2,37 @@
 // --- Team Picker Module/Object --- 
 // ==================================================
 
+// --- NEW: Fixed Config for Team Comparison Chart ---
+const TEAM_CHART_STATS = {
+    L10_HLTV2: { label: 'L10 HLTV' },
+    L10_ADR: { label: 'L10 ADR' },
+    L10_KD: { label: 'L10 K/D' },
+    S_HLTV2: { label: 'S HLTV' },
+    S_ADR: { label: 'S ADR' },
+};
+
+const TEAM_CHART_FIXED_RANGES = {
+    L10_HLTV2: { min: 0.7, max: 1.4 },
+    L10_ADR: { min: 75, max: 100 },
+    L10_KD: { min: 0.7, max: 1.4 },
+    S_HLTV2: { min: 0.7, max: 1.4 },
+    S_ADR: { min: 75, max: 100 },
+};
+// --- End Fixed Config ---
+
+// --- NEW: Helper to normalize using fixed ranges ---
+function normalizeStatWithFixedRange(value, statKey, fixedRanges) {
+    const range = fixedRanges[statKey];
+    if (!range || range.max === range.min || typeof value !== 'number' || isNaN(value)) {
+        return 0; // Return 0 if range is invalid or value is not a number
+    }
+    // Clamp the value within the fixed range before normalizing
+    const clampedValue = Math.max(range.min, Math.min(range.max, value));
+    const normalized = ((clampedValue - range.min) / (range.max - range.min)) * 100;
+    return Math.max(0, Math.min(100, normalized)); // Ensure result is between 0 and 100
+}
+// --- End Helper ---
+
 const TeamPicker = {
     // --- Constants (Specific to Team Picker) ---
     KABILE_JSON_URL: 'data/kabile.json',
@@ -26,6 +57,9 @@ const TeamPicker = {
     MAX_PLAYERS_PER_TEAM: 15,
     dbRef: null, // Firebase database reference
     listenersAttached: false, // Flag to prevent duplicate listeners
+    teamAPlayersData: [], // Store full player data for Team A
+    teamBPlayersData: [], // Store full player data for Team B
+    teamComparisonChartInstance: null, // Store chart instance
 
     /**
      * Initializes the team picker page
@@ -132,26 +166,32 @@ const TeamPicker = {
         this.dbRef.child('teamA').on('value', (snapshot) => {
             const teamAData = snapshot.val() || { players: {}, kabile: '' };
             TeamPicker.teamAName = teamAData.kabile || 'Team A';
-            TeamPicker.teamAPlayers = teamAData.players ? Object.keys(teamAData.players).map(name => ({ name })) : [];
+            // Store full player data object from Firebase
+            TeamPicker.teamAPlayersData = teamAData.players ? Object.values(teamAData.players) : [];
+            // Update simple name list for display slots (compatibility)
+            TeamPicker.teamAPlayers = TeamPicker.teamAPlayersData.map(p => ({ name: p.name })); 
             TeamPicker.updatePlayerSlots('team-a-players', TeamPicker.teamAPlayers);
-            TeamPicker.updateAvailablePlayerDisplay(); // Refresh available list view
+            TeamPicker.updateAvailablePlayerDisplay();
             const teamAKabileSelect = document.getElementById('team-a-kabile');
             if(teamAKabileSelect) teamAKabileSelect.value = teamAData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
-            TeamPicker.updateStatsDifferenceDisplay(); // Update diff display
+            TeamPicker.updateStatsDifferenceDisplay(); // Update diff display & trigger chart update
         });
 
         // Listener for Team B
         this.dbRef.child('teamB').on('value', (snapshot) => {
             const teamBData = snapshot.val() || { players: {}, kabile: '' };
             TeamPicker.teamBName = teamBData.kabile || 'Team B';
-            TeamPicker.teamBPlayers = teamBData.players ? Object.keys(teamBData.players).map(name => ({ name })) : [];
+            // Store full player data object from Firebase
+            TeamPicker.teamBPlayersData = teamBData.players ? Object.values(teamBData.players) : [];
+            // Update simple name list for display slots (compatibility)
+            TeamPicker.teamBPlayers = TeamPicker.teamBPlayersData.map(p => ({ name: p.name }));
             TeamPicker.updatePlayerSlots('team-b-players', TeamPicker.teamBPlayers);
-            TeamPicker.updateAvailablePlayerDisplay(); // Refresh available list view
+            TeamPicker.updateAvailablePlayerDisplay();
             const teamBKabileSelect = document.getElementById('team-b-kabile');
             if(teamBKabileSelect) teamBKabileSelect.value = teamBData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
-            TeamPicker.updateStatsDifferenceDisplay(); // Update diff display
+            TeamPicker.updateStatsDifferenceDisplay(); // Update diff display & trigger chart update
         });
 
         // Listener for Maps
@@ -530,80 +570,82 @@ const TeamPicker = {
         
         if (teamPlayers.length === 0) {
              container.innerHTML = '<p class="text-center text-gray-500 text-sm py-2">No players assigned.</p>';
-             return; // No need to add table structure if empty
-        }
+             // REMOVED EARLY RETURN: We still need to update/clear the stats below
+             // return; 
+        } else {
+            // Create table structure for assigned players
+            const table = document.createElement('table');
+            table.className = 'w-full border-collapse text-xs'; // text-xs for consistency
 
-        // Create table structure for assigned players
-        const table = document.createElement('table');
-        table.className = 'w-full border-collapse text-xs'; // text-xs for consistency
+            const thead = document.createElement('thead');
+            // Use <br> for line breaks in headers, remove whitespace-nowrap
+            thead.innerHTML = `
+                <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase sticky top-0 z-10">
+                    <th class="px-1 py-1">Player</th>
+                    <th class="px-1 py-1 text-center">L10<br>HLT</th>
+                    <th class="px-1 py-1 text-center">L10<br>ADR</th>
+                    <th class="px-1 py-1 text-center">L10<br>K/D</th>
+                    <th class="px-1 py-1 text-center">S<br>HLT</th>
+                    <th class="px-1 py-1 text-center">S<br>ADR</th>
+                    <th class="px-1 py-1 text-center">S<br>K/D</th>
+                    <th class="px-1 py-1 text-center">Action</th>
+                </tr>
+            `;
+            table.appendChild(thead);
 
-        const thead = document.createElement('thead');
-         // Use <br> for line breaks in headers, remove whitespace-nowrap
-        thead.innerHTML = `
-            <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase sticky top-0 z-10">
-                <th class="px-1 py-1">Player</th>
-                <th class="px-1 py-1 text-center">L10<br>HLT</th>
-                <th class="px-1 py-1 text-center">L10<br>ADR</th>
-                <th class="px-1 py-1 text-center">L10<br>K/D</th>
-                <th class="px-1 py-1 text-center">S<br>HLT</th>
-                <th class="px-1 py-1 text-center">S<br>ADR</th>
-                <th class="px-1 py-1 text-center">S<br>K/D</th>
-                <th class="px-1 py-1 text-center">Action</th>
-            </tr>
-        `;
-        table.appendChild(thead);
+            const tbody = document.createElement('tbody');
+            tbody.id = `team-${teamId}-tbody`;
+            
+            // Merge players with stats and sort
+            const teamPlayersWithStats = teamPlayers
+                .map(p => TeamPicker.mergePlayerWithStats(p)) // Ensure stats are present
+                .sort((a, b) => { // Sort by L10 HLTV descending
+                    const valueA = a.stats?.L10_HLTV2 ?? -Infinity;
+                    const valueB = b.stats?.L10_HLTV2 ?? -Infinity;
+                    return valueB - valueA;
+                });
 
-        const tbody = document.createElement('tbody');
-        tbody.id = `team-${teamId}-tbody`;
-        
-        // Merge players with stats and sort
-        const teamPlayersWithStats = teamPlayers
-            .map(p => TeamPicker.mergePlayerWithStats(p)) // Ensure stats are present
-            .sort((a, b) => { // Sort by L10 HLTV descending
-                const valueA = a.stats?.L10_HLTV2 ?? -Infinity;
-                const valueB = b.stats?.L10_HLTV2 ?? -Infinity;
-                return valueB - valueA;
+            teamPlayersWithStats.forEach(player => {
+                const row = document.createElement('tr');
+                row.className = `border-b border-gray-200 bg-${teamColor}-50`;
+                row.dataset.playerName = player.name;
+
+                row.innerHTML = `
+                    <td class="px-1 py-1 font-medium text-gray-900">${player.name}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_HLTV2)}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_ADR, 0)}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_KD)}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_HLTV2)}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_ADR, 0)}</td>
+                    <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_KD)}</td>
+                    <td class="px-1 py-1 text-center">
+                         <button data-player="${player.name}" class="remove-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
+                     </td>
+                `;
+                tbody.appendChild(row);
             });
 
-        teamPlayersWithStats.forEach(player => {
-            const row = document.createElement('tr');
-            row.className = `border-b border-gray-200 bg-${teamColor}-50`;
-            row.dataset.playerName = player.name;
+            table.appendChild(tbody);
 
-            row.innerHTML = `
-                <td class="px-1 py-1 font-medium text-gray-900">${player.name}</td>
-                <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_HLTV2)}</td>
-                <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_ADR, 0)}</td>
-                <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_KD)}</td>
-                <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_HLTV2)}</td>
-                <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_ADR, 0)}</td>
-                <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_KD)}</td>
-                <td class="px-1 py-1 text-center">
-                     <button data-player="${player.name}" class="remove-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
-                 </td>
-            `;
-            tbody.appendChild(row);
-        });
+            // --- Add Averages Row --- (Only if there are players)
+            const averagesRow = table.createTFoot().insertRow(0);
+            averagesRow.id = `team-${teamId}-averages-row`;
+            averagesRow.className = `bg-${teamColor}-200 font-bold text-${teamColor}-800 text-xs`; // Style for averages
+            averagesRow.innerHTML = `
+                 <td class="px-1 py-1 whitespace-nowrap">TEAM AVG</td>
+                 <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="L10_HLTV2">N/A</td>
+                 <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="L10_ADR">N/A</td>
+                 <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="L10_KD">N/A</td>
+                 <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_HLTV2">N/A</td>
+                 <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_ADR">N/A</td>
+                 <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_KD">N/A</td>
+                 <td class="px-1 py-1"></td> <!-- Empty cell for actions -->
+             `;
+            container.appendChild(table);
+        } // End else block for non-empty team
 
-        table.appendChild(tbody);
-
-        // --- Add Averages Row ---
-        const averagesRow = table.createTFoot().insertRow(0);
-        averagesRow.id = `team-${teamId}-averages-row`;
-        averagesRow.className = `bg-${teamColor}-200 font-bold text-${teamColor}-800 text-xs`; // Style for averages
-        averagesRow.innerHTML = `
-             <td class="px-1 py-1 whitespace-nowrap">TEAM AVG</td>
-             <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="L10_HLTV2">N/A</td>
-             <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="L10_ADR">N/A</td>
-             <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="L10_KD">N/A</td>
-             <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_HLTV2">N/A</td>
-             <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_ADR">N/A</td>
-             <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_KD">N/A</td>
-             <td class="px-1 py-1"></td> <!-- Empty cell for actions -->
-         `;
-        container.appendChild(table);
-
-        // Calculate and update stats after rendering table structure
+        // Calculate and update stats after rendering table structure (or clearing it)
+        // THIS CALL IS NOW UNCONDITIONAL
         TeamPicker.updateTeamStats(teamId);
     },
 
@@ -674,90 +716,193 @@ const TeamPicker = {
     },
 
     /**
-     * Calculates and displays the difference between Team A and Team B averages.
-     * REVISED: Calculates averages directly from current team lists to avoid potential async issues.
+     * Updates the team stats difference display AND the comparison chart.
      */
     updateStatsDifferenceDisplay: function() {
         const diffContainer = document.getElementById('team-stats-diff');
         if (!diffContainer) return;
 
-        const statsToCompare = ['L10_HLTV2', 'L10_ADR', 'L10_KD', 'S_HLTV2', 'S_ADR', 'S_KD'];
+        // --- Update Difference Display (Use stored averages) ---
+        const diffElements = diffContainer.querySelectorAll('[data-diff-stat]');
+        diffElements.forEach(el => {
+            const key = el.dataset.diffStat; // Key like 'L10_HLTV2' or 'S_ADR'
+            let valA = TeamPicker.teamAAverages[key];
+            let valB = TeamPicker.teamBAverages[key];
 
-        // Helper function to calculate averages for a given team list
-        const calculateAverages = (teamPlayers) => {
-            const averages = {};
-            if (!teamPlayers || teamPlayers.length === 0) {
-                return averages; // Return empty object if no players
+            if (typeof valA === 'number' && typeof valB === 'number' && !isNaN(valA) && !isNaN(valB)) {
+                const diff = valA - valB;
+                // Adjust formatting precision based on stat type
+                const decimals = (key === 'L10_KD' || key === 'S_KD') ? 2 : (key.includes('ADR') ? 0 : 1);
+                el.textContent = diff.toFixed(decimals);
+                el.className = 'text-center '; // Reset classes
+                if (diff > 0.001) el.classList.add('text-green-600', 'font-medium'); // Add small tolerance for floating point
+                else if (diff < -0.001) el.classList.add('text-red-600', 'font-medium');
+                else el.classList.add('text-gray-500');
+            } else {
+                el.textContent = '-';
+                el.className = 'text-center text-gray-500';
             }
+        });
+        // --- End Difference Display Update ---
 
-            const teamPlayersWithStats = teamPlayers.map(p => TeamPicker.mergePlayerWithStats(p));
-            const sums = {};
-            const counts = {};
+        // --- Update Pentagon Chart ---
+        // 1. Use the fixed stats config defined above
+        const chartStatsConfig = TEAM_CHART_STATS;
+        const chartStatKeys = Object.keys(chartStatsConfig);
 
-            statsToCompare.forEach(stat => {
-                sums[stat] = 0;
-                counts[stat] = 0;
-            });
+        // 2. Extract average values for the fixed stats from stored averages
+        const teamAChartData = {};
+        const teamBChartData = {};
 
-            teamPlayersWithStats.forEach(player => {
-                statsToCompare.forEach(stat => {
-                    const value = player.stats?.[stat];
-                    if (value !== undefined && value !== null && !isNaN(value)) {
-                        sums[stat] += value;
-                        counts[stat]++;
-                    }
-                });
-            });
+        chartStatKeys.forEach(key => {
+             // Keys in chartStatsConfig directly match keys in team averages (e.g., 'L10_HLTV2')
+             teamAChartData[key] = TeamPicker.teamAAverages[key] || 0; // Use stored average
+             teamBChartData[key] = TeamPicker.teamBAverages[key] || 0;
+        });
 
-            statsToCompare.forEach(statKey => {
-                if (counts[statKey] > 0) {
-                    averages[statKey] = sums[statKey] / counts[statKey];
+        // 3. Normalize data using the fixed ranges and the new helper
+        const normalizedTeamA = chartStatKeys.map(key => normalizeStatWithFixedRange(teamAChartData[key], key, TEAM_CHART_FIXED_RANGES));
+        const normalizedTeamB = chartStatKeys.map(key => normalizeStatWithFixedRange(teamBChartData[key], key, TEAM_CHART_FIXED_RANGES));
+
+        // 4. Render the chart
+        TeamPicker.renderTeamComparisonChart(
+            normalizedTeamA,
+            normalizedTeamB,
+            chartStatsConfig, // Pass the fixed config for labels
+            teamAChartData, // Pass original averages for tooltips
+            teamBChartData,
+            TEAM_CHART_FIXED_RANGES // Pass fixed ranges for axis label formatting
+        );
+        // --- End Pentagon Chart Update ---
+    },
+
+    /**
+     * Renders the team comparison radar chart.
+     * @param {Array<number>} normalizedDataA - Normalized data for Team A.
+     * @param {Array<number>} normalizedDataB - Normalized data for Team B.
+     * @param {Object} chartStatsConfig - Config object for the stats being displayed.
+     * @param {Object} originalAvgsA - Original (non-normalized) average stats for Team A.
+     * @param {Object} originalAvgsB - Original (non-normalized) average stats for Team B.
+     * @param {Object} fixedRanges - The fixed min/max ranges for the stats.
+     */
+    renderTeamComparisonChart: function(normalizedDataA, normalizedDataB, chartStatsConfig, originalAvgsA, originalAvgsB, fixedRanges) {
+        const canvasId = 'team-picker-pentagon-chart';
+        const ctx = document.getElementById(canvasId)?.getContext('2d');
+        if (!ctx) {
+            console.error(`Team comparison chart canvas with id '${canvasId}' not found!`);
+            return;
+        }
+
+        const labels = Object.values(chartStatsConfig).map(config => config.label);
+        const statKeys = Object.keys(chartStatsConfig);
+
+        const chartData = {
+            labels: labels,
+            datasets: [
+                {
+                    label: TeamPicker.teamAName || 'Team A',
+                    data: normalizedDataA,
+                    fill: true,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)', // Blue
+                    borderColor: 'rgb(54, 162, 235)',
+                    pointBackgroundColor: 'rgb(54, 162, 235)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(54, 162, 235)',
+                    borderWidth: 1.5,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                },
+                {
+                    label: TeamPicker.teamBName || 'Team B',
+                    data: normalizedDataB,
+                    fill: true,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)', // Green (adjust color if needed)
+                    borderColor: 'rgb(75, 192, 192)',
+                    pointBackgroundColor: 'rgb(75, 192, 192)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(75, 192, 192)',
+                    borderWidth: 1.5,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
                 }
-            });
-            return averages;
+            ]
         };
 
-        // Calculate current averages directly
-        const currentTeamAAverages = calculateAverages(TeamPicker.teamAPlayers);
-        const currentTeamBAverages = calculateAverages(TeamPicker.teamBPlayers);
-
-
-        statsToCompare.forEach(statKey => {
-            const diffCell = diffContainer.querySelector(`div[data-diff-stat="${statKey}"]`);
-            if (!diffCell) return;
-
-            // Use the freshly calculated averages
-            const avgA = currentTeamAAverages[statKey];
-            const avgB = currentTeamBAverages[statKey];
-            const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('KD') ? 1 : 2);
-
-            if (avgA !== undefined && avgB !== undefined) {
-                const diff = avgA - avgB;
-                // Format with explicit plus sign for positive differences
-                const formattedDiff = (diff > 0 ? '+' : '') + diff.toFixed(decimals); 
-                let displayVal = '';
-                let textColor = 'text-gray-700'; // Default color
-
-                if (diff > 0) {
-                     // Include "(A)" to indicate Team A is higher
-                    displayVal = `${formattedDiff} (A)`;
-                    textColor = 'text-blue-600'; 
-                } else if (diff < 0) {
-                     // Include "(B)" to indicate Team B is higher
-                    displayVal = `${formattedDiff} (B)`; // Negative sign included by toFixed
-                    textColor = 'text-green-600';
-                } else {
-                    displayVal = diff.toFixed(decimals); // Just "0.0" or "0.00"
-                    textColor = 'text-gray-500';
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { display: true, lineWidth: 0.5, color: 'rgba(0, 0, 0, 0.1)' },
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    ticks: { display: false }, // Keep radial ticks hidden (0-100)
+                    pointLabels: {
+                        font: { size: 9, weight: 'normal' },
+                        color: '#4b5563',
+                        // NEW: Callback to add ranges to point labels
+                        callback: function(pointLabel, index) {
+                            const statKey = statKeys[index];
+                            const range = fixedRanges[statKey];
+                            const statConfig = chartStatsConfig[statKey];
+                            if (range && statConfig) {
+                                // Format based on stat type for range display
+                                const decimals = (statKey === 'L10_KD' || statKey === 'S_KD') ? 1 : (statKey.includes('ADR') ? 0 : 1);
+                                return `${statConfig.label} (${range.min.toFixed(decimals)}-${range.max.toFixed(decimals)})`;
+                            }
+                            return statConfig ? statConfig.label : ''; // Fallback
+                        }
+                    },
+                    grid: { color: 'rgba(0, 0, 0, 0.08)', lineWidth: 0.5 }
                 }
-                diffCell.textContent = displayVal;
-                diffCell.className = `text-center ${textColor}`; // Apply text color
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                     labels: {
+                        boxWidth: 20,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            const datasetLabel = context.dataset.label || '';
+                            const statIndex = context.dataIndex;
+                            const statKey = statKeys[statIndex]; // Use statKeys from outer scope
+                            const statConfig = chartStatsConfig[statKey]; // Use chartStatsConfig
+                            let originalValue = 'N/A';
 
-            } else {
-                // If either average is missing, display '-'
-                diffCell.textContent = '-';
-                diffCell.className = 'text-center text-gray-500'; // Reset color
-            }
+                            const originalData = (datasetLabel === (TeamPicker.teamAName || 'Team A')) ? originalAvgsA : originalAvgsB;
+                            const valueRaw = originalData[statKey];
+
+                             // Format the original value based on stat type
+                             if (typeof valueRaw === 'number' && !isNaN(valueRaw)) {
+                                const decimals = (statKey === 'L10_KD' || statKey === 'S_KD') ? 2 : (statKey.includes('ADR') ? 0 : 1);
+                                originalValue = valueRaw.toFixed(decimals);
+                             }
+                            return `${datasetLabel} - ${statConfig.label}: ${originalValue}`;
+                        }
+                    }
+                }
+            },
+            layout: { padding: { top: 5, bottom: 5, left: 15, right: 15 } } // Increased horizontal padding for labels
+        };
+
+        // Destroy previous chart instance if it exists
+        if (TeamPicker.teamComparisonChartInstance) {
+            TeamPicker.teamComparisonChartInstance.destroy();
+        }
+
+        // Create new chart instance and store it
+        TeamPicker.teamComparisonChartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: chartData,
+            options: options
         });
     },
 
