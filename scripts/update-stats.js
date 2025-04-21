@@ -558,9 +558,12 @@ async function updateSeasonAvgStats() {
         const parsedValue = parseFn(value);
         return isNaN(parsedValue) ? defaultValue : parsedValue;
       };
+      // Get steam_id directly
+      const steamId = row[columnMap['steam_id'.toLowerCase()]];
 
       // Access data using the getData helper function
       return { 
+        steam_id: steamId, // Add steam_id here
         name: row[columnMap['name'.toLowerCase()]], // Name is likely a string, handle separately if needed
         hltv_2: getData('hltv_2'),
         adr: getData('adr'),
@@ -639,9 +642,12 @@ async function updateNightAvgStats() {
         const parsedValue = parseFn(value);
         return isNaN(parsedValue) ? defaultValue : parsedValue;
       };
+      // Get steam_id directly
+      const steamId = row[columnMap['steam_id'.toLowerCase()]];
 
       // Access data using the getData helper function and map to desired JSON keys
       return { 
+        steam_id: steamId, // Add steam_id here
         name: row[columnMap['name'.toLowerCase()]], // Name is likely a string
         "HLTV 2": getData('hltv_2'),
         "ADR": getData('adr'),
@@ -718,10 +724,13 @@ async function updateLast10Stats() {
         const parsedValue = parseFn(value);
         return isNaN(parsedValue) ? defaultValue : parsedValue;
       };
+      // Get steam_id directly
+      const steamId = row[columnMap['steam_id'.toLowerCase()]];
 
       // Access data using the getData helper function
       // Note: This structure mirrors seasonAvg as the query selects similar fields
       return { 
+        steam_id: steamId, // Add steam_id here
         name: row[columnMap['name'.toLowerCase()]], 
         hltv_2: getData('hltv_2'),
         adr: getData('adr'),
@@ -808,6 +817,7 @@ async function updateSonMacStats() {
       const teamName = row[columnMap['team_name']];
       const teamScore = getData(row, 'team_score', parseInt, 0); // Assuming score is integer
       const playerName = row[columnMap['name']];
+      const steamId = row[columnMap['steam_id']]; // Get steam_id
 
       if (!mapsData[mapName]) {
         mapsData[mapName] = { team1: null, team2: null };
@@ -842,6 +852,7 @@ async function updateSonMacStats() {
       // Map player stats - matching keys expected by index.html createTeamSection
       const playerStats = {
         name: playerName,
+        steam_id: steamId, // Add steam_id here
         hltv_2: getData(row, 'hltv_2'),
         adr: getData(row, 'adr'),
         kd: getData(row, 'kd'),
@@ -1092,6 +1103,7 @@ async function updatePerformanceGraphsStats() {
       // Use getData helper for numeric values, allowing nulls
       const hltv_2_raw = row[columnMap['hltv_2']];
       const adr_raw = row[columnMap['adr']];
+      const steamId = row[columnMap['steam_id']]; // Get steam_id
 
       // Parse only if not null, otherwise keep null
       const hltv_2 = (hltv_2_raw !== null && hltv_2_raw !== undefined) ? parseFloat(hltv_2_raw) : null;
@@ -1105,8 +1117,12 @@ async function updatePerformanceGraphsStats() {
       if (!groupedData[name]) {
         groupedData[name] = {
           name: name,
+          steam_id: steamId, // Ensure steam_id is added here
           performance: []
         };
+      } else if (!groupedData[name].steam_id) {
+          // Add steam_id if the player object already exists but lacks it
+          groupedData[name].steam_id = steamId; 
       }
 
       groupedData[name].performance.push({

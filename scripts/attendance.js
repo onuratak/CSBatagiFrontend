@@ -206,12 +206,21 @@ const Attendance = {
             if (typeof database !== 'undefined' && database !== null && this.ATTENDANCE_DB_PATH) {
                 try {
                     const initialFirebaseState = {};
+                    // NEW: Build state keyed by steamId
                     players.forEach(player => {
-                        initialFirebaseState[player.name] = player.attendance || 'no_response';
+                        if (player.steamId && player.name) { // Ensure we have ID and name
+                             const steamIdStr = String(player.steamId); // Ensure string key
+                             initialFirebaseState[steamIdStr] = { 
+                                 name: player.name, 
+                                 status: player.attendance || 'no_response' 
+                             };
+                        } else {
+                             console.warn("Skipping player for initial Firebase sync due to missing steamId or name:", player);
+                        }
                     });
                     const attendanceRef = database.ref(this.ATTENDANCE_DB_PATH);
                     await attendanceRef.set(initialFirebaseState);
-                    console.log("Initial attendance state synced to Firebase.");
+                    console.log("Initial attendance state (keyed by steamId) synced to Firebase.");
                 } catch (firebaseError) {
                     console.error("Failed to sync initial attendance state to Firebase:", firebaseError);
                     // Show a message? Maybe not critical if render still works.
@@ -222,12 +231,15 @@ const Attendance = {
             // --- End Firebase Initial Sync --- 
 
             // Initial Render: Call the UI update function AFTER fetch and initial sync are complete
-            // Pass the state we just synced to Firebase for consistency
-            const initialFirebaseState = {};
+            // Rebuild the state object in the format expected by the original UI update function
+            // (The listener in *this* file expects { playerName: status })
+            const stateForLocalUI = {};
             players.forEach(player => {
-                initialFirebaseState[player.name] = player.attendance || 'no_response';
+                 if(player.name) {
+                    stateForLocalUI[player.name] = player.attendance || 'no_response';
+                 }
             });
-            this.updateAttendanceUIFromFirebase(initialFirebaseState);
+            this.updateAttendanceUIFromFirebase(stateForLocalUI);
             
             // showMessage('Attendance data loaded!', 'success');
         } catch (err) {
@@ -248,55 +260,62 @@ const Attendance = {
      */
     syncAttendanceUpdate: async function(playerName, newAttendance) {
         console.log(`Syncing update for ${playerName} to ${newAttendance} (Firebase & Sheet)`);
-
-        // --- 1. Update Firebase --- 
+        
+        // --- Update Firebase using steamId --- 
         if (typeof database !== 'undefined' && database !== null && this.ATTENDANCE_DB_PATH) {
             try {
-                const playerRef = database.ref(this.ATTENDANCE_DB_PATH).child(playerName);
-                await playerRef.set(newAttendance);
-                console.log(`Attendance updated successfully in Firebase for ${playerName}`);
+                // Find the player in the global players array to get steamId
+                const player = players.find(p => p.name === playerName);
+                if (!player || !player.steamId) {
+                    throw new Error(`Could not find player or steamId for ${playerName} to update Firebase.`);
+                }
+                const steamIdStr = String(player.steamId); // Ensure string key
+                const playerStatusRef = database.ref(`${this.ATTENDANCE_DB_PATH}/${steamIdStr}/status`);
+                await playerStatusRef.set(newAttendance);
+                console.log(`Firebase attendance status updated for ${playerName} (ID: ${steamIdStr}).`);
             } catch (firebaseError) {
-                console.error(`Failed to update attendance in Firebase for ${playerName}:`, firebaseError);
-                // Don't necessarily show a message here, as the sheet update might still succeed,
-                // but log the error for debugging.
+                console.error("Failed to update Firebase attendance status:", firebaseError);
+                showMessage(`Error syncing status for ${playerName} to database.`, "error");
+                // Consider if we should stop or still try to update the sheet
             }
         } else {
-            console.error('Firebase database not available or ATTENDANCE_DB_PATH not set. Skipping Firebase update.');
+            console.warn('Firebase database not available. Skipping Firebase sync for attendance update.');
+            // Optionally show a less severe warning to the user?
         }
+        // --- End Firebase Update --- 
 
-        // --- 2. Update Google Sheet (Existing Logic) --- 
+        // --- Update Google Sheet (existing logic) --- 
         try {
-            const response = await fetch(APPS_SCRIPT_URL, { // Uses global constant
+            const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
+                    'Content-Type': 'application/json'
                 },
-                 body: JSON.stringify({ name: playerName, attendance: newAttendance }),
+                body: JSON.stringify({ 
+                    playerName: playerName, 
+                    newAttendance: newAttendance 
+                })
             });
-
-             if (!response.ok) {
-                 let errorText = `Network response was not ok (Status: ${response.status})`;
-                 try {
+            if (!response.ok) {
+                let errorDetails = `HTTP error! Status: ${response.status}`;
+                try {
                     const errorData = await response.json();
-                    errorText += `: ${errorData.message || JSON.stringify(errorData)}`;
-                 } catch(e) {
-                    errorText = await response.text();
-                 }
-                 throw new Error(errorText);
-             }
-             // Optional: Process success response
-             // const result = await response.json(); 
-             // console.log('Update successful:', result);
-
-            console.log(`Attendance updated successfully in sheet for ${playerName} to ${newAttendance}`);
-            // showMessage(`${playerName}'s status updated!`, 'success', 2000); // Uses global showMessage
-
-        } catch (error) {
-            console.error('Failed to update attendance in sheet:', error);
-            showMessage(`Failed to update status for ${playerName}: ${error.message}`, 'error'); // Uses global showMessage
-            // Consider reverting UI or refetching on error
-            // await this.fetchStatsFromSheet();
+                    errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
+                } catch (e) { /* Ignore */ }
+                throw new Error(errorDetails);
+            }
+            const result = await response.json();
+            if (result.success) {
+                console.log(`Successfully updated sheet for ${playerName}`);
+                // No message shown here as Firebase listener handles UI update
+            } else {
+                throw new Error(result.message || "Unknown error updating sheet.");
+            }
+        } catch (err) {
+            console.error(`Failed to sync update for ${playerName} to sheet:`, err);
+            showMessage(`Error updating status for ${playerName} in sheet: ${err.message}`, 'error');
         }
+        // --- End Sheet Update --- 
     },
 
     /**

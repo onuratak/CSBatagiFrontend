@@ -41,10 +41,10 @@ const TeamPicker = {
 
     // --- State (specific to Team Picker) ---
     // These will now be primarily populated/updated by Firebase listeners
-    availablePlayers: [], // Populated by updateAvailablePlayerDisplay
-    currentAttendanceData: {}, // Stores latest { playerName: status } from Firebase
-    teamAPlayers: [],
-    teamBPlayers: [],
+    availablePlayers: {}, // CHANGED: Use map keyed by steamId { steamId: { name: ..., steamId: ..., status: ..., stats: ... } }
+    currentAttendanceData: {}, // Stores latest { steamId: { name: ..., status: ...} } from Firebase
+    teamAPlayersData: {}, // CHANGED: Use map keyed by steamId { steamId: { name: ..., steamId: ..., stats: ... } }
+    teamBPlayersData: {}, // CHANGED: Use map keyed by steamId { steamId: { name: ..., steamId: ..., stats: ... } }
     teamAName: 'Team A', // Can be updated by Kabile selection via FB
     teamBName: 'Team B', // Can be updated by Kabile selection via FB
     mapSelections: { // Will be populated by FB listener
@@ -57,8 +57,6 @@ const TeamPicker = {
     MAX_PLAYERS_PER_TEAM: 15,
     dbRef: null, // Firebase database reference
     listenersAttached: false, // Flag to prevent duplicate listeners
-    teamAPlayersData: [], // Store full player data for Team A
-    teamBPlayersData: [], // Store full player data for Team B
     teamComparisonChartInstance: null, // Store chart instance
 
     /**
@@ -117,26 +115,71 @@ const TeamPicker = {
         if (typeof database !== 'undefined' && database !== null && Attendance.ATTENDANCE_DB_PATH) {
             const attendanceRef = database.ref(Attendance.ATTENDANCE_DB_PATH);
             attendanceRef.on('value', (snapshot) => {
-                const newAttendanceData = snapshot.val() || {};
-                console.log("TeamPicker received attendance update:", newAttendanceData); // Debug
+                const newAttendanceDataRaw = snapshot.val() || {};
+                console.log("TeamPicker received raw attendance update:", newAttendanceDataRaw);
 
-                // --- New Logic: Remove players from teams if not 'coming' anymore ---
+                // --- Process raw attendance into the steamId keyed format ---
+                // *** ASSUMPTION: newAttendanceDataRaw is like { playerName: { status: 'coming', steamId: '...' } } ***
+                // *** OR { steamId: { name: '...', status: '...' } } ***
+                // *** Adapt this processing based on your ACTUAL attendance data structure ***
+                const newAttendanceDataProcessed = {};
+                let processingError = false;
+                for (const key in newAttendanceDataRaw) {
+                    const playerData = newAttendanceDataRaw[key];
+                    let steamId = null;
+                    let playerName = null;
+                    let status = null;
+
+                    // Try to determine structure and extract data
+                    if (playerData && playerData.steamId && playerData.status) { // Assumes key is playerName
+                        steamId = playerData.steamId;
+                        playerName = key;
+                        status = playerData.status;
+                    } else if (playerData && playerData.name && playerData.status) { // Assumes key is steamId
+                        steamId = key;
+                        playerName = playerData.name;
+                        status = playerData.status;
+                    } else {
+                         console.warn(`Could not determine SteamID/Name/Status from attendance entry with key '${key}':`, playerData);
+                         processingError = true;
+                         continue; // Skip this entry
+                    }
+
+                    if (steamId && playerName && status) {
+                         // Ensure steamId is stored as a string if it's numeric
+                        const steamIdStr = String(steamId);
+                        newAttendanceDataProcessed[steamIdStr] = { name: playerName, status: status, steamId: steamIdStr };
+                    } else {
+                        console.warn(`Missing required data (SteamID, Name, or Status) for attendance entry with key '${key}`);
+                         processingError = true;
+                    }
+                }
+                if(processingError) {
+                    showMessage("Warning: Some attendance data could not be processed. Check format.", 'warning');
+                }
+                console.log("TeamPicker processed attendance data:", newAttendanceDataProcessed);
+                // --- End processing --- 
+
+                // --- New Logic: Remove players from teams if not 'coming' anymore --- 
                 const updates = {};
                 const playersToRemove = [];
 
-                // Check Team A
-                TeamPicker.teamAPlayers.forEach(player => {
-                    if (newAttendanceData[player.name] !== 'coming') {
-                        updates[`${TeamPicker.DB_PATH}/teamA/players/${player.name}`] = null;
-                        playersToRemove.push(player.name);
+                // Check Team A (using steamId as key)
+                Object.keys(TeamPicker.teamAPlayersData).forEach(steamId => {
+                    if (!newAttendanceDataProcessed[steamId] || newAttendanceDataProcessed[steamId].status !== 'coming') {
+                        updates[`${TeamPicker.DB_PATH}/teamA/players/${steamId}`] = null;
+                        playersToRemove.push(TeamPicker.teamAPlayersData[steamId]?.name || steamId); // Log name or ID
                     }
                 });
 
-                // Check Team B
-                TeamPicker.teamBPlayers.forEach(player => {
-                    if (newAttendanceData[player.name] !== 'coming') {
-                        updates[`${TeamPicker.DB_PATH}/teamB/players/${player.name}`] = null;
-                        playersToRemove.push(player.name); // Add to list even if already added from Team A (harmless)
+                // Check Team B (using steamId as key)
+                Object.keys(TeamPicker.teamBPlayersData).forEach(steamId => {
+                    if (!newAttendanceDataProcessed[steamId] || newAttendanceDataProcessed[steamId].status !== 'coming') {
+                        // Avoid duplicate remove update if already removed from Team A (Firebase handles this fine)
+                        updates[`${TeamPicker.DB_PATH}/teamB/players/${steamId}`] = null;
+                        if (!playersToRemove.includes(TeamPicker.teamBPlayersData[steamId]?.name || steamId)) {
+                             playersToRemove.push(TeamPicker.teamBPlayersData[steamId]?.name || steamId);
+                        }
                     }
                 });
 
@@ -152,7 +195,7 @@ const TeamPicker = {
                 // --- End New Logic ---
 
                 // Update local state and refresh available players list
-                this.currentAttendanceData = newAttendanceData; 
+                this.currentAttendanceData = newAttendanceDataProcessed; 
                 this.updateAvailablePlayerDisplay(); // Update the list based on new attendance
             }, (error) => {
                 console.error("Firebase attendance listener error in TeamPicker:", error);
@@ -166,12 +209,11 @@ const TeamPicker = {
         this.dbRef.child('teamA').on('value', (snapshot) => {
             const teamAData = snapshot.val() || { players: {}, kabile: '' };
             TeamPicker.teamAName = teamAData.kabile || 'Team A';
-            // Store full player data object from Firebase
-            TeamPicker.teamAPlayersData = teamAData.players ? Object.values(teamAData.players) : [];
-            // Update simple name list for display slots (compatibility)
-            TeamPicker.teamAPlayers = TeamPicker.teamAPlayersData.map(p => ({ name: p.name })); 
-            TeamPicker.updatePlayerSlots('team-a-players', TeamPicker.teamAPlayers);
-            TeamPicker.updateAvailablePlayerDisplay();
+            // Store player map directly from Firebase
+            TeamPicker.teamAPlayersData = teamAData.players || {};
+            // Update slots using the new map structure
+            TeamPicker.updatePlayerSlots('team-a-players', TeamPicker.teamAPlayersData, 'a');
+            TeamPicker.updateAvailablePlayerDisplay(); // Refresh available list display state
             const teamAKabileSelect = document.getElementById('team-a-kabile');
             if(teamAKabileSelect) teamAKabileSelect.value = teamAData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
@@ -182,12 +224,11 @@ const TeamPicker = {
         this.dbRef.child('teamB').on('value', (snapshot) => {
             const teamBData = snapshot.val() || { players: {}, kabile: '' };
             TeamPicker.teamBName = teamBData.kabile || 'Team B';
-            // Store full player data object from Firebase
-            TeamPicker.teamBPlayersData = teamBData.players ? Object.values(teamBData.players) : [];
-            // Update simple name list for display slots (compatibility)
-            TeamPicker.teamBPlayers = TeamPicker.teamBPlayersData.map(p => ({ name: p.name }));
-            TeamPicker.updatePlayerSlots('team-b-players', TeamPicker.teamBPlayers);
-            TeamPicker.updateAvailablePlayerDisplay();
+            // Store player map directly from Firebase
+            TeamPicker.teamBPlayersData = teamBData.players || {};
+            // Update slots using the new map structure
+            TeamPicker.updatePlayerSlots('team-b-players', TeamPicker.teamBPlayersData, 'b');
+            TeamPicker.updateAvailablePlayerDisplay(); // Refresh available list display state
             const teamBKabileSelect = document.getElementById('team-b-kabile');
             if(teamBKabileSelect) teamBKabileSelect.value = teamBData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
@@ -272,42 +313,55 @@ const TeamPicker = {
     handleAvailableListClick: function(event) {
         const assignButton = event.target.closest('button.assign-button');
         const removeButton = event.target.closest('button.remove-from-list-button');
+        const playerRow = event.target.closest('tr'); // Get the row element
+        const steamId = playerRow?.dataset.steamId; // Get steamId from the row
+
+        if (!steamId) return; // Need steamId to proceed
+
+        // Find the full player data from the availablePlayers map
+        const playerData = TeamPicker.availablePlayers[steamId]; 
+        if (!playerData) {
+            console.error(`Could not find player data for steamId ${steamId} in availablePlayers map.`);
+            showMessage(`Internal error: Player data not found for ${steamId}.`, 'error');
+            return;
+        }
 
         if (assignButton) {
-            // --- ASSIGN LOGIC --- 
-            const playerName = assignButton.dataset.player;
+            // --- ASSIGN LOGIC ---
             const targetTeam = assignButton.dataset.targetTeam; // 'a' or 'b'
-            if (!playerName || !targetTeam || !TeamPicker.dbRef) return;
-            console.log(`Assigning ${playerName} to Team ${targetTeam.toUpperCase()} via available list`);
-            
-            const playerData = TeamPicker.availablePlayers.find(p => p.name === playerName) || { name: playerName, stats: {} };
+            if (!targetTeam || !TeamPicker.dbRef) return;
+            console.log(`Assigning ${playerData.name} (ID: ${steamId}) to Team ${targetTeam.toUpperCase()}`);
+
             const updates = {};
+            const targetTeamPath = targetTeam === 'a' ? 'teamA' : 'teamB';
             const sourceTeamPath = targetTeam === 'a' ? 'teamB' : 'teamA';
-            
-            updates[`${TeamPicker.DB_PATH}/${targetTeam === 'a' ? 'teamA' : 'teamB'}/players/${playerName}`] = playerData;
-            updates[`${TeamPicker.DB_PATH}/${sourceTeamPath}/players/${playerName}`] = null;
-            
+
+            // Ensure player data has stats merged before assigning
+            const playerWithStats = TeamPicker.mergePlayerWithStats(playerData); // Pass the object {name, steamId, status}
+
+            updates[`${TeamPicker.DB_PATH}/${targetTeamPath}/players/${steamId}`] = playerWithStats; // Store the full object
+            updates[`${TeamPicker.DB_PATH}/${sourceTeamPath}/players/${steamId}`] = null; // Remove from the other team
+
             database.ref().update(updates)
                  .catch(error => {
-                    console.error(`Error assigning player ${playerName}:`, error);
-                    showMessage(`Failed to assign player ${playerName}.`, 'error');
+                    console.error(`Error assigning player ${playerData.name}:`, error);
+                    showMessage(`Failed to assign player ${playerData.name}.`, 'error');
                 });
 
         } else if (removeButton) {
             // --- REMOVE LOGIC (from available list view) ---
-            const playerName = removeButton.dataset.player;
             const currentTeam = removeButton.dataset.currentTeam; // 'a' or 'b'
-            if (!playerName || !currentTeam || !TeamPicker.dbRef) return;
-            console.log(`Removing ${playerName} from Team ${currentTeam.toUpperCase()} via available list`);
+            if (!currentTeam || !TeamPicker.dbRef) return;
+            console.log(`Removing ${playerData.name} (ID: ${steamId}) from Team ${currentTeam.toUpperCase()} via available list`);
 
             const teamPath = currentTeam === 'a' ? 'teamA' : 'teamB';
             const updates = {};
-            updates[`${TeamPicker.DB_PATH}/${teamPath}/players/${playerName}`] = null;
-            
+            updates[`${TeamPicker.DB_PATH}/${teamPath}/players/${steamId}`] = null;
+
             database.ref().update(updates)
                  .catch(error => {
-                    console.error(`Error removing player ${playerName}:`, error);
-                    showMessage(`Failed to remove player ${playerName}.`, 'error');
+                    console.error(`Error removing player ${playerData.name}:`, error);
+                    showMessage(`Failed to remove player ${playerData.name}.`, 'error');
                 });
         }
     },
@@ -319,21 +373,21 @@ const TeamPicker = {
       */
     handleTeamPlayerClick: function(event, teamId) {
         const button = event.target.closest('button.remove-button');
-        if (!button) return;
+        const playerRow = event.target.closest('tr'); // Get row to find steamId
+        if (!button || !playerRow) return;
 
-        const playerName = button.dataset.player;
-        if (!playerName || !TeamPicker.dbRef) return;
+        const steamId = playerRow.dataset.steamId; // Get steamId from row's dataset
+        const playerName = playerRow.dataset.playerName; // Get name for logging
 
-        console.log(`Removing ${playerName} from Team ${teamId.toUpperCase()}`); // Debug log
+        if (!steamId || !TeamPicker.dbRef) return;
+
+        console.log(`Removing ${playerName} (ID: ${steamId}) from Team ${teamId.toUpperCase()}`); // Debug log
 
         const teamPath = teamId === 'a' ? 'teamA' : 'teamB';
-        
+
         const updates = {};
-        // Remove from the current team
-        updates[`${TeamPicker.DB_PATH}/${teamPath}/players/${playerName}`] = null;
-        // Add back to available list (if syncing this via Firebase)
-        // const playerData = ... get player data if needed ...
-        // updates[`${TeamPicker.DB_PATH}/availablePlayers/${playerName}`] = playerData; 
+        // Remove from the current team using steamId
+        updates[`${TeamPicker.DB_PATH}/${teamPath}/players/${steamId}`] = null;
 
         // Perform atomic update
         database.ref().update(updates)
@@ -367,34 +421,32 @@ const TeamPicker = {
      * Called by Firebase listeners for attendance and team assignments.
      */
     updateAvailablePlayerDisplay: function() {
-        if (!this.currentAttendanceData || Object.keys(this.currentAttendanceData).length === 0) { // Check if empty too
-             // Optionally clear the display or show a loading state
-             const availablePlayersContainer = document.getElementById('available-players');
-             if (availablePlayersContainer) {
-                 availablePlayersContainer.innerHTML = '<div class="text-center py-4 text-gray-500">Loading attendance...</div>';
-             }
+        const availablePlayersContainer = document.getElementById('available-players');
+         if (!availablePlayersContainer) return; // Safety check
+
+        if (!this.currentAttendanceData || Object.keys(this.currentAttendanceData).length === 0) {
+             availablePlayersContainer.innerHTML = '<div class="text-center py-4 text-gray-500">Loading attendance...</div>';
             return; // Wait for attendance data
         }
 
-        // Filter global players based on Firebase attendance status ('coming')
-        const comingPlayerNames = Object.keys(this.currentAttendanceData).filter(
-            name => this.currentAttendanceData[name] === 'coming'
-        );
-
-        // Map names back to player objects from the global list (which has status etc.)
-        // Ensure global players is actually an array
-        const globalPlayersArray = Array.isArray(players) ? players : [];
-        const comingPlayers = globalPlayersArray.filter(p => comingPlayerNames.includes(p.name));
-
-        // Merge with stats data
-        try {
-             this.availablePlayers = comingPlayers.map(player => this.mergePlayerWithStats(player));
-        } catch (error) {
-            console.error("[updateAvailablePlayerDisplay] Error merging player stats:", error);
-            this.availablePlayers = []; // Set to empty on error
+        // --- Build the availablePlayers map --- 
+        TeamPicker.availablePlayers = {}; // Reset the map
+        for (const steamId in this.currentAttendanceData) {
+            const playerData = this.currentAttendanceData[steamId];
+            if (playerData.status === 'coming') {
+                // Start with basic data from attendance
+                const playerBase = { 
+                    name: playerData.name,
+                    steamId: steamId, // Already have it as key
+                    status: playerData.status
+                };
+                // Merge stats using steamId
+                TeamPicker.availablePlayers[steamId] = TeamPicker.mergePlayerWithStats(playerBase);
+            }
         }
+        // --- End building map --- 
 
-        this.renderAvailablePlayersTable();
+        this.renderAvailablePlayersTable(); // Re-render the table with the new map
     },
 
     /**
@@ -408,22 +460,28 @@ const TeamPicker = {
         // Clear container
         availablePlayersContainer.innerHTML = ''; // Clear previous content
         
-        if (TeamPicker.availablePlayers.length === 0) {
-            availablePlayersContainer.innerHTML = '<div class="text-center py-4 text-gray-500">No players available. Check attendance.</div>';
+        if (Object.keys(TeamPicker.availablePlayers).length === 0) {
+            availablePlayersContainer.innerHTML = '<div class="text-center py-4 text-gray-500">No players coming or attendance data missing.</div>';
             return;
         }
-        
-        // Create scrollable wrapper
+
+        // Convert map to array for sorting
+        let availablePlayersArray = Object.values(TeamPicker.availablePlayers);
+
+        // Sort by HLTV2 by default
+        availablePlayersArray.sort((a, b) => {
+            const valueA = a.stats?.L10_HLTV2 ?? -Infinity;
+            const valueB = b.stats?.L10_HLTV2 ?? -Infinity;
+            return valueB - valueA; // Descending order
+        });
+
+        // Create table structure (same as before)
         const scrollWrapper = document.createElement('div');
-        scrollWrapper.className = 'overflow-x-auto'; // Add horizontal scrolling
-        
-        // Create table
+        scrollWrapper.className = 'overflow-x-auto';
         const table = document.createElement('table');
-        table.className = 'w-full border-collapse text-xs'; // text-xs
+        table.className = 'w-full border-collapse text-xs';
         table.id = 'available-players-table';
-        
         const thead = document.createElement('thead');
-        // Use <br> for line breaks in headers, remove whitespace-nowrap
         thead.innerHTML = `
             <tr class="bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase sticky top-0 z-10">
                 <th class="px-1 py-1">Player</th>
@@ -437,102 +495,89 @@ const TeamPicker = {
                 <th class="px-1 py-1 text-center">Action</th>
             </tr>
         `;
-        
         table.appendChild(thead);
-        
         const tbody = document.createElement('tbody');
         tbody.id = 'available-players-tbody';
         table.appendChild(tbody);
-        
-        scrollWrapper.appendChild(table); // Add table to scroll wrapper
-        availablePlayersContainer.appendChild(scrollWrapper); // Add scroll wrapper to container
-        
-        // Sort by HLTV2 by default (could be made dynamic later)
-        TeamPicker.availablePlayers.sort((a, b) => {
-            const valueA = a.stats && a.stats.L10_HLTV2 !== undefined ? a.stats.L10_HLTV2 : -Infinity;
-            const valueB = b.stats && b.stats.L10_HLTV2 !== undefined ? b.stats.L10_HLTV2 : -Infinity;
-            return valueB - valueA; // Descending order
-        });
-        
-        // Render the table body rows
-        TeamPicker.availablePlayers.forEach(player => {
-            const row = TeamPicker.createAvailablePlayerRow(player);
+        scrollWrapper.appendChild(table);
+        availablePlayersContainer.appendChild(scrollWrapper);
+
+        // Render the table body rows from the sorted array
+        availablePlayersArray.forEach(player => {
+            // Pass the player object which now includes steamId
+            const row = TeamPicker.createAvailablePlayerRow(player); 
             tbody.appendChild(row);
         });
-        
+
         // After rendering, update rows based on current assignments
         TeamPicker.updateAssignedPlayersInAvailableList();
     },
     
     /**
      * Updates the visual state of rows in the available players list 
-     * based on current team assignments (TeamPicker.teamAPlayers / TeamPicker.teamBPlayers).
+     * based on current team assignments (TeamPicker.teamAPlayersData / TeamPicker.teamBPlayersData maps).
      */
     updateAssignedPlayersInAvailableList: function() {
         const tbody = document.getElementById('available-players-tbody');
         if (!tbody) return;
 
-        const assignedToA = new Set(TeamPicker.teamAPlayers.map(p => p.name));
-        const assignedToB = new Set(TeamPicker.teamBPlayers.map(p => p.name));
+        // Use the team data maps (keyed by steamId)
+        const assignedToA = TeamPicker.teamAPlayersData;
+        const assignedToB = TeamPicker.teamBPlayersData;
 
         tbody.querySelectorAll('tr').forEach(row => {
-            const playerName = row.dataset.playerName;
+            const steamId = row.dataset.steamId; // Get steamId from row
             const teamCell = row.querySelector('.player-team-cell');
             const actionCell = row.querySelector('.player-action-cell');
-            
-            if (!playerName || !teamCell || !actionCell) return;
+
+            if (!steamId || !teamCell || !actionCell) return;
 
             row.classList.remove('bg-blue-50', 'bg-green-50', 'opacity-50'); 
             actionCell.innerHTML = ''; // Clear actions
 
-            if (assignedToA.has(playerName)) {
+            if (assignedToA[steamId]) { // Check if steamId exists as key in Team A map
                 row.classList.add('bg-blue-50', 'opacity-50');
                 teamCell.textContent = 'A';
                 teamCell.className = 'player-team-cell px-1 py-1 text-center text-blue-600 font-semibold';
-                // Add remove button
+                // Add remove button using steamId
                 actionCell.innerHTML = `
-                    <button data-player="${playerName}" data-current-team="a" class="remove-from-list-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
+                    <button data-current-team="a" class="remove-from-list-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
                 `;
-            } else if (assignedToB.has(playerName)) {
+            } else if (assignedToB[steamId]) { // Check if steamId exists as key in Team B map
                 row.classList.add('bg-green-50', 'opacity-50');
                 teamCell.textContent = 'B';
                 teamCell.className = 'player-team-cell px-1 py-1 text-center text-green-600 font-semibold';
-                 // Add remove button
+                 // Add remove button using steamId
                  actionCell.innerHTML = `
-                    <button data-player="${playerName}" data-current-team="b" class="remove-from-list-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
+                    <button data-current-team="b" class="remove-from-list-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
                 `;
             } else {
                 // Player is available
                 teamCell.textContent = '-';
                 teamCell.className = 'player-team-cell px-1 py-1 text-center text-gray-500';
-                // Add assign buttons
+                // Add assign buttons using steamId
                 actionCell.innerHTML = `
-                    <button data-player="${playerName}" data-target-team="a" class="assign-button text-blue-500 hover:text-blue-700 px-1 text-xs">->A</button>
-                    <button data-player="${playerName}" data-target-team="b" class="assign-button text-green-500 hover:text-green-700 px-1 text-xs">->B</button>
+                    <button data-target-team="a" class="assign-button text-blue-500 hover:text-blue-700 px-1 text-xs">->A</button>
+                    <button data-target-team="b" class="assign-button text-green-500 hover:text-green-700 px-1 text-xs">->B</button>
                 `;
             }
         });
     },
 
-
     /**
      * Creates a single row for the available players table.
-     * @param {Object} player - Player object with stats.
+     * @param {Object} player - Player object with name, steamId, status, and stats.
      * @returns {HTMLTableRowElement} The created table row.
      */
     createAvailablePlayerRow: function(player) {
         const row = document.createElement('tr');
         row.className = 'border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150';
-        row.dataset.playerName = player.name; // Store name for easy access
+        row.dataset.steamId = player.steamId; // Store steamId for easy access
+        row.dataset.playerName = player.name; // Store name for logging/display if needed elsewhere
 
-        // Determine if player is already assigned (initially based on local state, updated by listener)
-        const isAssignedToA = TeamPicker.teamAPlayers.some(p => p.name === player.name);
-        const isAssignedToB = TeamPicker.teamBPlayers.some(p => p.name === player.name);
-        const assignedTeam = isAssignedToA ? 'A' : (isAssignedToB ? 'B' : null);
-        const rowClass = isAssignedToA ? 'bg-blue-50 opacity-50' : (isAssignedToB ? 'bg-green-50 opacity-50' : '');
-        const teamText = isAssignedToA ? 'A' : (isAssignedToB ? 'B' : '-');
-        const teamClass = isAssignedToA ? 'text-blue-600 font-semibold' : (isAssignedToB ? 'text-green-600 font-semibold' : 'text-gray-500');
-
+        // Determine initial assignment state (will be updated by updateAssignedPlayersInAvailableList)
+        const teamText = '-';
+        const teamClass = 'text-gray-500';
 
         row.innerHTML = `
             <td class="px-1 py-1 font-medium text-gray-900 whitespace-nowrap">${player.name}</td>
@@ -544,47 +589,37 @@ const TeamPicker = {
             <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_KD)}</td>
             <td class="player-team-cell px-1 py-1 text-center ${teamClass}">${teamText}</td>
             <td class="player-action-cell px-1 py-1 text-center whitespace-nowrap">
-                ${!assignedTeam ? `
-                    <button data-player="${player.name}" data-target-team="a" class="assign-button text-blue-500 hover:text-blue-700 px-1 text-xs">->A</button>
-                    <button data-player="${player.name}" data-target-team="b" class="assign-button text-green-500 hover:text-green-700 px-1 text-xs">->B</button>
-                    ` : ''
-                }
+                <button data-target-team="a" class="assign-button text-blue-500 hover:text-blue-700 px-1 text-xs">->A</button>
+                <button data-target-team="b" class="assign-button text-green-500 hover:text-green-700 px-1 text-xs">->B</button>
             </td>
         `;
-         if (assignedTeam && rowClass) {
-             row.classList.add(...rowClass.split(' '));
-         }
         return row;
     },
-    
+
     // --- updatePlayerSlots (rendering logic for team lists) ---
      /**
-     * Updates the player slots for a specific team.
+     * Updates the player slots table for a specific team.
      * @param {string} containerId - ID of the container element ('team-a-players' or 'team-b-players').
-     * @param {Array} teamPlayers - Array of player objects for the team.
+     * @param {Object} teamPlayersMap - Map of player objects { steamId: player } for the team.
+     * @param {'a' | 'b'} teamId - Team identifier.
      */
-    updatePlayerSlots: function(containerId, teamPlayers) {
+    updatePlayerSlots: function(containerId, teamPlayersMap, teamId) {
         const container = document.getElementById(containerId);
         if (!container) return;
 
         // Clear existing content
         container.innerHTML = '';
 
-        // Determine team context ('a' or 'b')
-        const teamId = containerId.includes('team-a') ? 'a' : 'b';
         const teamColor = teamId === 'a' ? 'blue' : 'green';
-        
-        if (teamPlayers.length === 0) {
-             container.innerHTML = '<p class="text-center text-gray-500 text-sm py-2">No players assigned.</p>';
-             // REMOVED EARLY RETURN: We still need to update/clear the stats below
-             // return; 
-        } else {
-            // Create table structure for assigned players
-            const table = document.createElement('table');
-            table.className = 'w-full border-collapse text-xs'; // text-xs for consistency
+        const teamPlayerArray = Object.values(teamPlayersMap); // Convert map to array for iteration/sorting
 
+        if (teamPlayerArray.length === 0) {
+             container.innerHTML = '<p class="text-center text-gray-500 text-sm py-2">No players assigned.</p>';
+        } else {
+            // Create table structure
+            const table = document.createElement('table');
+            table.className = 'w-full border-collapse text-xs';
             const thead = document.createElement('thead');
-            // Use <br> for line breaks in headers, remove whitespace-nowrap
             thead.innerHTML = `
                 <tr class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase sticky top-0 z-10">
                     <th class="px-1 py-1">Player</th>
@@ -598,23 +633,21 @@ const TeamPicker = {
                 </tr>
             `;
             table.appendChild(thead);
-
             const tbody = document.createElement('tbody');
             tbody.id = `team-${teamId}-tbody`;
-            
-            // Merge players with stats and sort
-            const teamPlayersWithStats = teamPlayers
-                .map(p => TeamPicker.mergePlayerWithStats(p)) // Ensure stats are present
-                .sort((a, b) => { // Sort by L10 HLTV descending
-                    const valueA = a.stats?.L10_HLTV2 ?? -Infinity;
-                    const valueB = b.stats?.L10_HLTV2 ?? -Infinity;
-                    return valueB - valueA;
-                });
 
-            teamPlayersWithStats.forEach(player => {
+            // Sort players by L10 HLTV descending
+            teamPlayerArray.sort((a, b) => {
+                const valueA = a.stats?.L10_HLTV2 ?? -Infinity;
+                const valueB = b.stats?.L10_HLTV2 ?? -Infinity;
+                return valueB - valueA;
+            });
+
+            teamPlayerArray.forEach(player => {
                 const row = document.createElement('tr');
                 row.className = `border-b border-gray-200 bg-${teamColor}-50`;
-                row.dataset.playerName = player.name;
+                row.dataset.steamId = player.steamId; // Use steamId in dataset
+                row.dataset.playerName = player.name; // Keep name for logging/tooltip
 
                 row.innerHTML = `
                     <td class="px-1 py-1 font-medium text-gray-900">${player.name}</td>
@@ -625,7 +658,7 @@ const TeamPicker = {
                     <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_ADR, 0)}</td>
                     <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_KD)}</td>
                     <td class="px-1 py-1 text-center">
-                         <button data-player="${player.name}" class="remove-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
+                         <button class="remove-button text-red-500 hover:text-red-700 px-1 text-xs">Remove</button>
                      </td>
                 `;
                 tbody.appendChild(row);
@@ -633,10 +666,10 @@ const TeamPicker = {
 
             table.appendChild(tbody);
 
-            // --- Add Averages Row --- (Only if there are players)
+            // Add Averages Row
             const averagesRow = table.createTFoot().insertRow(0);
             averagesRow.id = `team-${teamId}-averages-row`;
-            averagesRow.className = `bg-${teamColor}-200 font-bold text-${teamColor}-800 text-xs`; // Style for averages
+            averagesRow.className = `bg-${teamColor}-200 font-bold text-${teamColor}-800 text-xs`;
             averagesRow.innerHTML = `
                  <td class="px-1 py-1 whitespace-nowrap">TEAM AVG</td>
                  <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="L10_HLTV2">N/A</td>
@@ -645,14 +678,12 @@ const TeamPicker = {
                  <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_HLTV2">N/A</td>
                  <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_ADR">N/A</td>
                  <td class="px-1 py-1 text-center whitespace-nowrap" data-stat="S_KD">N/A</td>
-                 <td class="px-1 py-1"></td> <!-- Empty cell for actions -->
+                 <td class="px-1 py-1"></td>
              `;
             container.appendChild(table);
         } // End else block for non-empty team
 
-        // Calculate and update stats after rendering table structure (or clearing it)
-        // THIS CALL IS NOW UNCONDITIONAL
-        TeamPicker.updateTeamStats(teamId);
+        TeamPicker.updateTeamStats(teamId); // Call unconditionally
     },
 
     // --- updateTeamStats ---
@@ -661,7 +692,9 @@ const TeamPicker = {
      * @param {'a' | 'b'} teamId - The team identifier ('a' or 'b').
      */
     updateTeamStats: function(teamId) {
-        const teamPlayers = (teamId === 'a') ? TeamPicker.teamAPlayers : TeamPicker.teamBPlayers;
+        // Use the player map directly
+        const teamPlayersMap = (teamId === 'a') ? TeamPicker.teamAPlayersData : TeamPicker.teamBPlayersData;
+        const teamPlayerArray = Object.values(teamPlayersMap);
         const averagesRow = document.getElementById(`team-${teamId}-averages-row`);
         const targetAvgObject = (teamId === 'a') ? this.teamAAverages : this.teamBAverages;
 
@@ -670,7 +703,7 @@ const TeamPicker = {
             delete targetAvgObject[key];
         }
 
-        if (!averagesRow || teamPlayers.length === 0) {
+        if (!averagesRow || teamPlayerArray.length === 0) {
              // If row exists but team is empty, reset stats in UI
             if (averagesRow) {
                  averagesRow.querySelectorAll('td[data-stat]').forEach(cell => {
@@ -682,7 +715,7 @@ const TeamPicker = {
              return;
          }
 
-        const teamPlayersWithStats = teamPlayers.map(p => TeamPicker.mergePlayerWithStats(p));
+        const teamPlayersWithStats = teamPlayerArray.map(p => TeamPicker.mergePlayerWithStats(p));
 
         const statsToAverage = ['L10_HLTV2', 'L10_ADR', 'L10_KD', 'S_HLTV2', 'S_ADR', 'S_KD'];
         const sums = {};
@@ -1134,29 +1167,39 @@ const TeamPicker = {
     
     /**
      * Merges player data with their stats (uses global stats arrays)
-     * @param {Object} player - The player object with attendance info
-     * @returns {Object} - Player with merged stats
+     * @param {Object} player - The player object with at least name and steamId.
+     * @returns {Object} - Player object with merged stats under player.stats.
      */
     mergePlayerWithStats: function(player) {
-        const playerWithStats = { ...player, stats: {} };
-        
-        // Find player in last 10 stats (use StatsTables module state)
-        const last10Player = StatsTables.last10Stats.find(p => p.name === player.name);
-        if (last10Player) {
-            playerWithStats.stats.L10_HLTV2 = last10Player.hltv_2;
-            playerWithStats.stats.L10_ADR = last10Player.adr;
-            playerWithStats.stats.L10_KD = last10Player.kd;
+        // Use the getter functions from StatsTables which expect steamId
+        if (!player || !player.steamId) {
+            console.warn("Attempted to merge stats for player without steamId:", player);
+            return { ...player, stats: {} }; // Return basic player data with empty stats
         }
-        
-        // Find player in season stats (use StatsTables module state)
-        const seasonPlayer = StatsTables.seasonStats.find(p => p.name === player.name);
-        if (seasonPlayer) {
-            playerWithStats.stats.S_HLTV2 = seasonPlayer.hltv_2;
-            playerWithStats.stats.S_ADR = seasonPlayer.adr;
-            playerWithStats.stats.S_KD = seasonPlayer.kd;
+
+        const steamId = String(player.steamId); // Ensure it's a string
+        const mergedPlayer = { ...player, stats: {} }; // Start with a copy
+
+        const last10PlayerStats = StatsTables.getLast10StatsBySteamId(steamId);
+        if (last10PlayerStats) {
+            mergedPlayer.stats.L10_HLTV2 = last10PlayerStats.hltv_2;
+            mergedPlayer.stats.L10_ADR = last10PlayerStats.adr;
+            mergedPlayer.stats.L10_KD = last10PlayerStats.kd;
         }
-        
-        return playerWithStats;
+
+        const seasonPlayerStats = StatsTables.getSeasonStatsBySteamId(steamId);
+        if (seasonPlayerStats) {
+            mergedPlayer.stats.S_HLTV2 = seasonPlayerStats.hltv_2;
+            mergedPlayer.stats.S_ADR = seasonPlayerStats.adr;
+            mergedPlayer.stats.S_KD = seasonPlayerStats.kd;
+        }
+
+        // Log if stats are missing for debugging
+        if (!last10PlayerStats || !seasonPlayerStats) {
+             console.log(`Stats lookup for ${player.name} (ID: ${steamId}): Last10=${!!last10PlayerStats}, Season=${!!seasonPlayerStats}`);
+        }
+
+        return mergedPlayer;
     },
 
     // ==================================================
@@ -1289,40 +1332,42 @@ const TeamPicker = {
      * @returns {object|null} The team data object or null if invalid.
      */
     createTeamObjectForAPI: function(teamId) {
-        const teamPlayersData = (teamId === 'a') ? TeamPicker.teamAPlayersData : TeamPicker.teamBPlayersData;
+        const teamPlayersDataMap = (teamId === 'a') ? TeamPicker.teamAPlayersData : TeamPicker.teamBPlayersData;
         const teamName = (teamId === 'a') ? (TeamPicker.teamAName || 'Team A') : (TeamPicker.teamBName || 'Team B');
+        const teamPlayerArray = Object.values(teamPlayersDataMap); // Get array from map
 
-        if (!teamPlayersData || teamPlayersData.length === 0) {
+        if (!teamPlayerArray || teamPlayerArray.length === 0) {
             showMessage(`Team ${teamId.toUpperCase()} has no players. Cannot create match.`, 'error');
             return null;
         }
 
         const playersObj = {};
-        let missingSteamId = false;
-        teamPlayersData.forEach(player => {
-            // IMPORTANT: Assumes player objects in teamXPlayersData have a 'steamId' property
-            if (player.steamId && player.name) {
-                playersObj[player.steamId] = player.name;
+        let missingSteamIdOrName = false;
+        teamPlayerArray.forEach(player => {
+            const steamIdStr = String(player.steamId); // Ensure string key
+            if (steamIdStr && player.name) {
+                playersObj[steamIdStr] = player.name;
             } else {
-                console.error(`Player ${player.name || 'Unknown'} is missing a SteamID.`);
-                missingSteamId = true;
+                console.error(`Player data incomplete for API in Team ${teamId.toUpperCase()}:`, player);
+                missingSteamIdOrName = true;
             }
         });
 
-        if (missingSteamId) {
-             showMessage(`One or more players in Team ${teamId.toUpperCase()} are missing SteamIDs. Check player data.`, 'error');
-             return null; // Stop if any player is missing steamId
+        if (missingSteamIdOrName) {
+             showMessage(`One or more players in Team ${teamId.toUpperCase()} have incomplete data (SteamID or Name).`, 'error');
+             return null;
         }
-        
-         // Basic validation for player count consistency (although API object uses team1 count)
-         if (TeamPicker.teamAPlayersData.length !== TeamPicker.teamBPlayersData.length) {
-             console.warn(`Team sizes are different: Team A (${TeamPicker.teamAPlayersData.length}), Team B (${TeamPicker.teamBPlayersData.length}). API uses Team A's count.`);
-             // We don't throw an error here, as the original script used team1's length.
+
+         // Use the actual lengths from the maps for comparison
+         const teamASize = Object.keys(TeamPicker.teamAPlayersData).length;
+         const teamBSize = Object.keys(TeamPicker.teamBPlayersData).length;
+         if (teamASize !== teamBSize) {
+             console.warn(`Team sizes are different: Team A (${teamASize}), Team B (${teamBSize}). API uses Team A's count.`);
          }
 
         return {
             name: teamName,
-            players: playersObj
+            players: playersObj // Payload format: { steamId: name, ... }
         };
     },
 

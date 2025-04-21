@@ -8,6 +8,9 @@ const StatsTables = (() => {
     let seasonStats = null;
     let last10Stats = null;
     let nightAvgStats = null;
+    let seasonStatsBySteamId = {}; // NEW: Map for quick lookup
+    let last10StatsBySteamId = {}; // NEW: Map for quick lookup
+    let nightAvgStatsBySteamId = {}; // NEW: Map for quick lookup (though not requested for picker yet)
 
     // --- State specific to Season Avg Graph View ---
     let seasonAvgGraphPopulated = false;
@@ -259,6 +262,9 @@ const StatsTables = (() => {
         if (seasonStats) {
              // Initial render
             fillSeasonAvgTable(seasonStats, tbody);
+            // NEW: Process data into map after fetching
+            seasonStatsBySteamId = processStatsIntoMap(seasonStats, 'steam_id');
+            console.log("Processed season stats by SteamID:", seasonStatsBySteamId);
             // Potentially trigger initial graph render if graph tab exists and is active (though unlikely on initial load)
             checkAndRenderSeasonGraph();
         }
@@ -274,6 +280,10 @@ const StatsTables = (() => {
         last10Stats = await fetchJsonData(LAST10_JSON_URL, 'Last 10');
         if (last10Stats) {
             fillLast10Table(last10Stats, tbody);
+             // NEW: Process data into map after fetching
+            last10StatsBySteamId = processStatsIntoMap(last10Stats, 'steam_id');
+            console.log("Processed last 10 stats by SteamID:", last10StatsBySteamId);
+            checkAndRenderLast10Graph(); // Trigger graph check if needed
         }
     }
 
@@ -287,6 +297,11 @@ const StatsTables = (() => {
         nightAvgStats = await fetchJsonData(NIGHT_AVG_JSON_URL, 'Night Average');
         if (nightAvgStats) {
             fillNightAvgTable(nightAvgStats, tbody);
+             // NEW: Process data into map after fetching
+            // Assuming night_avg.json also includes steam_id now
+            nightAvgStatsBySteamId = processStatsIntoMap(nightAvgStats, 'steam_id');
+            console.log("Processed night average stats by SteamID:", nightAvgStatsBySteamId);
+            checkAndRenderNightAvgGraph(); // Trigger graph check if needed
         }
     }
 
@@ -574,6 +589,23 @@ const StatsTables = (() => {
             seasonAvgCheckboxContainer.appendChild(div);
         });
          updateSeasonAvgStatSelectionUI(); // Set initial state after populating
+    }
+
+    // --- NEW: Helper function to process raw stats array into a map ---
+    function processStatsIntoMap(statsArray, mapKey = 'steam_id') {
+        const statsMap = {};
+        if (!Array.isArray(statsArray)) {
+            console.error("Invalid stats data provided for processing:", statsArray);
+            return statsMap;
+        }
+        statsArray.forEach(player => {
+            if (player && player[mapKey]) {
+                statsMap[player[mapKey]] = player;
+            } else {
+                console.warn("Skipping player object due to missing key:", player);
+            }
+        });
+        return statsMap;
     }
 
     // --- Last 10 Graph View Specific Helpers ---
@@ -915,6 +947,19 @@ const StatsTables = (() => {
         }
     }
 
+    // --- NEW: Getter functions for stats by steam ID ---
+    function getSeasonStatsBySteamId(steamId) {
+        return seasonStatsBySteamId[steamId] || null;
+    }
+
+    function getLast10StatsBySteamId(steamId) {
+        return last10StatsBySteamId[steamId] || null;
+    }
+
+    function getNightAvgStatsBySteamId(steamId) { // Added for completeness
+        return nightAvgStatsBySteamId[steamId] || null;
+    }
+
     // --- Initialization ---
     function init() {
         loadAndRenderSeasonAvgTable();
@@ -948,9 +993,14 @@ const StatsTables = (() => {
         fillNightAvgTable: fillNightAvgTable,
         get seasonStats() { return seasonStats; },
         get last10Stats() { return last10Stats; },
-        get nightAvgStats() { return nightAvgStats; }
+        get nightAvgStats() { return nightAvgStats; },
+        getSeasonStatsBySteamId: getSeasonStatsBySteamId, // Expose new getter
+        getLast10StatsBySteamId: getLast10StatsBySteamId, // Expose new getter
+        getNightAvgStatsBySteamId: getNightAvgStatsBySteamId // Expose new getter
     };
 })();
 
 // Make StatsTables globally available if needed by other scripts (like MainScript for sorting)
 // window.StatsTables = StatsTables; // Or manage dependencies differently
+// Expose globally for TeamPicker to use
+window.StatsTables = StatsTables;
