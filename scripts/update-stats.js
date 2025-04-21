@@ -446,6 +446,61 @@ const queries = {
     LEFT JOIN player_kills_deaths pkd
       ON dp1.playerSteamId = pkd.killerSteamId AND dp2.playerSteamId = pkd.victimSteamId
     ORDER BY dp1.playerName, dp2.playerName;
+  `,
+
+  // Query for performance_data.json - retrieves historical performance data
+  performanceGraphs: `
+    WITH season_start_info AS (
+        SELECT '${sezonbaslangic}'::date AS seasonstart
+      ),
+      match_date_info AS (
+        SELECT MAX(date::date) AS latest_match_date 
+        FROM matches
+      ),
+      -- Only consider dates where there was a match in the interval
+      match_dates AS (
+        SELECT DISTINCT date::date AS match_date
+        FROM matches
+        WHERE date::date BETWEEN 
+              (SELECT seasonstart FROM season_start_info)
+          AND (SELECT latest_match_date FROM match_date_info)
+      ),
+      -- Get distinct players based solely on steam_id and choose a canonical name
+      distinct_players AS (
+        SELECT steam_id, MAX(name) AS name
+        FROM players
+        GROUP BY steam_id
+      ),
+      -- Aggregate performance data per steam_id and match date
+      performance_data AS (
+        SELECT 
+            p.steam_id, 
+            m.date::date AS match_date,
+            AVG(p.hltv_rating_2) AS HLTV_2,
+            AVG(p.average_damage_per_round) AS adr,
+            COUNT(*) AS matches_played
+        FROM players p
+        INNER JOIN matches m 
+            ON p.match_checksum = m.checksum
+        WHERE m.date::date BETWEEN 
+              (SELECT seasonstart FROM season_start_info)
+          AND (SELECT latest_match_date FROM match_date_info)
+        GROUP BY p.steam_id, m.date::date
+      )
+      -- Cross join distinct players with the match dates, then join the performance data
+      SELECT 
+          dp.steam_id,
+          dp.name,
+          md.match_date::date, -- Ensure correct date format
+          pd.HLTV_2,
+          pd.adr,
+          pd.matches_played -- Included just in case, though not used in final JSON
+      FROM distinct_players dp
+      CROSS JOIN match_dates md
+      LEFT JOIN performance_data pd 
+          ON pd.steam_id = dp.steam_id 
+        AND pd.match_date = md.match_date
+      ORDER BY dp.name, md.match_date; -- Order by name then date for easier processing
   `
 };
 
@@ -1004,6 +1059,83 @@ async function updateDuelloSezonStats() {
   }
 }
 
+// Process Performance Graphs data
+async function updatePerformanceGraphsStats() {
+  try {
+    console.log('Updating Performance Graphs data...');
+
+    const results = await executeDbQuery(queries.performanceGraphs);
+
+    if (!results || !results.rows || !results.rows.length) {
+      console.log('No results found for Performance Graphs data.');
+      const emptyData = []; // Use an empty array as expected by the frontend
+      const dataDir = path.join(__dirname, '..', 'data');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const filePath = path.join(dataDir, 'performance_data.json');
+      fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
+      console.log('✅ Empty Performance Graphs data written to data/performance_data.json');
+      return;
+    }
+
+    const columnMap = {};
+    results.columns.forEach((colName, index) => {
+      columnMap[colName.toLowerCase()] = index;
+    });
+
+    const groupedData = {};
+
+    results.rows.forEach(row => {
+      const name = row[columnMap['name']];
+      const matchDate = row[columnMap['match_date']];
+      // Use getData helper for numeric values, allowing nulls
+      const hltv_2_raw = row[columnMap['hltv_2']];
+      const adr_raw = row[columnMap['adr']];
+
+      // Parse only if not null, otherwise keep null
+      const hltv_2 = (hltv_2_raw !== null && hltv_2_raw !== undefined) ? parseFloat(hltv_2_raw) : null;
+      const adr = (adr_raw !== null && adr_raw !== undefined) ? parseFloat(adr_raw) : null;
+
+      // Ensure date is formatted correctly (ISO string)
+      const formattedDate = matchDate ? new Date(matchDate).toISOString() : null;
+      
+      if (!formattedDate) return; // Skip if date is invalid
+
+      if (!groupedData[name]) {
+        groupedData[name] = {
+          name: name,
+          performance: []
+        };
+      }
+
+      groupedData[name].performance.push({
+        match_date: formattedDate,
+        hltv_2: isNaN(hltv_2) ? null : hltv_2, // Final check for NaN after parseFloat
+        adr: isNaN(adr) ? null : adr         // Final check for NaN after parseFloat
+      });
+    });
+
+    // Convert the grouped object back into an array
+    const finalData = Object.values(groupedData);
+
+    // Sort the final array by player name (optional, but good practice)
+    finalData.sort((a, b) => a.name.localeCompare(b.name));
+
+    // Write the result to performance_data.json
+    const dataDir = path.join(__dirname, '..', 'data');
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    const filePath = path.join(dataDir, 'performance_data.json');
+    fs.writeFileSync(filePath, JSON.stringify(finalData, null, 2));
+    console.log('✅ Performance Graphs data written to data/performance_data.json');
+
+  } catch (error) {
+    console.error('❌ Error updating Performance Graphs data:', error);
+  }
+}
+
 // Main function
 async function main() {
   try {
@@ -1026,6 +1158,9 @@ async function main() {
 
     // Update Duello Sezon stats
     await updateDuelloSezonStats();
+
+    // Update Performance Graphs data
+    await updatePerformanceGraphsStats();
 
     console.log('✅ Stats update process completed');
   } catch (error) {
