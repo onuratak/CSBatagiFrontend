@@ -13,10 +13,10 @@ const TEAM_CHART_STATS = {
 
 const TEAM_CHART_FIXED_RANGES = {
     L10_HLTV2: { min: 0.70, max: 1.40 },
-    L10_ADR: { min: 65, max: 100 },
+    L10_ADR: { min: 50, max: 100 },
     L10_KD: { min: 0.70, max: 1.40 },
     S_HLTV2: { min: 0.70, max: 1.40 },
-    S_ADR: { min: 65, max: 100 },
+    S_ADR: { min: 50, max: 100 },
 };
 // --- End Fixed Config ---
 
