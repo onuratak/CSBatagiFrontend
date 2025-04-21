@@ -70,7 +70,30 @@ const Attendance = {
         players.forEach((player) => {
             const playerName = player.name;
             // Get current attendance from Firebase data, default to no_response
-            const currentAttendance = attendanceData[playerName] || 'no_response';
+            // OLD WAY: const currentAttendance = attendanceData[playerName] || 'no_response';
+
+            // --- NEW WAY: Look up using steamId if possible --- 
+            let currentAttendance = 'no_response'; // Default
+            if (player.steamId) {
+                const steamIdStr = String(player.steamId);
+                // Check if the data from Firebase has steamId as key
+                if (attendanceData[steamIdStr] && typeof attendanceData[steamIdStr] === 'object') {
+                    currentAttendance = attendanceData[steamIdStr].status || 'no_response';
+                } else if (typeof attendanceData[playerName] === 'string') {
+                    // Fallback for the potentially inconsistent initial state passed directly after fetch
+                    // (Ideally, the initial call should also pass the steamId-keyed data)
+                    console.warn("Attendance listener received player-name keyed data, using fallback.");
+                    currentAttendance = attendanceData[playerName] || 'no_response';
+                } else {
+                     // Player with steamId exists locally, but not found in Firebase data or format is wrong
+                     console.warn(`Could not find status for ${playerName} (ID: ${steamIdStr}) in Firebase data object:`, attendanceData);
+                }
+            } else {
+                // Fallback if player object is missing steamId (shouldn't happen ideally)
+                currentAttendance = attendanceData[playerName] || 'no_response'; 
+                console.warn(`Player object for ${playerName} is missing steamId, falling back to name lookup.`);
+            }
+            // --- End NEW WAY ---
 
              // Recalculate counts based on Firebase data
             if (currentAttendance === 'coming') countComing++;
@@ -286,27 +309,46 @@ const Attendance = {
 
         // --- Update Google Sheet (existing logic) --- 
         try {
+            // Find the player again to get steamId (necessary for the new payload)
+            const player = players.find(p => p.name === playerName);
+            if (!player || !player.steamId) {
+                 // If we couldn't find the player or steamId here, we can't update the sheet.
+                 // The Firebase update might have already failed, but check again.
+                 throw new Error(`Could not find player or steamId for ${playerName} to update Sheet.`);
+            }
+            const steamIdStr = String(player.steamId); // Ensure string
+
             const response = await fetch(APPS_SCRIPT_URL, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    // Set Content-Type to application/json as doPost uses JSON.parse
+                    'Content-Type': 'application/json' 
                 },
+                // Send steamId and attendance
                 body: JSON.stringify({ 
-                    playerName: playerName, 
-                    newAttendance: newAttendance 
+                    steamId: steamIdStr,        // Use "steamId" key
+                    attendance: newAttendance  // Use "attendance" key
                 })
             });
-            if (!response.ok) {
-                let errorDetails = `HTTP error! Status: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
-                } catch (e) { /* Ignore */ }
-                throw new Error(errorDetails);
+
+            // Improved response handling based on Apps Script returning JSON
+            let result = null;
+            const responseText = await response.text(); // Read body first
+            try {
+                result = JSON.parse(responseText); // Try parsing as JSON
+            } catch (e) {
+                 console.error("Failed to parse Apps Script response as JSON:", responseText);
+                 throw new Error(`Invalid response from server: ${responseText}`);
             }
-            const result = await response.json();
+
+            if (!response.ok) {
+                // Use message from JSON if available, otherwise use status
+                const errorMsg = result?.message || `HTTP error! Status: ${response.status}`;
+                throw new Error(errorMsg);
+            }
+
             if (result.success) {
-                console.log(`Successfully updated sheet for ${playerName}`);
+                console.log(`Successfully updated sheet for ${playerName} (ID: ${steamIdStr})`);
                 // No message shown here as Firebase listener handles UI update
             } else {
                 throw new Error(result.message || "Unknown error updating sheet.");
