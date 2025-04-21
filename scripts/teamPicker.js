@@ -410,7 +410,7 @@ const TeamPicker = {
 
             if (mapSelect) mapSelect.value = mapData.mapName || "";
             if (tSelect) tSelect.value = mapData.t_team || "";
-            if (ctSelect) ctSelect.value = mapData.ct_team || "";
+            if (ctSelect) ctSelect.addEventListener('change', () => TeamPicker.handleSideChange(i, 'ct'));
         }
          // Ensure consistency (if T is A, CT must be B) - might be handled by Firebase rules later
          TeamPicker.enforceMapSideConsistency(); 
@@ -1207,21 +1207,8 @@ const TeamPicker = {
     // ==================================================
 
     /**
-     * Placeholder function to retrieve the Match Creation API token.
-     * WARNING: Retrieving sensitive tokens directly in the frontend is insecure.
-     * Implement a secure method (e.g., via a backend proxy) in a real application.
-     * @returns {string|null} The API token or null if not found.
-     */
-    getMatchCreationToken: function() {
-        // TODO: Implement secure token retrieval
-        console.warn("Using placeholder for Match Creation Token. Implement secure retrieval!");
-        // Example: return window.firebaseConfig?.matchmakingToken; // If stored in a config
-        // Example: return prompt("Enter Match Creation Token (Insecure):"); // Highly insecure
-        return null; // Return null to indicate failure for now
-    },
-
-    /**
-     * Gathers data from the UI state and attempts to create a match via API call.
+     * Gathers data from the UI state and attempts to create a match via API call
+     * (using a Cloudflare Worker proxy).
      */
     createMatchFromUI: async function() {
         console.log("Attempting to create match...");
@@ -1232,11 +1219,6 @@ const TeamPicker = {
         if (spinner) spinner.classList.remove('hidden');
 
         try {
-            const mwToken = TeamPicker.getMatchCreationToken();
-            if (!mwToken) {
-                throw new Error("Match creation token not available. Cannot create match.");
-            }
-
             // --- 1. Create Team Objects ---
             const team1Object = TeamPicker.createTeamObjectForAPI('a');
             const team2Object = TeamPicker.createTeamObjectForAPI('b');
@@ -1291,18 +1273,20 @@ const TeamPicker = {
                 players_per_team: team1Object.players ? Object.keys(team1Object.players).length : 0, // Use actual player count
                 cvars: {
                     tv_enable: 1,
-                    hostname: `${team1Name} vs ${teamBName}`
+                    hostname: `${teamAName} vs ${teamBName}`
                 }
             };
 
             console.log("Match Object Payload:", JSON.stringify(matchObject, null, 2)); // Log for debugging
 
-            // --- 5. Make API Call ---
-            const response = await fetch('https://db2.csbatagi.com/start-match', {
+            // --- 5. Make API Call via Cloudflare Worker ---
+            // IMPORTANT: Replace with your actual Worker URL!
+            const WORKER_URL = 'https://misty-snow-cebf.onur1atak.workers.dev/create-match'; 
+            const response = await fetch(WORKER_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${mwToken}`
+                    // Authorization header is removed - handled by the Worker
                 },
                 body: JSON.stringify(matchObject)
             });
@@ -1310,10 +1294,10 @@ const TeamPicker = {
             if (!response.ok) {
                 const errorBody = await response.text();
                 console.error("API Error Response:", errorBody);
-                throw new Error(`Failed to create match. Server responded with status ${response.status}. ${errorBody}`);
+                throw new Error(`Failed to create match via worker. Server responded with status ${response.status}. ${errorBody}`);
             }
 
-            const result = await response.json(); // Assuming the API returns JSON
+            const result = await response.json(); // Assuming the worker forwards JSON
             console.log("Match creation successful:", result);
             showMessage('Match created successfully!', 'success');
 
