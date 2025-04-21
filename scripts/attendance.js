@@ -194,7 +194,13 @@ const Attendance = {
                 console.error("Received data is not an array:", data);
                 throw new Error("Invalid data format received from server.");
             }
-            players = data; // Update the global players array
+            // players = data; // Update the global players array
+            // NEW: Map steamid to steamId
+            players = data.map(player => ({
+                ...player, // Copy existing properties (name, status, attendance)
+                steamId: player.steamid // Add steamId property from steamid
+            }));
+            console.log("Processed players with steamId:", players); // Debug log
 
             // --- Write Initial State to Firebase --- 
             if (typeof database !== 'undefined' && database !== null && this.ATTENDANCE_DB_PATH) {

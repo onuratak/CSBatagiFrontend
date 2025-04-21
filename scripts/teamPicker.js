@@ -242,6 +242,12 @@ const TeamPicker = {
             teamBContainer.removeEventListener('click', TeamPicker.handleTeamPlayerClick);
             teamBContainer.addEventListener('click', (e) => TeamPicker.handleTeamPlayerClick(e, 'b'));
         }
+        
+        // NEW: Create Match Button Listener
+        const createMatchBtn = document.getElementById('create-match-button');
+        if (createMatchBtn) {
+            createMatchBtn.addEventListener('click', TeamPicker.createMatchFromUI);
+        }
     },
     
     /**
@@ -1152,4 +1158,175 @@ const TeamPicker = {
         
         return playerWithStats;
     },
+
+    // ==================================================
+    // --- NEW: Match Creation Logic ---
+    // ==================================================
+
+    /**
+     * Placeholder function to retrieve the Match Creation API token.
+     * WARNING: Retrieving sensitive tokens directly in the frontend is insecure.
+     * Implement a secure method (e.g., via a backend proxy) in a real application.
+     * @returns {string|null} The API token or null if not found.
+     */
+    getMatchCreationToken: function() {
+        // TODO: Implement secure token retrieval
+        console.warn("Using placeholder for Match Creation Token. Implement secure retrieval!");
+        // Example: return window.firebaseConfig?.matchmakingToken; // If stored in a config
+        // Example: return prompt("Enter Match Creation Token (Insecure):"); // Highly insecure
+        return null; // Return null to indicate failure for now
+    },
+
+    /**
+     * Gathers data from the UI state and attempts to create a match via API call.
+     */
+    createMatchFromUI: async function() {
+        console.log("Attempting to create match...");
+        const createButton = document.getElementById('create-match-button');
+        const spinner = document.getElementById('create-match-spinner');
+
+        if (createButton) createButton.disabled = true;
+        if (spinner) spinner.classList.remove('hidden');
+
+        try {
+            const mwToken = TeamPicker.getMatchCreationToken();
+            if (!mwToken) {
+                throw new Error("Match creation token not available. Cannot create match.");
+            }
+
+            // --- 1. Create Team Objects ---
+            const team1Object = TeamPicker.createTeamObjectForAPI('a');
+            const team2Object = TeamPicker.createTeamObjectForAPI('b');
+
+            if (!team1Object || !team2Object) {
+                // createTeamObjectForAPI will show specific errors
+                throw new Error("Failed to create team data for API.");
+            }
+
+            // --- 2. Get Map List ---
+            const maps = [
+                TeamPicker.mapSelections.map1?.mapName,
+                TeamPicker.mapSelections.map2?.mapName,
+                TeamPicker.mapSelections.map3?.mapName
+            ].filter(mapName => mapName && mapName !== ""); // Filter out empty selections
+
+            if (maps.length === 0) {
+                throw new Error("No maps selected. Please select at least one map.");
+            }
+
+            // --- 3. Get Map Sides ---
+            const mapSides = [];
+            const teamAName = TeamPicker.teamAName || 'Team A';
+            const teamBName = TeamPicker.teamBName || 'Team B'; // Use synced names
+
+            for (let i = 1; i <= maps.length; i++) {
+                const mapSelection = TeamPicker.mapSelections[`map${i}`];
+                let side = 'knife'; // Default to knife
+                if (mapSelection?.ct_team === 'A') {
+                    side = 'team1_ct';
+                } else if (mapSelection?.ct_team === 'B') {
+                    side = 'team2_ct';
+                }
+                mapSides.push(side);
+            }
+             // Pad mapSides with 'knife' if fewer sides are selected than maps
+            while (mapSides.length < maps.length) {
+                mapSides.push('knife');
+            }
+            // Ensure mapSides is not longer than maps (shouldn't happen with current logic)
+            mapSides.length = maps.length;
+
+
+            // --- 4. Construct Final Match Object ---
+            const matchObject = {
+                team1: team1Object,
+                team2: team2Object,
+                num_maps: maps.length,
+                maplist: maps,
+                map_sides: mapSides,
+                clinch_series: true, // Assuming default true as in script
+                players_per_team: team1Object.players ? Object.keys(team1Object.players).length : 0, // Use actual player count
+                cvars: {
+                    tv_enable: 1,
+                    hostname: `${team1Name} vs ${teamBName}`
+                }
+            };
+
+            console.log("Match Object Payload:", JSON.stringify(matchObject, null, 2)); // Log for debugging
+
+            // --- 5. Make API Call ---
+            const response = await fetch('https://db2.csbatagi.com/start-match', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${mwToken}`
+                },
+                body: JSON.stringify(matchObject)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.error("API Error Response:", errorBody);
+                throw new Error(`Failed to create match. Server responded with status ${response.status}. ${errorBody}`);
+            }
+
+            const result = await response.json(); // Assuming the API returns JSON
+            console.log("Match creation successful:", result);
+            showMessage('Match created successfully!', 'success');
+
+        } catch (error) {
+            console.error('Error creating match:', error);
+            showMessage(`Error creating match: ${error.message}`, 'error');
+        } finally {
+            if (createButton) createButton.disabled = false;
+            if (spinner) spinner.classList.add('hidden');
+        }
+    },
+
+    /**
+     * Creates the team data object structure needed for the match creation API.
+     * @param {'a' | 'b'} teamId - The team identifier ('a' or 'b').
+     * @returns {object|null} The team data object or null if invalid.
+     */
+    createTeamObjectForAPI: function(teamId) {
+        const teamPlayersData = (teamId === 'a') ? TeamPicker.teamAPlayersData : TeamPicker.teamBPlayersData;
+        const teamName = (teamId === 'a') ? (TeamPicker.teamAName || 'Team A') : (TeamPicker.teamBName || 'Team B');
+
+        if (!teamPlayersData || teamPlayersData.length === 0) {
+            showMessage(`Team ${teamId.toUpperCase()} has no players. Cannot create match.`, 'error');
+            return null;
+        }
+
+        const playersObj = {};
+        let missingSteamId = false;
+        teamPlayersData.forEach(player => {
+            // IMPORTANT: Assumes player objects in teamXPlayersData have a 'steamId' property
+            if (player.steamId && player.name) {
+                playersObj[player.steamId] = player.name;
+            } else {
+                console.error(`Player ${player.name || 'Unknown'} is missing a SteamID.`);
+                missingSteamId = true;
+            }
+        });
+
+        if (missingSteamId) {
+             showMessage(`One or more players in Team ${teamId.toUpperCase()} are missing SteamIDs. Check player data.`, 'error');
+             return null; // Stop if any player is missing steamId
+        }
+        
+         // Basic validation for player count consistency (although API object uses team1 count)
+         if (TeamPicker.teamAPlayersData.length !== TeamPicker.teamBPlayersData.length) {
+             console.warn(`Team sizes are different: Team A (${TeamPicker.teamAPlayersData.length}), Team B (${TeamPicker.teamBPlayersData.length}). API uses Team A's count.`);
+             // We don't throw an error here, as the original script used team1's length.
+         }
+
+        return {
+            name: teamName,
+            players: playersObj
+        };
+    },
+
+    // ==================================================
+    // --- END NEW Match Creation Logic ---
+    // ==================================================
 }; 
