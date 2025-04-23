@@ -4,9 +4,53 @@
 
 const Attendance = {
     ATTENDANCE_STATES: ["not_coming", "no_response", "coming"], // Order matters for cycling
+    EMOJI_STATES: [
+        "normal", 
+        "tired", 
+        "sick", 
+        "feeling_good", 
+        "waffle",
+        "cocuk_bende",
+        "evde_degil",
+        "sonrakine",
+        "kafa_izni",
+        "hanimpoints",
+        "sikimin_keyfi",
+        "dokuzda_haber"
+    ], // Order matters for cycling
+    EMOJI_MAPPING: {
+        "normal": "😊",
+        "tired": "😴",
+        "sick": "🤒", 
+        "feeling_good": "🔥",
+        "waffle": "🧇",
+        "cocuk_bende": "👶",
+        "evde_degil": "🛄",
+        "sonrakine": "🔜",
+        "kafa_izni": "💆‍♂️",
+        "hanimpoints": "🙅‍♀️",
+        "sikimin_keyfi": "🍆",
+        "dokuzda_haber": "9️⃣"
+    },
+    EMOJI_EXPLANATIONS: {
+        "normal": "Normal",
+        "tired": "Yorgun",
+        "sick": "Hasta", 
+        "feeling_good": "İyi hissediyorum",
+        "waffle": "Waffle",
+        "cocuk_bende": "Çocuk bende / hasta",
+        "evde_degil": "Evde değil",
+        "sonrakine": "Bi sonraki maça geliyorum",
+        "kafa_izni": "Kafa izni",
+        "hanimpoints": "Not enough hanımpoints",
+        "sikimin_keyfi": "Sikimin keyfine, size mi soracağım götelekler",
+        "dokuzda_haber": "9'da kalirsaniz haber edin"
+    },
     TEKER_DONDU_THRESHOLD: 10, // Number of players needed for the wheel
     ATTENDANCE_DB_PATH: 'attendanceState', // Firebase path for attendance
+    EMOJI_DB_PATH: 'emojiState', // Firebase path for emoji states
     attendanceListenersAttached: false, // Flag for Firebase listener
+    emojiListenersAttached: false, // Flag for emoji Firebase listener
 
     /**
      * Initializes the attendance module (e.g., fetches initial data, attaches listeners)
@@ -20,6 +64,15 @@ const Attendance = {
             this.attachFirebaseListener();
             this.attendanceListenersAttached = true;
         }
+
+        // Attach emoji Firebase listener only once
+        if (!this.emojiListenersAttached) {
+            this.attachEmojiFirebaseListener();
+            this.emojiListenersAttached = true;
+        }
+        
+        // Force emoji initialization (in case Firebase listener hasn't triggered yet)
+        this.initializeEmojiStatuses();
     },
 
     /**
@@ -44,6 +97,155 @@ const Attendance = {
     },
 
     /**
+     * Attaches the Firebase listener for emoji state changes.
+     */
+    attachEmojiFirebaseListener: function() {
+        if (typeof database === 'undefined' || database === null || !this.EMOJI_DB_PATH) {
+            console.error('Firebase database not available for emoji status listener.');
+            return;
+        }
+        const emojiRef = database.ref(this.EMOJI_DB_PATH);
+
+        emojiRef.on('value', (snapshot) => {
+            const emojiData = snapshot.val() || {};
+            console.log("Firebase emoji status listener triggered."); // Debug log
+            // Update the emoji UI based on the latest data from Firebase
+            this.updateEmojiUIFromFirebase(emojiData);
+        }, (error) => {
+            console.error("Firebase emoji listener error:", error);
+            showMessage("Error syncing emoji states.", "error");
+        });
+    },
+
+    /**
+     * Initializes the emoji statuses in Firebase if they don't exist yet
+     */
+    initializeEmojiStatuses: function() {
+        if (typeof database === 'undefined' || database === null || !this.EMOJI_DB_PATH) {
+            console.error('Firebase database not available for emoji status initialization.');
+            return;
+        }
+
+        const emojiRef = database.ref(this.EMOJI_DB_PATH);
+        
+        // Check if emoji data exists
+        emojiRef.once('value', (snapshot) => {
+            const emojiData = snapshot.val() || {};
+            const initialEmojiState = {};
+            let needsSync = false;
+
+            // For each player, check if emoji data exists in Firebase
+            players.forEach(player => {
+                if (player.steamId) {
+                    const steamIdStr = String(player.steamId);
+                    if (!emojiData[steamIdStr]) {
+                        initialEmojiState[steamIdStr] = {
+                            name: player.name,
+                            status: 'normal' // Default emoji state
+                        };
+                        needsSync = true;
+                    }
+                }
+            });
+
+            // If needed, update Firebase with initial emoji states
+            if (needsSync) {
+                emojiRef.update(initialEmojiState)
+                    .then(() => {
+                        console.log("Initial emoji states synced to Firebase");
+                        // Explicitly update UI with complete data
+                        const completeData = {...emojiData, ...initialEmojiState};
+                        this.updateEmojiUIFromFirebase(completeData);
+                    })
+                    .catch(error => console.error("Failed to sync initial emoji states:", error));
+            } else {
+                // If no sync needed, update UI with existing data
+                this.updateEmojiUIFromFirebase(emojiData);
+            }
+        });
+    },
+
+    /**
+     * Updates the emoji UI based on Firebase data.
+     * @param {object} emojiData - The object containing emoji status data from Firebase.
+     */
+    updateEmojiUIFromFirebase: function(emojiData) {
+        console.log("Updating emoji UI with data:", emojiData); // Debug log
+        
+        const playerRows = document.querySelectorAll('#player-list tr[data-player-name]');
+        if (playerRows.length === 0) {
+            console.warn("No player rows found to update emoji UI.");
+            return;
+        }
+        
+        playerRows.forEach(row => {
+            const playerName = row.getAttribute('data-player-name');
+            if (!playerName) {
+                console.warn("Row missing data-player-name attribute");
+                return;
+            }
+            
+            const player = players.find(p => p.name === playerName);
+            
+            if (!player || !player.steamId) {
+                console.warn(`Could not find player data or SteamID for ${playerName}.`);
+                return;
+            }
+            
+            const steamIdStr = String(player.steamId);
+            const statusCell = row.querySelector('td:nth-child(2)'); // Status is second column
+            
+            if (!statusCell) {
+                console.warn(`Could not find status cell for ${playerName}.`);
+                return;
+            }
+            
+            // Clear status cell first
+            statusCell.innerHTML = '';
+            
+            // Create a new emoji control container
+            const container = document.createElement('div');
+            container.className = 'emoji-control-container'; 
+
+            const leftArrowBtn = document.createElement('button');
+            leftArrowBtn.className = 'emoji-arrow';
+            leftArrowBtn.setAttribute('aria-label', `Previous emoji for ${playerName}`);
+            leftArrowBtn.setAttribute('data-direction', 'left');
+            leftArrowBtn.setAttribute('data-player', playerName);
+            leftArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>`;
+            
+            // Get the current emoji state from Firebase
+            let currentState = "normal"; // Default
+            if (emojiData[steamIdStr] && emojiData[steamIdStr].status) {
+                currentState = emojiData[steamIdStr].status;
+            }
+            
+            const labelSpan = document.createElement('span');
+            labelSpan.className = 'emoji-label';
+            labelSpan.textContent = this.EMOJI_MAPPING[currentState] || "😊";
+            labelSpan.setAttribute('data-state', currentState);
+            labelSpan.setAttribute('data-player', playerName);
+            
+            // Add tooltip with explanation
+            const explanation = this.EMOJI_EXPLANATIONS[currentState] || "Normal";
+            labelSpan.setAttribute('title', explanation);
+            labelSpan.setAttribute('data-tooltip', explanation);
+            
+            const rightArrowBtn = document.createElement('button');
+            rightArrowBtn.className = 'emoji-arrow';
+            rightArrowBtn.setAttribute('aria-label', `Next emoji for ${playerName}`);
+            rightArrowBtn.setAttribute('data-direction', 'right');
+            rightArrowBtn.setAttribute('data-player', playerName);
+            rightArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>`;
+            
+            container.appendChild(leftArrowBtn);
+            container.appendChild(labelSpan);
+            container.appendChild(rightArrowBtn);
+            statusCell.appendChild(container);
+        });
+    },
+
+    /**
      * Rebuilds the attendance table and summary based on Firebase data.
      * @param {object} attendanceData - The object containing { playerName: status } from Firebase.
      */
@@ -61,6 +263,15 @@ const Attendance = {
             not_coming: { text: 'Gelmiyor', bgColor: 'bg-red-500', textColor: 'text-white' },
             no_response: { text: 'Belirsiz', bgColor: 'bg-gray-300', textColor: 'text-gray-900' }
         };
+
+        // Also get emoji states from Firebase if available
+        let emojiStates = {};
+        if (typeof database !== 'undefined' && database !== null) {
+            const emojiRef = database.ref(this.EMOJI_DB_PATH);
+            emojiRef.once('value', (snapshot) => {
+                emojiStates = snapshot.val() || {};
+            });
+        }
 
         let countComing = 0;
         let countNoResponse = 0;
@@ -108,22 +319,58 @@ const Attendance = {
             nameCell.textContent = playerName;
             row.appendChild(nameCell);
 
-            // Status cell (from global players array)
+            // Status cell - now with EMOJI controls
             const statusCell = document.createElement('td');
             statusCell.className = 'text-center'; 
-            const statusBadge = document.createElement('span');
-            statusBadge.className = 'status-badge px-2 py-1 text-xs font-medium rounded-md';
-            let displayStatus = 'Unknown'; 
-            const originalStatus = (player.status || '').toLowerCase();
-            if (originalStatus.includes('aktif')) displayStatus = 'Aktif Oyuncu';
-            else if (originalStatus === 'adam evde yok') displayStatus = 'Evde Yok';
-            else if (player.status) displayStatus = player.status;
-            statusBadge.textContent = displayStatus;
-            if (originalStatus.includes('aktif')) statusBadge.classList.add('bg-green-100', 'text-green-800');
-            else if (originalStatus === 'adam evde yok' || originalStatus.includes('inactive')) statusBadge.classList.add('bg-red-100', 'text-red-800');
-            else statusBadge.classList.add('bg-gray-100', 'text-gray-800');
-            statusCell.appendChild(statusBadge);
+            
+            // --- Create emoji controls directly here ---
+            const steamIdStr = String(player.steamId || '');
+            const emojiContainer = document.createElement('div');
+            emojiContainer.className = 'emoji-control-container';
+            
+            const leftArrowBtn = document.createElement('button');
+            leftArrowBtn.className = 'emoji-arrow';
+            leftArrowBtn.setAttribute('aria-label', `Previous emoji for ${playerName}`);
+            leftArrowBtn.setAttribute('data-direction', 'left');
+            leftArrowBtn.setAttribute('data-player', playerName);
+            leftArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>`;
+            
+            // Get the current emoji state if available
+            let currentEmojiState = "normal"; // Default
+            if (emojiStates[steamIdStr] && emojiStates[steamIdStr].status) {
+                currentEmojiState = emojiStates[steamIdStr].status;
+            }
+            
+            const emojiLabel = document.createElement('span');
+            emojiLabel.className = 'emoji-label';
+            emojiLabel.textContent = this.EMOJI_MAPPING[currentEmojiState] || "😊";
+            emojiLabel.setAttribute('data-state', currentEmojiState);
+            emojiLabel.setAttribute('data-player', playerName);
+            
+            // Add tooltip with explanation
+            const explanation = this.EMOJI_EXPLANATIONS[currentEmojiState] || "Normal";
+            emojiLabel.setAttribute('title', explanation);
+            emojiLabel.setAttribute('data-tooltip', explanation);
+            
+            const rightArrowBtn = document.createElement('button');
+            rightArrowBtn.className = 'emoji-arrow';
+            rightArrowBtn.setAttribute('aria-label', `Next emoji for ${playerName}`);
+            rightArrowBtn.setAttribute('data-direction', 'right');
+            rightArrowBtn.setAttribute('data-player', playerName);
+            rightArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>`;
+            
+            emojiContainer.appendChild(leftArrowBtn);
+            emojiContainer.appendChild(emojiLabel);
+            emojiContainer.appendChild(rightArrowBtn);
+            statusCell.appendChild(emojiContainer);
+            
             row.appendChild(statusCell);
+            
+            // Check player status for row styling
+            const originalStatus = (player.status || '').toLowerCase();
+            if (originalStatus === 'adam evde yok') {
+                row.classList.add('bg-red-100'); // Light red background for 'Evde Yok'
+            }
 
             // Attendance cell (state determined by Firebase)
             const attendanceCell = document.createElement('td');
@@ -131,26 +378,26 @@ const Attendance = {
             const config = stateConfigs[currentAttendance];
             const container = document.createElement('div');
             container.className = 'attendance-control-container'; 
-            const leftArrowBtn = document.createElement('button');
-            leftArrowBtn.className = 'attendance-arrow';
-            leftArrowBtn.setAttribute('aria-label', `Previous status for ${playerName}`);
-            leftArrowBtn.setAttribute('data-direction', 'left');
-            leftArrowBtn.setAttribute('data-player', playerName);
-            leftArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>`;
+            const leftArrowBtn2 = document.createElement('button');
+            leftArrowBtn2.className = 'attendance-arrow';
+            leftArrowBtn2.setAttribute('aria-label', `Previous status for ${playerName}`);
+            leftArrowBtn2.setAttribute('data-direction', 'left');
+            leftArrowBtn2.setAttribute('data-player', playerName);
+            leftArrowBtn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>`;
             const labelSpan = document.createElement('span');
             labelSpan.className = `attendance-label ${config.bgColor} ${config.textColor}`;
             labelSpan.textContent = config.text;
             labelSpan.setAttribute('data-state', currentAttendance);
             labelSpan.setAttribute('data-player', playerName);
-            const rightArrowBtn = document.createElement('button');
-            rightArrowBtn.className = 'attendance-arrow';
-            rightArrowBtn.setAttribute('aria-label', `Next status for ${playerName}`);
-            rightArrowBtn.setAttribute('data-direction', 'right');
-            rightArrowBtn.setAttribute('data-player', playerName);
-            rightArrowBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>`;
-            container.appendChild(leftArrowBtn);
+            const rightArrowBtn2 = document.createElement('button');
+            rightArrowBtn2.className = 'attendance-arrow';
+            rightArrowBtn2.setAttribute('aria-label', `Next status for ${playerName}`);
+            rightArrowBtn2.setAttribute('data-direction', 'right');
+            rightArrowBtn2.setAttribute('data-player', playerName);
+            rightArrowBtn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>`;
+            container.appendChild(leftArrowBtn2);
             container.appendChild(labelSpan);
-            container.appendChild(rightArrowBtn);
+            container.appendChild(rightArrowBtn2);
             attendanceCell.appendChild(container);
             row.appendChild(attendanceCell);
 
@@ -178,6 +425,9 @@ const Attendance = {
         if (!tekerDonduIndicator.classList.contains('hidden')) {
              tekerDonduIndicator.classList.add(wheelColorClass);
         }
+
+        // Initialize any missing emoji statuses in Firebase
+        this.initializeEmojiStatuses();
     },
 
     /**
@@ -276,6 +526,40 @@ const Attendance = {
     },
 
     /**
+     * Updates a player's emoji status in Firebase.
+     * @param {string} playerName - The name of the player to update.
+     * @param {string} newEmojiState - The new emoji status.
+     */
+    syncEmojiUpdate: async function(playerName, newEmojiState) {
+        console.log(`Syncing emoji update for ${playerName} to ${newEmojiState}`);
+
+        // Find player 
+        const player = players.find(p => p.name === playerName);
+        if (!player || !player.steamId) {
+            console.error(`Could not find player data or SteamID for ${playerName}. Emoji update aborted.`);
+            return;
+        }
+        const steamIdStr = String(player.steamId);
+
+        // Update Firebase
+        if (typeof database !== 'undefined' && database !== null && this.EMOJI_DB_PATH) {
+            try {
+                const emojiRef = database.ref(`${this.EMOJI_DB_PATH}/${steamIdStr}`);
+                await emojiRef.update({
+                    name: playerName,
+                    status: newEmojiState
+                });
+                console.log(`Firebase emoji status updated for ${playerName} (ID: ${steamIdStr}).`);
+            } catch (firebaseError) {
+                console.error("Failed to update Firebase emoji status:", firebaseError);
+                showMessage(`Error updating emoji for ${playerName}.`, "error");
+            }
+        } else {
+            console.warn('Firebase database not available. Skipping Firebase sync for emoji update.');
+        }
+    },
+
+    /**
      * Sends an attendance update for a specific player to the Google Apps Script endpoint.
      * Uses global `APPS_SCRIPT_URL`, `showMessage`.
      * @param {string} playerName - The name of the player to update.
@@ -343,50 +627,106 @@ const Attendance = {
      * @param {Event} event - The click event object.
      */
     handlePlayerListClick: async function(event) {
-        const targetArrow = event.target.closest('.attendance-arrow');
-        const targetLabel = event.target.closest('.attendance-label');
-        let clickedElement = targetArrow || targetLabel;
+        console.log("Player list click detected", event.target);
         
-        if (!clickedElement) return; // Exit if click wasn't on a relevant element
-
-        const playerName = clickedElement.getAttribute('data-player');
-        if (!playerName) return; // Exit if player name not found
-
-        const controlContainer = clickedElement.closest('.attendance-control-container');
-        if (!controlContainer) return; // Exit if container not found
-
-        const labelSpan = controlContainer.querySelector('.attendance-label');
-        if (!labelSpan) return; // Exit if label span not found
-
-        // --- Get current state FROM THE UI (data-state attribute) --- 
-        const currentState = labelSpan.getAttribute('data-state') || 'no_response';
-        // --- End getting state from UI ---
+        // Handle attendance arrows/labels
+        const targetAttendanceArrow = event.target.closest('.attendance-arrow');
+        const targetAttendanceLabel = event.target.closest('.attendance-label');
         
-        let direction = null; 
-        if (targetArrow) {
-            direction = targetArrow.getAttribute('data-direction');
-        } else if (targetLabel) {
-             const rect = targetLabel.getBoundingClientRect();
-             const clickX = event.clientX - rect.left;
-             direction = (clickX < rect.width / 2) ? 'left' : 'right'; 
+        if (targetAttendanceArrow || targetAttendanceLabel) {
+            console.log("Attendance control clicked");
+            let clickedElement = targetAttendanceArrow || targetAttendanceLabel;
+            
+            const playerName = clickedElement.getAttribute('data-player');
+            if (!playerName) return;
+
+            const controlContainer = clickedElement.closest('.attendance-control-container');
+            if (!controlContainer) return;
+
+            const labelSpan = controlContainer.querySelector('.attendance-label');
+            if (!labelSpan) return;
+
+            // Get current state FROM THE UI
+            const currentState = labelSpan.getAttribute('data-state') || 'no_response';
+            
+            let direction = null; 
+            if (targetAttendanceArrow) {
+                direction = targetAttendanceArrow.getAttribute('data-direction');
+            } else if (targetAttendanceLabel) {
+                const rect = targetAttendanceLabel.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                direction = (clickX < rect.width / 2) ? 'left' : 'right'; 
+            }
+
+            if (direction) {
+                let currentIndex = this.ATTENDANCE_STATES.indexOf(currentState); 
+
+                if (direction === 'left') {
+                    currentIndex = (currentIndex - 1 + this.ATTENDANCE_STATES.length) % this.ATTENDANCE_STATES.length;
+                } else {
+                    currentIndex = (currentIndex + 1) % this.ATTENDANCE_STATES.length;
+                }
+                const newState = this.ATTENDANCE_STATES[currentIndex];
+
+                this.syncAttendanceUpdate(playerName, newState);
+            }
+            return;
         }
 
-        if (direction) {
-            let currentIndex = this.ATTENDANCE_STATES.indexOf(currentState); 
-
-            if (direction === 'left') {
-                currentIndex = (currentIndex - 1 + this.ATTENDANCE_STATES.length) % this.ATTENDANCE_STATES.length;
-            } else { // Right arrow or label click
-                currentIndex = (currentIndex + 1) % this.ATTENDANCE_STATES.length;
+        // Handle emoji arrows/labels
+        const targetEmojiArrow = event.target.closest('.emoji-arrow');
+        const targetEmojiLabel = event.target.closest('.emoji-label');
+        
+        if (targetEmojiArrow || targetEmojiLabel) {
+            console.log("Emoji control clicked", targetEmojiArrow || targetEmojiLabel);
+            let clickedElement = targetEmojiArrow || targetEmojiLabel;
+            
+            const playerName = clickedElement.getAttribute('data-player');
+            if (!playerName) {
+                console.warn("Missing data-player attribute on emoji control");
+                return;
             }
-            const newState = this.ATTENDANCE_STATES[currentIndex];
 
-            // Call the combined update function (runs in background)
-            this.syncAttendanceUpdate(playerName, newState);
+            const controlContainer = clickedElement.closest('.emoji-control-container');
+            if (!controlContainer) {
+                console.warn("Cannot find parent emoji-control-container");
+                return;
+            }
 
-        } else {
-             console.warn(`Could not determine click direction for player ${playerName}`);
+            const labelSpan = controlContainer.querySelector('.emoji-label');
+            if (!labelSpan) {
+                console.warn("Cannot find emoji-label within container");
+                return;
+            }
+
+            // Get current emoji state FROM THE UI
+            const currentState = labelSpan.getAttribute('data-state') || 'normal';
+            console.log(`Current emoji state for ${playerName}: ${currentState}`);
+            
+            let direction = null; 
+            if (targetEmojiArrow) {
+                direction = targetEmojiArrow.getAttribute('data-direction');
+            } else if (targetEmojiLabel) {
+                const rect = targetEmojiLabel.getBoundingClientRect();
+                const clickX = event.clientX - rect.left;
+                direction = (clickX < rect.width / 2) ? 'left' : 'right'; 
+            }
+            console.log(`Direction: ${direction}`);
+
+            if (direction) {
+                let currentIndex = this.EMOJI_STATES.indexOf(currentState); 
+                console.log(`Current index: ${currentIndex}`);
+
+                if (direction === 'left') {
+                    currentIndex = (currentIndex - 1 + this.EMOJI_STATES.length) % this.EMOJI_STATES.length;
+                } else {
+                    currentIndex = (currentIndex + 1) % this.EMOJI_STATES.length;
+                }
+                const newState = this.EMOJI_STATES[currentIndex];
+                console.log(`New emoji state: ${newState}`);
+
+                this.syncEmojiUpdate(playerName, newState);
+            }
         }
     }
-
-}; // End of Attendance object 
+}; // End of Attendance object
