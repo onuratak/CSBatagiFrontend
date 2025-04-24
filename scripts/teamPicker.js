@@ -58,6 +58,7 @@ const TeamPicker = {
     dbRef: null, // Firebase database reference
     listenersAttached: false, // Flag to prevent duplicate listeners
     teamComparisonChartInstance: null, // Store chart instance
+    chartRenderDebounceTimer: null, // NEW: Timer for debouncing chart renders
 
     /**
      * Initializes the team picker page
@@ -208,31 +209,31 @@ const TeamPicker = {
         // Listener for Team A
         this.dbRef.child('teamA').on('value', (snapshot) => {
             const teamAData = snapshot.val() || { players: {}, kabile: '' };
+            console.log("Team A listener triggered. New data:", teamAData);
             TeamPicker.teamAName = teamAData.kabile || 'Team A';
-            // Store player map directly from Firebase
             TeamPicker.teamAPlayersData = teamAData.players || {};
-            // Update slots using the new map structure
             TeamPicker.updatePlayerSlots('team-a-players', TeamPicker.teamAPlayersData, 'a');
-            TeamPicker.updateAvailablePlayerDisplay(); // Refresh available list display state
+            TeamPicker.updateAvailablePlayerDisplay();
             const teamAKabileSelect = document.getElementById('team-a-kabile');
             if(teamAKabileSelect) teamAKabileSelect.value = teamAData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
-            TeamPicker.updateStatsDifferenceDisplay(); // Update diff display & trigger chart update
+            console.log("Team A listener: Calling updateStatsDifferenceDisplay");
+            TeamPicker.updateStatsDifferenceDisplay();
         });
 
         // Listener for Team B
         this.dbRef.child('teamB').on('value', (snapshot) => {
             const teamBData = snapshot.val() || { players: {}, kabile: '' };
+            console.log("Team B listener triggered. New data:", teamBData);
             TeamPicker.teamBName = teamBData.kabile || 'Team B';
-            // Store player map directly from Firebase
             TeamPicker.teamBPlayersData = teamBData.players || {};
-            // Update slots using the new map structure
             TeamPicker.updatePlayerSlots('team-b-players', TeamPicker.teamBPlayersData, 'b');
-            TeamPicker.updateAvailablePlayerDisplay(); // Refresh available list display state
+            TeamPicker.updateAvailablePlayerDisplay();
             const teamBKabileSelect = document.getElementById('team-b-kabile');
             if(teamBKabileSelect) teamBKabileSelect.value = teamBData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
-            TeamPicker.updateStatsDifferenceDisplay(); // Update diff display & trigger chart update
+            console.log("Team B listener: Calling updateStatsDifferenceDisplay");
+            TeamPicker.updateStatsDifferenceDisplay();
         });
 
         // Listener for Maps
@@ -770,11 +771,10 @@ const TeamPicker = {
 
             if (typeof valA === 'number' && typeof valB === 'number' && !isNaN(valA) && !isNaN(valB)) {
                 const diff = valA - valB;
-                // Adjust formatting precision based on stat type
                 const decimals = key.includes('ADR') ? 0 : (key.includes('HLTV') || key.includes('KD')) ? 2 : 1;
                 el.textContent = diff.toFixed(decimals);
                 el.className = 'text-center '; // Reset classes
-                if (diff > 0.001) el.classList.add('text-green-600', 'font-medium'); // Add small tolerance for floating point
+                if (diff > 0.001) el.classList.add('text-green-600', 'font-medium');
                 else if (diff < -0.001) el.classList.add('text-red-600', 'font-medium');
                 else el.classList.add('text-gray-500');
             } else {
@@ -784,35 +784,40 @@ const TeamPicker = {
         });
         // --- End Difference Display Update ---
 
-        // --- Update Pentagon Chart ---
-        // 1. Use the fixed stats config defined above
-        const chartStatsConfig = TEAM_CHART_STATS;
-        const chartStatKeys = Object.keys(chartStatsConfig);
+        // --- NEW: Debounce Pentagon Chart Update ---
+        clearTimeout(TeamPicker.chartRenderDebounceTimer); // Clear existing timer
 
-        // 2. Extract average values for the fixed stats from stored averages
-        const teamAChartData = {};
-        const teamBChartData = {};
+        TeamPicker.chartRenderDebounceTimer = setTimeout(() => {
+            // 1. Use the fixed stats config defined above
+            const chartStatsConfig = TEAM_CHART_STATS;
+            const chartStatKeys = Object.keys(chartStatsConfig);
 
-        chartStatKeys.forEach(key => {
-             // Keys in chartStatsConfig directly match keys in team averages (e.g., 'L10_HLTV2')
-             teamAChartData[key] = TeamPicker.teamAAverages[key] || 0; // Use stored average
-             teamBChartData[key] = TeamPicker.teamBAverages[key] || 0;
-        });
+            // 2. Extract average values for the fixed stats from stored averages
+            const teamAChartData = {};
+            const teamBChartData = {};
 
-        // 3. Normalize data using the fixed ranges and the new helper
-        const normalizedTeamA = chartStatKeys.map(key => normalizeStatWithFixedRange(teamAChartData[key], key, TEAM_CHART_FIXED_RANGES));
-        const normalizedTeamB = chartStatKeys.map(key => normalizeStatWithFixedRange(teamBChartData[key], key, TEAM_CHART_FIXED_RANGES));
+            chartStatKeys.forEach(key => {
+                 const avgA = TeamPicker.teamAAverages[key];
+                 const avgB = TeamPicker.teamBAverages[key];
+                 teamAChartData[key] = (typeof avgA === 'number' && !isNaN(avgA)) ? avgA : 0;
+                 teamBChartData[key] = (typeof avgB === 'number' && !isNaN(avgB)) ? avgB : 0;
+            });
 
-        // 4. Render the chart
-        TeamPicker.renderTeamComparisonChart(
-            normalizedTeamA,
-            normalizedTeamB,
-            chartStatsConfig, // Pass the fixed config for labels
-            teamAChartData, // Pass original averages for tooltips
-            teamBChartData,
-            TEAM_CHART_FIXED_RANGES // Pass fixed ranges for axis label formatting
-        );
-        // --- End Pentagon Chart Update ---
+            // 3. Normalize data using the fixed ranges and the new helper
+            const normalizedTeamA = chartStatKeys.map(key => normalizeStatWithFixedRange(teamAChartData[key], key, TEAM_CHART_FIXED_RANGES));
+            const normalizedTeamB = chartStatKeys.map(key => normalizeStatWithFixedRange(teamBChartData[key], key, TEAM_CHART_FIXED_RANGES));
+
+            // 4. Render the chart (This now runs *after* the delay)
+            TeamPicker.renderTeamComparisonChart(
+                normalizedTeamA,
+                normalizedTeamB,
+                chartStatsConfig,
+                teamAChartData,
+                teamBChartData,
+                TEAM_CHART_FIXED_RANGES
+            );
+        }, 100); // Delay in milliseconds (adjust if needed)
+         // --- End Debounce Logic ---
     },
 
     /**
@@ -875,23 +880,38 @@ const TeamPicker = {
             scales: {
                 r: {
                     angleLines: { display: true, lineWidth: 0.5, color: 'rgba(0, 0, 0, 0.1)' },
-                    suggestedMin: 0,
-                    suggestedMax: 100,
-                    ticks: { display: false }, // Keep radial ticks hidden (0-100)
+                    min: 0,
+                    max: 100,
+                    ticks: { display: false },
                     pointLabels: {
                         font: { size: 9, weight: 'normal' },
                         color: '#4b5563',
-                        // NEW: Callback to add ranges to point labels
                         callback: function(pointLabel, index) {
                             const statKey = statKeys[index];
                             const range = fixedRanges[statKey];
                             const statConfig = chartStatsConfig[statKey];
-                            if (range && statConfig) {
-                                // Format based on stat type for range display
-                                const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('HLTV') || statKey.includes('KD')) ? 2 : 1;
-                                return `${statConfig.label} (${range.min.toFixed(decimals)}-${range.max.toFixed(decimals)})`;
+                            const defaultLabel = statConfig ? statConfig.label : (pointLabel || '');
+
+                            try {
+                                if (range && typeof range.min === 'number' && !isNaN(range.min) && typeof range.max === 'number' && !isNaN(range.max)) {
+                                    const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('HLTV') || statKey.includes('KD')) ? 2 : 1;
+                                    
+                                    if (typeof decimals !== 'number' || isNaN(decimals) || decimals < 0) {
+                                        console.warn(`Invalid decimals calculated (${decimals}) for statKey: ${statKey}. Using default label.`);
+                                        return defaultLabel;
+                                    }
+
+                                    const minFormatted = range.min.toFixed(decimals);
+                                    const maxFormatted = range.max.toFixed(decimals);
+                                    return `${statConfig.label} (${minFormatted}-${maxFormatted})`;
+                                } else {
+                                     console.warn(`Invalid range data for statKey: ${statKey}. Range:`, range);
+                                     return defaultLabel;
+                                }
+                            } catch (error) {
+                                console.error(`Error formatting pointLabel for ${statKey}:`, error);
+                                return defaultLabel;
                             }
-                            return statConfig ? statConfig.label : ''; // Fallback
                         }
                     },
                     grid: { color: 'rgba(0, 0, 0, 0.08)', lineWidth: 0.5 }
@@ -912,29 +932,31 @@ const TeamPicker = {
                         label: function(context) {
                             const datasetLabel = context.dataset.label || '';
                             const statIndex = context.dataIndex;
-                            const statKey = statKeys[statIndex]; // Use statKeys from outer scope
-                            const statConfig = chartStatsConfig[statKey]; // Use chartStatsConfig
+                            const statKey = statKeys[statIndex];
+                            const statConfig = chartStatsConfig[statKey];
                             let originalValue = 'N/A';
 
                             const originalData = (datasetLabel === (TeamPicker.teamAName || 'Team A')) ? originalAvgsA : originalAvgsB;
                             const valueRaw = originalData[statKey];
 
-                             // Format the original value based on stat type
                              if (typeof valueRaw === 'number' && !isNaN(valueRaw)) {
                                 const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('HLTV') || statKey.includes('KD')) ? 2 : 1;
                                 originalValue = valueRaw.toFixed(decimals);
+                             } else {
+                                 originalValue = 'N/A';
                              }
                             return `${datasetLabel} - ${statConfig.label}: ${originalValue}`;
                         }
                     }
                 }
             },
-            layout: { padding: { top: 5, bottom: 5, left: 15, right: 15 } } // Increased horizontal padding for labels
+            layout: { padding: { top: 5, bottom: 5, left: 15, right: 15 } }
         };
 
         // Destroy previous chart instance if it exists
         if (TeamPicker.teamComparisonChartInstance) {
             TeamPicker.teamComparisonChartInstance.destroy();
+            TeamPicker.teamComparisonChartInstance = null;
         }
 
         // Create new chart instance and store it
@@ -972,8 +994,7 @@ const TeamPicker = {
          const mapName = mapSelect.value;
          this.dbRef.child(`maps/map${mapIndex}/mapName`).set(mapName)
             .catch(error => console.error(`Error updating Map ${mapIndex} name:`, error));
-        // Side consistency check might be needed or handled by listener update
-         TeamPicker.enforceMapSideConsistency(); 
+        TeamPicker.enforceMapSideConsistency(); 
     },
 
     /**
@@ -993,7 +1014,6 @@ const TeamPicker = {
         const updates = {};
         updates[`maps/map${mapIndex}/${side}_team`] = selectedTeam;
 
-        // Auto-select other side if one is chosen and the other is empty or same
         if (selectedTeam && otherSelectElement) {
             const otherTeamCurrentValue = otherSelectElement.value;
             const otherTeamShouldBe = selectedTeam === 'A' ? 'B' : 'A';
@@ -1001,16 +1021,11 @@ const TeamPicker = {
                  updates[`maps/map${mapIndex}/${otherSide}_team`] = otherTeamShouldBe;
              }
          } else if (!selectedTeam && otherSelectElement) {
-             // If clearing one side, clear the other too for simplicity? Or leave it? Let's clear.
              updates[`maps/map${mapIndex}/${otherSide}_team`] = "";
          }
 
         this.dbRef.update(updates)
              .catch(error => console.error(`Error updating Map ${mapIndex} sides:`, error));
-             
-         // Note: UI update will be handled by the 'maps' listener reacting to the DB change.
-         // We might still call enforceMapSideConsistency locally for immediate feedback, but the listener is the source of truth.
-         // TeamPicker.enforceMapSideConsistency(); // Optional immediate UI update
     },
     
     /**
@@ -1039,33 +1054,21 @@ const TeamPicker = {
             const ctVal = ctSelect.value;
 
             if (tVal && tVal === ctVal) {
-                // If both are set to the same, clear the one that wasn't just changed (tricky without event context)
-                // For simplicity, let's just clear CT if T was set, and vice-versa (less ideal)
-                // A better approach is in handleSideChange which writes the correct opposite to Firebase.
-                // This function becomes more of a final check or visual sync if needed.
                 console.warn(`Inconsistent sides detected for Map ${i}. Firebase update should correct this.`);
             }
-            // The Firebase listener reacting to handleSideChange should ultimately fix the UI state.
         }
     },
      /**
      * Updates the team name based on kabile selection (Local UI update, FB triggers actual name change).
      */
     updateTeamName: function(event) {
-         // This function might become redundant if kabile listener handles name update
-         // Or it can provide immediate (though temporary) UI feedback before FB sync
          const teamId = event.target.id.includes('-a-') ? 'a' : 'b';
          const selectedKabile = event.target.value;
          const teamHeader = document.querySelector(`#page-team_picker .team-container:nth-child(${teamId === 'a' ? 1 : 2}) h3`);
          
          if (teamHeader) {
              teamHeader.textContent = selectedKabile || (teamId === 'a' ? 'Team A' : 'Team B');
-             // Update local state immediately for responsiveness? Or rely purely on FB?
-             // if (teamId === 'a') TeamPicker.teamAName = selectedKabile || 'Team A';
-             // else TeamPicker.teamBName = selectedKabile || 'Team B';
          }
-         // TeamPicker.updateMapSideTeamNames(); // Update names in map selects immediately
-         // Note: The actual state change happens via handleKabileChange writing to Firebase.
     },
 
     /**
@@ -1073,7 +1076,6 @@ const TeamPicker = {
      */
     fetchKabileData: async function() {
         try {
-            // Use the constant defined within the module
             const response = await fetch(this.KABILE_JSON_URL);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -1081,7 +1083,6 @@ const TeamPicker = {
             return await response.json();
         } catch (error) {
             console.error('Error fetching kabile data:', error);
-            // Return default values if there's an error
             return ["Team A", "Team B", "Kabile 1", "HilingTurimik", "Kianlar", "ShilkadinoguflarI"];
         }
     },
@@ -1091,7 +1092,6 @@ const TeamPicker = {
      */
     fetchMapsData: async function() {
         try {
-            // Use the constant defined within the module
             const response = await fetch(this.MAPS_JSON_URL);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -1099,7 +1099,6 @@ const TeamPicker = {
             return await response.json();
         } catch (error) {
             console.error('Error fetching maps data:', error);
-            // Return default values if there's an error
             return [
                 {"id": "anubis", "name": "Anubis"},
                 {"id": "ancient", "name": "Ancient"},
@@ -1121,11 +1120,9 @@ const TeamPicker = {
         
         if (!teamAKabile || !teamBKabile) return;
         
-        // Clear existing options
         teamAKabile.innerHTML = '<option value="">Select Kabile</option>';
         teamBKabile.innerHTML = '<option value="">Select Kabile</option>';
         
-        // Add options from JSON data
         kabileData.forEach(kabile => {
             const optionA = document.createElement('option');
             optionA.value = kabile;
@@ -1152,10 +1149,8 @@ const TeamPicker = {
         mapSelects.forEach(select => {
             if (!select) return;
             
-            // Clear existing options
             select.innerHTML = '<option value="">Select Map</option>';
             
-            // Add options from JSON data
             mapsData.forEach(map => {
                 const option = document.createElement('option');
                 option.value = map.id;
@@ -1171,14 +1166,13 @@ const TeamPicker = {
      * @returns {Object} - Player object with merged stats under player.stats.
      */
     mergePlayerWithStats: function(player) {
-        // Use the getter functions from StatsTables which expect steamId
         if (!player || !player.steamId) {
             console.warn("Attempted to merge stats for player without steamId:", player);
-            return { ...player, stats: {} }; // Return basic player data with empty stats
+            return { ...player, stats: {} };
         }
 
-        const steamId = String(player.steamId); // Ensure it's a string
-        const mergedPlayer = { ...player, stats: {} }; // Start with a copy
+        const steamId = String(player.steamId);
+        const mergedPlayer = { ...player, stats: {} };
 
         const last10PlayerStats = StatsTables.getLast10StatsBySteamId(steamId);
         if (last10PlayerStats) {
@@ -1194,7 +1188,6 @@ const TeamPicker = {
             mergedPlayer.stats.S_KD = seasonPlayerStats.kd;
         }
 
-        // Log if stats are missing for debugging
         if (!last10PlayerStats || !seasonPlayerStats) {
              console.log(`Stats lookup for ${player.name} (ID: ${steamId}): Last10=${!!last10PlayerStats}, Season=${!!seasonPlayerStats}`);
         }
@@ -1219,7 +1212,6 @@ const TeamPicker = {
         if (spinner) spinner.classList.remove('hidden');
 
         try {
-            // --- 1. Create Team Objects ---
             const team1Object = TeamPicker.createTeamObjectForAPI('a');
             const team2Object = TeamPicker.createTeamObjectForAPI('b');
 

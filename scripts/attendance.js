@@ -728,5 +728,150 @@ const Attendance = {
                 this.syncEmojiUpdate(playerName, newState);
             }
         }
+    },
+
+    /**
+     * NEW: Clears attendance and emoji states to defaults.
+     * Syncs changes to Firebase and Google Sheets.
+     */
+    clearAttendanceAndEmojis: async function() {
+        const clearButton = document.getElementById('clear-attendance-button');
+        const clearSpinner = document.getElementById('clear-spinner');
+
+        if (!clearButton || !clearSpinner) {
+            console.error("Clear button or spinner element not found.");
+            return;
+        }
+
+        if (typeof database === 'undefined' || database === null) {
+            showMessage("Database connection not available.", "error");
+            return;
+        }
+
+        clearButton.disabled = true;
+        clearSpinner.classList.remove('hidden');
+        showMessage("Clearing attendance...", "info");
+
+        try {
+            // 1. Get current state from Firebase
+            const attendanceSnapshot = await database.ref(this.ATTENDANCE_DB_PATH).once('value');
+            const currentAttendanceData = attendanceSnapshot.val() || {};
+            const emojiSnapshot = await database.ref(this.EMOJI_DB_PATH).once('value');
+            const currentEmojiData = emojiSnapshot.val() || {};
+
+            const firebaseUpdates = {};
+            const sheetUpdates = []; // Array to store { steamId, attendance } for POST
+
+            // 2. Iterate through global players list (contains sheet status)
+            for (const player of players) {
+                if (!player.steamId || !player.name) {
+                    console.warn("Skipping player due to missing steamId or name:", player);
+                    continue;
+                }
+                const steamIdStr = String(player.steamId);
+                const currentAttendance = currentAttendanceData[steamIdStr]?.status || 'no_response';
+                const currentEmoji = currentEmojiData[steamIdStr]?.status || 'normal';
+
+                let targetAttendance = 'no_response';
+                const targetEmoji = 'normal';
+
+                // Log the status being checked from the global players array
+                console.log(`Checking player: ${player.name}, Sheet Status: '${player.status}'`);
+
+                // Determine target attendance based on sheet status ('adam evde yok')
+                const sheetStatus = (player.status || '').trim().toLowerCase();
+                if (sheetStatus === 'adam evde yok') {
+                    // Always set 'adam evde yok' players to 'not_coming' on clear
+                    targetAttendance = 'not_coming';
+                } else {
+                    // Set all other players to 'no_response'
+                    targetAttendance = 'no_response';
+                }
+
+                // Prepare Firebase updates if changes are needed
+                if (targetAttendance !== currentAttendance) {
+                    firebaseUpdates[`${this.ATTENDANCE_DB_PATH}/${steamIdStr}/status`] = targetAttendance;
+                    // Mark for sheet update
+                    sheetUpdates.push({ steamId: steamIdStr, attendance: targetAttendance });
+                }
+                // Always ensure name is present in attendance data
+                if (!currentAttendanceData[steamIdStr]?.name) {
+                     firebaseUpdates[`${this.ATTENDANCE_DB_PATH}/${steamIdStr}/name`] = player.name;
+                }
+
+                if (targetEmoji !== currentEmoji) {
+                    firebaseUpdates[`${this.EMOJI_DB_PATH}/${steamIdStr}/status`] = targetEmoji;
+                }
+                // Always ensure name is present in emoji data
+                 if (!currentEmojiData[steamIdStr]?.name) {
+                     firebaseUpdates[`${this.EMOJI_DB_PATH}/${steamIdStr}/name`] = player.name;
+                }
+            }
+
+            // 3. Perform Firebase update
+            if (Object.keys(firebaseUpdates).length > 0) {
+                console.log("Applying Firebase updates:", firebaseUpdates);
+                await database.ref().update(firebaseUpdates);
+                console.log("Firebase updated successfully.");
+            } else {
+                console.log("No Firebase updates needed.");
+            }
+
+            // 4. Perform Google Sheet updates (POST requests)
+            if (sheetUpdates.length > 0) {
+                console.log("Sending updates to Google Sheet:", sheetUpdates);
+                // Send updates concurrently
+                const sheetPromises = sheetUpdates.map(update =>
+                    fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(update),
+                        redirect: 'follow'
+                    }).catch(err => {
+                         // Log sheet errors but don't block completion
+                         console.error(`Error sending sheet update for ${update.steamId}:`, err);
+                     })
+                );
+                await Promise.all(sheetPromises);
+                console.log("Sheet updates sent.");
+            }
+
+            showMessage('Attendance cleared successfully!', 'success');
+
+        } catch (error) {
+            console.error('Error clearing attendance:', error);
+            showMessage(`Error clearing attendance: ${error.message}`, 'error');
+        } finally {
+            clearButton.disabled = false;
+            clearSpinner.classList.add('hidden');
+        }
     }
 }; // End of Attendance object
+
+// --- Event Listener Setup --- 
+document.addEventListener('DOMContentLoaded', () => {
+    // Ensure Attendance.init is called only after Firebase is likely initialized
+    // We rely on MainScript.js handling the initial Firebase setup.
+    // Delaying slightly or using a custom event might be more robust if needed.
+    // setTimeout(Attendance.init, 500); // Example delay, adjust if necessary
+
+    // --- Add Listener for Update Button --- 
+    const updateButton = document.getElementById('update-stats-button');
+    if (updateButton) {
+        updateButton.addEventListener('click', () => Attendance.fetchStatsFromSheet());
+    }
+
+    // --- Add Listener for Clear Button --- 
+    const clearButton = document.getElementById('clear-attendance-button');
+    if (clearButton) {
+        clearButton.addEventListener('click', () => Attendance.clearAttendanceAndEmojis());
+    }
+
+    // --- Add Listener for Player List Clicks --- 
+    const playerList = document.getElementById('player-list');
+    if (playerList) {
+        playerList.addEventListener('click', (event) => Attendance.handlePlayerListClick(event));
+    }
+});
