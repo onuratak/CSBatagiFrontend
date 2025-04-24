@@ -867,13 +867,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-    
-
-    // --- Add Listener for Clear Button --- 
-    const clearButton = document.getElementById('clear-attendance-button');
-    if (clearButton) {
-        clearButton.addEventListener('click', () => Attendance.clearAttendanceAndEmojis());
-    }
 
     // --- Add Listener for Player List Clicks --- 
     const playerList = document.getElementById('player-list');
