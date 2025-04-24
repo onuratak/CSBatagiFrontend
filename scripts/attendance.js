@@ -857,11 +857,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Delaying slightly or using a custom event might be more robust if needed.
     // setTimeout(Attendance.init, 500); // Example delay, adjust if necessary
 
-    // --- Add Listener for Update Button --- 
-    const updateButton = document.getElementById('update-stats-button');
-    if (updateButton) {
-        updateButton.addEventListener('click', () => Attendance.fetchStatsFromSheet());
+    // --- Add Listener for Clear Button --- 
+    const clearButton = document.getElementById('clear-attendance-button');
+    if (clearButton) {
+        clearButton.addEventListener('click', () => {
+            // Show confirmation dialog in Turkish
+            if (confirm('Emin misiniz? Bu işlem tüm katılım durumlarını sıfırlayacak.')) {
+                Attendance.clearAttendanceAndEmojis();
+            }
+        });
     }
+    
 
     // --- Add Listener for Clear Button --- 
     const clearButton = document.getElementById('clear-attendance-button');
