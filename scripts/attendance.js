@@ -861,9 +861,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearButton = document.getElementById('clear-attendance-button');
     if (clearButton) {
         clearButton.addEventListener('click', () => {
-            // Show confirmation dialog in Turkish
-            if (confirm('Emin misiniz? Bu işlem tüm katılım durumlarını sıfırlayacak.')) {
-                Attendance.clearAttendanceAndEmojis();
+            // Prompt for password
+            const password = prompt("Please enter the password to clear attendance:");
+            // Hardcoded password for now
+            const correctPassword = "osirikler"; 
+            //const correctPassword = window.CLEAR_ATTENDANCE_PASSWORD || "INJECTED_PASSWORD_PLACEHOLDER"; 
+
+            if (password === correctPassword) {
+                // Show confirmation dialog in Turkish
+                if (confirm('Emin misiniz? Bu işlem tüm katılım durumlarını sıfırlayacak.')) {
+                    Attendance.clearAttendanceAndEmojis();
+                }
+            } else if (password !== null) { // Don't alert if the user pressed Cancel
+                alert("Incorrect password. Action cancelled.");
             }
         });
     }
