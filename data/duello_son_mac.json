@@ -2,6 +2,7 @@
   "playerRows": [
     "Cago",
     "Cavid-20",
+    "Malawhur",
     "Mustasem",
     "Nerull",
     "Titus",
@@ -18,6 +19,7 @@
   "playerCols": [
     "Cago",
     "Cavid-20",
+    "Malawhur",
     "Mustasem",
     "Nerull",
     "Titus",
@@ -38,8 +40,8 @@
         "deaths": 0
       },
       "Cago": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 5,
+        "deaths": 3
       },
       "Cavid-20": {
         "kills": 3,
@@ -50,8 +52,8 @@
         "deaths": 0
       },
       "darbe": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 2,
+        "deaths": 3
       },
       "ekl1ps": {
         "kills": 2,
@@ -60,6 +62,10 @@
       "eskisigibi": {
         "kills": 6,
         "deaths": 4
+      },
+      "Malawhur": {
+        "kills": 0,
+        "deaths": 3
       },
       "mersido": {
         "kills": 0,
@@ -79,11 +85,11 @@
       },
       "Titus": {
         "kills": 0,
-        "deaths": 0
+        "deaths": 3
       },
       "Uncle Iroh": {
-        "kills": 6,
-        "deaths": 3
+        "kills": 7,
+        "deaths": 6
       },
       "wormik": {
         "kills": 2,
@@ -92,8 +98,8 @@
     },
     "Cago": {
       "bobinaj": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 3,
+        "deaths": 5
       },
       "Cago": {
         "kills": 0,
@@ -112,28 +118,32 @@
         "deaths": 0
       },
       "ekl1ps": {
-        "kills": 6,
-        "deaths": 5
+        "kills": 10,
+        "deaths": 9
       },
       "eskisigibi": {
         "kills": 3,
         "deaths": 1
       },
-      "mersido": {
+      "Malawhur": {
         "kills": 0,
         "deaths": 0
+      },
+      "mersido": {
+        "kills": 2,
+        "deaths": 1
       },
       "Mustasem": {
         "kills": 0,
         "deaths": 0
       },
       "Nerull": {
-        "kills": 5,
-        "deaths": 7
+        "kills": 8,
+        "deaths": 13
       },
       "sedo": {
-        "kills": 6,
-        "deaths": 3
+        "kills": 8,
+        "deaths": 5
       },
       "Titus": {
         "kills": 0,
@@ -174,6 +184,10 @@
         "deaths": 0
       },
       "eskisigibi": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "Malawhur": {
         "kills": 0,
         "deaths": 0
       },
@@ -235,6 +249,10 @@
         "kills": 7,
         "deaths": 4
       },
+      "Malawhur": {
+        "kills": 0,
+        "deaths": 0
+      },
       "mersido": {
         "kills": 0,
         "deaths": 0
@@ -266,8 +284,8 @@
     },
     "darbe": {
       "bobinaj": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 3,
+        "deaths": 2
       },
       "Cago": {
         "kills": 0,
@@ -287,27 +305,31 @@
       },
       "ekl1ps": {
         "kills": 6,
-        "deaths": 4
+        "deaths": 8
       },
       "eskisigibi": {
         "kills": 6,
         "deaths": 3
       },
-      "mersido": {
+      "Malawhur": {
         "kills": 0,
         "deaths": 0
+      },
+      "mersido": {
+        "kills": 2,
+        "deaths": 1
       },
       "Mustasem": {
         "kills": 0,
         "deaths": 0
       },
       "Nerull": {
-        "kills": 3,
-        "deaths": 14
+        "kills": 6,
+        "deaths": 18
       },
       "sedo": {
-        "kills": 5,
-        "deaths": 5
+        "kills": 6,
+        "deaths": 12
       },
       "Titus": {
         "kills": 0,
@@ -328,8 +350,8 @@
         "deaths": 2
       },
       "Cago": {
-        "kills": 5,
-        "deaths": 6
+        "kills": 9,
+        "deaths": 10
       },
       "Cavid-20": {
         "kills": 0,
@@ -340,7 +362,7 @@
         "deaths": 10
       },
       "darbe": {
-        "kills": 4,
+        "kills": 8,
         "deaths": 6
       },
       "ekl1ps": {
@@ -350,6 +372,10 @@
       "eskisigibi": {
         "kills": 0,
         "deaths": 0
+      },
+      "Malawhur": {
+        "kills": 5,
+        "deaths": 7
       },
       "mersido": {
         "kills": 8,
@@ -368,12 +394,12 @@
         "deaths": 0
       },
       "Titus": {
-        "kills": 6,
-        "deaths": 4
+        "kills": 12,
+        "deaths": 5
       },
       "Uncle Iroh": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 2,
+        "deaths": 1
       },
       "wormik": {
         "kills": 0,
@@ -409,6 +435,10 @@
         "kills": 0,
         "deaths": 0
       },
+      "Malawhur": {
+        "kills": 0,
+        "deaths": 0
+      },
       "mersido": {
         "kills": 2,
         "deaths": 6
@@ -438,9 +468,9 @@
         "deaths": 0
       }
     },
-    "mersido": {
+    "Malawhur": {
       "bobinaj": {
-        "kills": 0,
+        "kills": 3,
         "deaths": 0
       },
       "Cago": {
@@ -448,8 +478,8 @@
         "deaths": 0
       },
       "Cavid-20": {
-        "kills": 7,
-        "deaths": 4
+        "kills": 0,
+        "deaths": 0
       },
       "daE": {
         "kills": 0,
@@ -460,12 +490,78 @@
         "deaths": 0
       },
       "ekl1ps": {
+        "kills": 7,
+        "deaths": 5
+      },
+      "eskisigibi": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "Malawhur": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "mersido": {
+        "kills": 4,
+        "deaths": 3
+      },
+      "Mustasem": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "Nerull": {
+        "kills": 4,
+        "deaths": 6
+      },
+      "sedo": {
+        "kills": 6,
+        "deaths": 2
+      },
+      "Titus": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "Uncle Iroh": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "wormik": {
+        "kills": 0,
+        "deaths": 0
+      }
+    },
+    "mersido": {
+      "bobinaj": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "Cago": {
+        "kills": 1,
+        "deaths": 2
+      },
+      "Cavid-20": {
+        "kills": 7,
+        "deaths": 4
+      },
+      "daE": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "darbe": {
+        "kills": 1,
+        "deaths": 2
+      },
+      "ekl1ps": {
         "kills": 1,
         "deaths": 8
       },
       "eskisigibi": {
         "kills": 6,
         "deaths": 2
+      },
+      "Malawhur": {
+        "kills": 3,
+        "deaths": 4
       },
       "mersido": {
         "kills": 0,
@@ -484,12 +580,12 @@
         "deaths": 2
       },
       "Titus": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 4,
+        "deaths": 2
       },
       "Uncle Iroh": {
-        "kills": 3,
-        "deaths": 1
+        "kills": 11,
+        "deaths": 2
       },
       "wormik": {
         "kills": 2,
@@ -523,6 +619,10 @@
       },
       "eskisigibi": {
         "kills": 4,
+        "deaths": 0
+      },
+      "Malawhur": {
+        "kills": 0,
         "deaths": 0
       },
       "mersido": {
@@ -560,8 +660,8 @@
         "deaths": 1
       },
       "Cago": {
-        "kills": 7,
-        "deaths": 5
+        "kills": 13,
+        "deaths": 8
       },
       "Cavid-20": {
         "kills": 0,
@@ -572,8 +672,8 @@
         "deaths": 7
       },
       "darbe": {
-        "kills": 14,
-        "deaths": 3
+        "kills": 18,
+        "deaths": 6
       },
       "ekl1ps": {
         "kills": 0,
@@ -582,6 +682,10 @@
       "eskisigibi": {
         "kills": 0,
         "deaths": 0
+      },
+      "Malawhur": {
+        "kills": 6,
+        "deaths": 4
       },
       "mersido": {
         "kills": 5,
@@ -600,12 +704,12 @@
         "deaths": 0
       },
       "Titus": {
-        "kills": 8,
-        "deaths": 5
+        "kills": 10,
+        "deaths": 7
       },
       "Uncle Iroh": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 1,
+        "deaths": 3
       },
       "wormik": {
         "kills": 0,
@@ -618,8 +722,8 @@
         "deaths": 1
       },
       "Cago": {
-        "kills": 3,
-        "deaths": 6
+        "kills": 5,
+        "deaths": 8
       },
       "Cavid-20": {
         "kills": 0,
@@ -630,8 +734,8 @@
         "deaths": 5
       },
       "darbe": {
-        "kills": 5,
-        "deaths": 5
+        "kills": 12,
+        "deaths": 6
       },
       "ekl1ps": {
         "kills": 0,
@@ -640,6 +744,10 @@
       "eskisigibi": {
         "kills": 0,
         "deaths": 0
+      },
+      "Malawhur": {
+        "kills": 2,
+        "deaths": 6
       },
       "mersido": {
         "kills": 2,
@@ -658,12 +766,12 @@
         "deaths": 0
       },
       "Titus": {
-        "kills": 1,
-        "deaths": 3
+        "kills": 6,
+        "deaths": 6
       },
       "Uncle Iroh": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 7,
+        "deaths": 2
       },
       "wormik": {
         "kills": 0,
@@ -672,7 +780,7 @@
     },
     "Titus": {
       "bobinaj": {
-        "kills": 0,
+        "kills": 3,
         "deaths": 0
       },
       "Cago": {
@@ -692,28 +800,32 @@
         "deaths": 0
       },
       "ekl1ps": {
-        "kills": 4,
-        "deaths": 6
+        "kills": 5,
+        "deaths": 12
       },
       "eskisigibi": {
         "kills": 2,
         "deaths": 3
       },
-      "mersido": {
+      "Malawhur": {
         "kills": 0,
         "deaths": 0
+      },
+      "mersido": {
+        "kills": 2,
+        "deaths": 4
       },
       "Mustasem": {
         "kills": 0,
         "deaths": 0
       },
       "Nerull": {
-        "kills": 5,
-        "deaths": 8
+        "kills": 7,
+        "deaths": 10
       },
       "sedo": {
-        "kills": 3,
-        "deaths": 1
+        "kills": 6,
+        "deaths": 6
       },
       "Titus": {
         "kills": 0,
@@ -730,8 +842,8 @@
     },
     "Uncle Iroh": {
       "bobinaj": {
-        "kills": 3,
-        "deaths": 6
+        "kills": 6,
+        "deaths": 7
       },
       "Cago": {
         "kills": 2,
@@ -750,28 +862,32 @@
         "deaths": 6
       },
       "ekl1ps": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 1,
+        "deaths": 2
       },
       "eskisigibi": {
         "kills": 0,
         "deaths": 0
       },
+      "Malawhur": {
+        "kills": 0,
+        "deaths": 0
+      },
       "mersido": {
-        "kills": 1,
-        "deaths": 3
+        "kills": 2,
+        "deaths": 11
       },
       "Mustasem": {
         "kills": 4,
         "deaths": 5
       },
       "Nerull": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 3,
+        "deaths": 1
       },
       "sedo": {
-        "kills": 0,
-        "deaths": 0
+        "kills": 2,
+        "deaths": 7
       },
       "Titus": {
         "kills": 1,
@@ -812,6 +928,10 @@
         "deaths": 0
       },
       "eskisigibi": {
+        "kills": 0,
+        "deaths": 0
+      },
+      "Malawhur": {
         "kills": 0,
         "deaths": 0
       },
