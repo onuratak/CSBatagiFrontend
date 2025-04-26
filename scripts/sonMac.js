@@ -83,7 +83,7 @@ const SonMac = {
 
             const button = document.createElement('button');
             button.id = `${mapName}-tab`;
-            button.className = `tab-nav-item map-tab-button inline-block p-4 border-b-2 ${isFirst ? 'border-blue-500 active' : 'border-transparent'} rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
+            button.className = `tab-nav-item map-tab-button inline-block border-b-2 ${isFirst ? 'border-blue-500 active' : 'border-transparent'} rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
             button.setAttribute('aria-controls', mapName);
             button.textContent = mapName;
 

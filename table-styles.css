@@ -179,13 +179,6 @@
     border-bottom: 1px solid #e5e7eb;
 }
 
-/* --- Player Status Table Specific Styles --- */
-/* This applies only to the player status table while preserving its Tailwind styling */
-.player-status-header {
-    /* background-color: #f1f1f1 !important; */ /* Light gray background - REMOVED !important */
-    /* Let the default .styled-table thead th styles apply, or dark theme override */
-}
-
 /* --- Status Badge Style --- */
 .status-badge {
     display: inline-block; /* Crucial for background on wrapped lines */
@@ -1510,9 +1503,7 @@ body.dark-theme #team-b-players { /* Team B List BG */
 body.dark-theme .team-list table { /* Target table within team list */
     background-color: transparent; /* Make table bg transparent */
 }
-body.dark-theme .team-list thead tr {
-    /* Background is now handled by specific team rules below */
-}
+
 body.dark-theme .team-list thead th {
     color: #f3f4f6;
     border-color: #4b5563;
@@ -1598,19 +1589,12 @@ body.dark-theme .map-container option.text-green-600 {
 body.dark-theme #team-pentagon-comparison h4 {
      color: #e5e7eb;
 }
-body.dark-theme #team-picker-pentagon-chart {
-     /* Chart.js options control most colors, but ensure background isn't forced */
-}
+
 /* Adjust Radar chart point labels for dark theme */
 body.dark-theme .chartjs-render-monitor + div, /* Might need adjustment based on Chart.js structure */
 body.dark-theme canvas + div { /* Fallback */
    color: #d1d5db !important; /* Ensure point labels are light */
 }/* More specific targeting if needed */
-body.dark-theme #team-picker-pentagon-chart + .chartjs-tooltip, /* Tooltip styles */
-body.dark-theme #team-picker-pentagon-chart ~ * { /* Point labels might be siblings */
-   /* Adjust styles if needed */
-}/* Note: Chart.js v3 uses scale 'r' options for pointLabels */
-/* Options in JS should handle colors ideally */
 
 /* === End Dark Theme Adjustments for Team Picker === */
 
