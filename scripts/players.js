@@ -136,16 +136,32 @@ const PlayerCharts = {
             }]
         };
 
+        const isDarkMode = document.body.classList.contains('dark-theme');
+        console.log(`[renderPentagonChart - ${canvasId}] isDarkMode:`, isDarkMode); // <<< Log the theme status
+
         const options = {
             responsive: true,
             scales: {
                 r: {
-                    angleLines: { display: true, lineWidth: 0.5, color: 'rgba(0, 0, 0, 0.1)' },
+                    angleLines: { 
+                        display: true, 
+                        lineWidth: 0.5, 
+                        // Darker gray for light mode, light gray for dark mode
+                        color: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.4)' // Increased light mode opacity 
+                    },
                     suggestedMin: 0,
                     suggestedMax: 100,
                     ticks: { display: false, stepSize: 25, backdropColor: 'rgba(0, 0, 0, 0)' },
-                    pointLabels: { font: { size: 7, weight: 'bold' }, color: '#4b5563' },
-                    grid: { color: 'rgba(0, 0, 0, 0.08)', lineWidth: 0.5 }
+                    pointLabels: { 
+                        font: { size: 7, weight: 'bold' }, 
+                        // Use lighter gray for dark mode, very dark gray for light mode
+                        color: isDarkMode ? '#f3f4f6' : '#1f2937' 
+                    },
+                    grid: { 
+                        // Darker gray grid for light mode, light gray for dark mode
+                        color: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.3)', // Increased light mode opacity
+                        lineWidth: 0.5 
+                    }
                 }
             },
             plugins: {
@@ -181,6 +197,8 @@ const PlayerCharts = {
             },
             layout: { padding: 5 }
         };
+
+        console.log(`[renderPentagonChart - ${canvasId}] Assigned pointLabel color:`, options.scales.r.pointLabels.color); // <<< Log the assigned color
 
         // Destroy previous chart instance for this canvas if it exists
         if (this.playerChartInstances[canvasId]) {
@@ -264,24 +282,4 @@ function createPlayerCard(playerData, container) {
     return canvasId;
 }
 
-// --- REMOVED: Functions specific to the "Players" Tab Initialization ---
-// let isPlayersPageInitialized = false;
-// let allPlayerStatRanges = {}; // Store ranges calculated on init
-// let allPlayersData = {}; // Store the raw player data
-// let playerGridElement = null;
-// let statCheckboxContainer = null;
-// let updateGraphsButton = null;
-// let statValidationMsgElement = null;
-// let playerStatSelectorToggle = null;
-// let playerStatSelectorContent = null;
-// let playerStatArrow = null;
-// function getSelectedPentagonStats() { ... }
-// function updateStatSelectionUI() { ... }
-// function handleCheckboxChange() { ... }
-// function handleUpdateGraphsClick() { ... }
-// function populateStatCheckboxes() { ... }
-// async function initializePlayersPage() { ... }
-// window.initializePlayersPage = initializePlayersPage;
-
-// Optional: Add message display function if not globally available (already exists in MainScript.js)
-// function displayMessage(message, type = 'info') { ... } 
+// --- End Utility Functions ---

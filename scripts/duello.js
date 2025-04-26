@@ -136,6 +136,7 @@ const Duello = {
             th.className = 'border bg-gray-50 p-3 font-semibold text-center';
             th.style.position = 'sticky'; th.style.top = '0'; th.style.zIndex = '10';
             th.style.minWidth = '100px'; th.textContent = colName;
+            th.title = colName; // Add title for full name tooltip
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
@@ -149,6 +150,7 @@ const Duello = {
             rowHeader.className = 'border bg-gray-50 p-3 font-semibold text-left';
             rowHeader.style.position = 'sticky'; rowHeader.style.left = '0'; rowHeader.style.zIndex = '10';
             rowHeader.textContent = rowName;
+            rowHeader.title = rowName; // Add title attribute for tooltip
             tr.appendChild(rowHeader);
 
             playerCols.forEach(colName => {

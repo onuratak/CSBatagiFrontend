@@ -257,11 +257,11 @@ const Attendance = {
         }
         playerListBody.innerHTML = ''; // Clear existing rows
 
-        // Define attendance state configurations (styles and text)
+        // Define attendance state configurations (just text values, styling moved to CSS)
         const stateConfigs = {
-            coming: { text: 'Geliyor', bgColor: 'bg-green-500', textColor: 'text-white' },
-            not_coming: { text: 'Gelmiyor', bgColor: 'bg-red-500', textColor: 'text-white' },
-            no_response: { text: 'Belirsiz', bgColor: 'bg-gray-300', textColor: 'text-gray-900' }
+            coming: { text: 'Geliyor' },
+            not_coming: { text: 'Gelmiyor' },
+            no_response: { text: 'Belirsiz' }
         };
 
         // Also get emoji states from Firebase if available
@@ -385,7 +385,7 @@ const Attendance = {
             leftArrowBtn2.setAttribute('data-player', playerName);
             leftArrowBtn2.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>`;
             const labelSpan = document.createElement('span');
-            labelSpan.className = `attendance-label ${config.bgColor} ${config.textColor}`;
+            labelSpan.className = 'attendance-label';
             labelSpan.textContent = config.text;
             labelSpan.setAttribute('data-state', currentAttendance);
             labelSpan.setAttribute('data-player', playerName);

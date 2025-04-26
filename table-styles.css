@@ -115,7 +115,7 @@
 }
 
 .styled-table tbody td {
-    padding: 12px 6px; /* Reduced horizontal padding to reduce column gaps */
+    padding: 14px 8px; /* Increased padding slightly */
     white-space: nowrap; /* Prevent text wrapping in cells by default */
     vertical-align: middle; /* Align cell content vertically */
 }
@@ -182,7 +182,8 @@
 /* --- Player Status Table Specific Styles --- */
 /* This applies only to the player status table while preserving its Tailwind styling */
 .player-status-header {
-    background-color: #f1f1f1 !important; /* Light gray background to match other tables */
+    /* background-color: #f1f1f1 !important; */ /* Light gray background - REMOVED !important */
+    /* Let the default .styled-table thead th styles apply, or dark theme override */
 }
 
 /* --- Status Badge Style --- */
@@ -213,6 +214,15 @@
 }
 .info-panel strong {
     color: #374151; /* Medium-dark gray text for labels */
+}
+
+/* Info panel list items - dark theme */
+body.dark-theme .info-panel ul {
+    color: #e5e7eb; /* Light gray for list text */
+}
+
+body.dark-theme .info-panel li {
+    color: #e5e7eb; /* Light gray for better readability */
 }
 
 /* --- Attendance Control Styles --- */
@@ -321,8 +331,62 @@
 /* Use Inter font */
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #f3f4f6; /* Light gray background */
-    color: #1f2937; /* Darker gray text */
+    background-color: #f3f4f6; /* Light gray background - DEFAULT */
+    color: #1f2937; /* Darker gray text - DEFAULT */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+/* --- Dark Theme Base Styles --- */
+body.dark-theme {
+    background-color: #111827; /* Dark Blue-Gray background */
+    color: #d1d5db; /* Light Gray text */
+}
+
+/* --- Headings and Links (Default - Light Theme) --- */
+h1, h2, h3, h4, h5, h6 {
+    color: #1f2937; /* Default dark heading */
+    transition: color 0.3s ease;
+}
+.text-blue-700 { 
+    color: #1d4ed8 !important; /* Standard Blue */
+}
+.text-blue-600 {
+    color: #2563eb !important; /* Standard Blue */
+}
+a {
+    color: #2563eb; /* Standard Blue */
+    transition: color 0.2s ease;
+}
+a:hover {
+    color: #1d4ed8; /* Darker Blue on hover */
+}
+#header-home-link h1 {
+    color: #1d4ed8; /* Default dark blue for header */
+}
+
+/* Adjust header & link colors for Dark Theme */
+body.dark-theme h1, 
+body.dark-theme h2, 
+body.dark-theme h3, 
+body.dark-theme h4, 
+body.dark-theme h5, 
+body.dark-theme h6 {
+    color: #e5e7eb; /* Lighter Gray for headings */
+}
+body.dark-theme .text-blue-700 { 
+    color: #60a5fa !important; /* Brighter Blue */
+}
+body.dark-theme .text-blue-600 {
+    color: #93c5fd !important; /* Lighter Blue */
+}
+body.dark-theme a {
+    color: #60a5fa; /* Brighter Blue */
+}
+body.dark-theme a:hover {
+    color: #93c5fd; /* Lighter Blue on hover */
+}
+body.dark-theme #header-home-link h1 {
+    color: #60a5fa; /* Ensure header link uses the bright blue */
 }
 
 /* --- General Styles --- */
@@ -417,7 +481,7 @@ th {
     color: #2563eb; /* Use text-blue-600 color */
     border-bottom-color: #2563eb; /* Active tab border color (border-blue-600) */
     font-weight: 600;
-    background-color: #eff6ff; /* Light blue background (blue-50) */
+    background-color: #bdd4f1; /* Light blue background (blue-50) */
 }
 
 /* Specific styles for SonMac map tabs */
@@ -752,4 +816,1193 @@ th {
     border-style: solid;
     border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
     z-index: 10;
+}
+
+/* --- Dark Theme Table Styles --- */
+body.dark-theme .styled-table {
+    background-color: #1f2937; /* Dark Gray-Blue background */
+    color: #d1d5db; /* Lighter gray text */
+    border-color: #4b5563; /* Medium gray borders */
+}
+
+body.dark-theme .styled-table thead th {
+    background-color: #374151; /* Darker header */
+    color: #f3f4f6; /* Off-white header text */
+    border-bottom-color: #4b5563;
+}
+
+body.dark-theme .styled-table tbody tr {
+    border-bottom-color: #4b5563;
+}
+
+body.dark-theme .styled-table tbody tr:nth-child(even) {
+    background-color: #2b3748; /* Slightly lighter dark for zebra */
+}
+body.dark-theme .styled-table tbody tr:nth-child(even) td:first-child {
+    background-color: #2b3748; /* Match zebra for sticky */
+}
+
+body.dark-theme .styled-table tbody tr:hover {
+    background-color: #4b5563 !important; /* Darker hover */
+    color: #ffffff !important;
+}
+body.dark-theme .styled-table tbody tr:hover td:first-child {
+    background-color: #4b5563 !important; /* Match hover for sticky */
+}
+
+body.dark-theme .styled-table tbody td {
+    border-color: #4b5563;
+}
+
+/* Sticky column/header adjustments for dark theme */
+body.dark-theme .styled-table thead th:first-child {
+    background-color: #374151; /* Match dark header background */
+    border-right-color: #4b5563;
+}
+
+body.dark-theme .styled-table tbody td:first-child {
+    background-color: #1f2937; /* Match dark base background */
+    border-right-color: #4b5563;
+    color: #f3f4f6; /* Ensure sticky text is light */
+}
+
+/* Ensure sticky header sort indicators are visible */
+body.dark-theme .styled-table .sortable-header.sort-asc::after {
+    border-bottom-color: #f3f4f6;
+}
+
+body.dark-theme .styled-table .sortable-header.sort-desc::after {
+    border-top-color: #f3f4f6;
+}
+
+/* Hover adjustments for sortable headers in dark */
+body.dark-theme .styled-table .sortable-header:hover {
+    background-color: #4b5563;
+}
+body.dark-theme .styled-table .sortable-header.sort-active {
+    background-color: #5a6b7c; /* Slightly lighter active sort header */
+}
+
+/* Info Panel Styles (Dark Theme Adaptation) */
+body.dark-theme .info-panel {
+    background-color: #1f2937; /* Darker content background */
+    padding: 1.5rem;
+    border-radius: 0.5rem; /* Rounded corners */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* Adjusted shadow for dark */
+    border: 1px solid #4b5563; /* Darker border */
+}
+body.dark-theme .info-panel h3 {
+    color: #93c5fd; /* Lighter Blue accent for heading */
+    border-bottom: 1px solid #4b5563; /* Darker border */
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+body.dark-theme .info-panel p {
+    margin-bottom: 0.5rem;
+    color: #e5e7eb; /* Much lighter gray for better readability */
+}
+body.dark-theme .info-panel strong {
+    color: #f3f4f6; /* Almost white for strong text - more contrast */
+}
+
+/* List items in info panels - dark theme */
+body.dark-theme .info-panel ul {
+    color: #e5e7eb; /* Light gray for list text */
+}
+
+body.dark-theme .info-panel li {
+    color: #e5e7eb; /* Light gray for better readability */
+}
+
+/* --- Tab Navigation Styles (Dark Theme Adaptation) --- */
+body.dark-theme .tab-nav-item { /* Base style for ALL nav items */
+    padding: 0.75rem 1rem; /* Default padding */
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    color: #9ca3af; /* Medium Gray default tab color */
+    font-weight: 500;
+    white-space: nowrap; /* Prevent wrapping */
+    display: inline-block; /* Ensure proper spacing and border */
+    border-radius: 0.375rem 0.375rem 0 0; /* Add top rounding */
+}
+body.dark-theme .tab-nav-item:hover:not(.active) { /* Hover for NON-MAP tabs */
+    color: #e5e7eb; /* Lighter Gray color on hover */
+    /* background-color: #374151; */ /* Optional: Darker background on hover */
+}
+body.dark-theme .tab-nav-item.active { /* Style for ANY active tab */
+    color: #60a5fa; /* Brighter Blue for active */
+    border-bottom-color: #60a5fa; /* Active tab border color */
+    font-weight: 600;
+    background-color: #1e40af; /* Darker Blue background for active tab */
+}
+
+/* Specific styles for SonMac map tabs */
+body.dark-theme .map-tab-button {
+     background-color: transparent; /* Remove light gray */
+     /* border-color: #4b5563; */ /* Optional: Add subtle border */
+}
+body.dark-theme .map-tab-button:hover:not(.active) {
+    color: #e5e7eb; /* Lighter Gray text on hover */
+    background-color: #374151; /* Dark Gray background on hover */
+}
+/* The .tab-nav-item.active style above will handle the active state */
+
+/* --- Mobile Navigation Styles (Dark Theme Adaptation) --- */
+/* Container when mobile menu is active */
+body.dark-theme #main-nav-links.mobile-menu-active {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%; /* Position below the header */
+    left: 0;
+    right: 0;
+    background-color: #1f2937; /* Dark background for mobile menu */
+    z-index: 30; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); /* Darker shadow */
+    border-radius: 0 0 0.375rem 0.375rem; 
+    border: 1px solid #4b5563; /* Add border */
+    border-top: none;
+}
+/* Individual links in mobile menu */
+body.dark-theme #main-nav-links.mobile-menu-active .tab-nav-item {
+    display: block; 
+    padding: 0.75rem 1rem; 
+    border-bottom: 1px solid #4b5563; /* Darker separator */
+    border-left: 3px solid transparent; 
+    /* border-bottom-color: #4b5563; */ /* Use border-bottom directly */
+    color: #d1d5db; /* Light Gray text color */
+    font-weight: 500;
+    border-radius: 0; /* Remove top rounding */
+    background-color: transparent; /* Ensure no bg color inherited */
+}
+body.dark-theme #main-nav-links.mobile-menu-active .tab-nav-item:last-child {
+    border-bottom: none; 
+}
+/* Active link style in mobile menu */
+body.dark-theme #main-nav-links.mobile-menu-active .tab-nav-item.active {
+    color: #60a5fa; /* Active tab color (Brighter Blue) */
+    border-left-color: #60a5fa; /* Active tab border color */
+    background-color: #374151; /* Dark Gray background */
+    border-bottom-color: #4b5563 !important; /* Ensure bottom border remains consistent */
+    font-weight: 600;
+}
+/* Mobile menu button icon color */
+body.dark-theme #menu-button svg {
+    color: #d1d5db; /* Light gray icon */
+}
+
+/* --- Basic Button Style (Dark Theme Adaptation) --- */
+body.dark-theme .action-button {
+    background-color: #3b82f6; /* Slightly brighter blue */
+    color: white;
+    padding: 10px 20px;
+    border: 1px solid #1e40af; /* Darker blue border */
+    border-radius: 0.375rem; 
+    cursor: pointer;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    font-weight: 500;
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+}
+body.dark-theme .action-button:hover {
+    background-color: #60a5fa; /* Lighter blue on hover */
+    border-color: #3b82f6;
+}
+body.dark-theme .action-button:disabled {
+    background-color: #4b5563; /* Dark gray when disabled */
+    color: #9ca3af; /* Lighter text for disabled */
+    cursor: not-allowed;
+    border-color: #374151;
+}
+body.dark-theme .action-button:focus {
+     outline: 2px solid transparent;
+     outline-offset: 2px;
+     box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.7); /* Brighter ring focus */
+}
+/* Specific button adjustments if needed */
+body.dark-theme #clear-attendance-button {
+    background-color: #d97706; /* Amber/Orange */
+    border-color: #b45309;
+}
+body.dark-theme #clear-attendance-button:hover {
+    background-color: #f59e0b; /* Lighter Amber */
+    border-color: #d97706;
+}
+body.dark-theme #create-match-button {
+    background-color: #dc2626; /* Red */
+    border-color: #b91c1c;
+}
+body.dark-theme #create-match-button:hover {
+    background-color: #ef4444; /* Lighter Red */
+    border-color: #dc2626;
+}
+
+
+/* --- Message Area (Dark Theme Adaptation) --- */
+body.dark-theme #message-area {
+    margin-top: 1rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.375rem; 
+    font-weight: 500;
+    border-width: 1px;
+    border-style: solid;
+    max-width: 42rem; 
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    color: #1f2937; /* Dark text for messages on light bg */
+}
+body.dark-theme #message-area.success {
+    background-color: #d1fae5; color: #065f46; border-color: #6ee7b7; /* Light Green */
+}
+body.dark-theme #message-area.error {
+    background-color: #fee2e2; color: #991b1b; border-color: #fca5a5; /* Light Red */
+}
+body.dark-theme #message-area.hidden {
+    display: none;
+}
+
+/* --- General Page Content Container Style (Dark Theme Adaptation) --- */
+body.dark-theme .page-content-container {
+    background-color: #1f2937 !important;
+    border-color: #374151 !important;
+}
+
+/* Landing Page Tiles (Dark Theme Adaptation) */
+body.dark-theme .landing-tile {
+    background-color: #1f2937 !important; /* Ensure dark bg overrides */
+    border-color: #4b5563 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4) !important; /* Darker shadow */
+    transition: all 0.2s ease-in-out !important;
+}
+body.dark-theme .landing-tile:hover {
+    background-color: #374151 !important; /* Slightly lighter dark on hover */
+    border-color: #60a5fa !important; /* Blue border on hover */
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5) !important; /* Enhanced shadow on hover */
+}
+body.dark-theme .landing-tile h3 {
+    color: #93c5fd !important; /* Light blue heading */
+}
+body.dark-theme .landing-tile p {
+    color: #d1d5db !important; /* Light gray text */
+}
+body.dark-theme .landing-tile:hover h3 {
+    color: #bfdbfe !important; /* Even lighter blue on hover */
+}
+body.dark-theme .landing-tile:hover p {
+    color: #e5e7eb !important; /* Lighter gray on hover */
+}
+
+/* --- Attendance Control Styles (Dark Theme Adaptation) --- */
+body.dark-theme .attendance-control-container {
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    gap: 0.25rem; 
+}
+body.dark-theme .attendance-arrow {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem; 
+    height: 2rem; 
+    border-radius: 9999px; 
+    background-color: #374151; /* Dark Gray background */
+    color: #d1d5db; /* Light Gray icon */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    cursor: pointer;
+    border: 1px solid #4b5563; /* Darker border */
+}
+body.dark-theme .attendance-arrow:hover {
+    background-color: #4b5563; /* Slightly lighter gray on hover */
+}
+body.dark-theme .attendance-arrow:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.7); /* Brighter Ring focus */
+}
+body.dark-theme .attendance-arrow svg {
+    width: 1rem; 
+    height: 1rem; 
+}
+body.dark-theme .attendance-label {
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
+    width: 76px; 
+    padding-top: 0.5rem; 
+    padding-bottom: 0.5rem; 
+    border-radius: 9999px; 
+    font-weight: 500; 
+    text-align: center;
+    line-height: 1; 
+    font-size: 0.875rem; 
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    cursor: pointer; 
+    border: 1px solid #4b5563; /* Default dark border */
+    /* Color/BG set dynamically by JS based on status */
+}
+/* Add a default state for the label if needed (Dark) */
+body.dark-theme .attendance-label:not([style*="background-color"]) {
+    background-color: #374151;
+    color: #d1d5db;
+}
+
+/* --- Attendance Summary Bar Styles --- */
+#attendance-summary {
+    /* Default Light Theme */
+    background-color: #fee2e2; /* Light Red */
+    color: #991b1b; /* Dark Red */
+    border: 1px solid #fca5a5; /* Medium Red */
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+body.dark-theme #attendance-summary {
+    /* Dark Theme */
+    background-color: #7f1d1d; /* Darker Red */
+    color: #fecaca; /* Light Red Text */
+    border-color: #b91c1c; /* Medium-Dark Red */
+}
+/* Styles for when summary indicates enough players (optional, add if needed) */
+#attendance-summary.summary-ok {
+    /* Light Theme OK */
+    background-color: #d1fae5; /* Light Green */
+    color: #065f46; /* Dark Green */
+    border-color: #6ee7b7; /* Medium Green */
+}
+body.dark-theme #attendance-summary.summary-ok {
+    /* Dark Theme OK */
+    background-color: #064e3b; /* Darker Green */
+    color: #a7f3d0; /* Light Green Text */
+    border-color: #10b981; /* Medium-Dark Green */
+}
+
+
+/* --- NEW Attendance Status Classes --- */
+/* Geldi */
+.attendance-label.attendance-geldi {
+    /* Light Theme */
+    background-color: #dcfce7; 
+    color: #166534; 
+    border-color: #86efac;
+}
+body.dark-theme .attendance-label.attendance-geldi {
+    /* Dark Theme */
+    background-color: #166534; 
+    color: #dcfce7; 
+    border-color: #4ade80;
+}
+
+/* Gelmedi */
+.attendance-label.attendance-gelmedi {
+    /* Light Theme */
+    background-color: #fee2e2; 
+    color: #991b1b; 
+    border-color: #fca5a5;
+}
+body.dark-theme .attendance-label.attendance-gelmedi {
+    /* Dark Theme */
+    background-color: #991b1b; 
+    color: #fee2e2; 
+    border-color: #f87171;
+}
+
+/* Belirsiz */
+.attendance-label.attendance-belirsiz {
+    /* Light Theme */
+    background-color: #e5e7eb; 
+    color: #4b5563; 
+    border-color: #d1d5db;
+}
+body.dark-theme .attendance-label.attendance-belirsiz {
+    /* Dark Theme */
+    background-color: #4b5563; 
+    color: #e5e7eb; 
+    border-color: #6b7280;
+}
+
+/* Light theme styles */
+.attendance-label[data-state="coming"] {
+    background-color: #10ca61; 
+    color: #ffffff; 
+    border-color: #10ca61;
+    border-radius: 9999px;
+}
+
+.attendance-label[data-state="not_coming"] {
+    background-color: #f14747; 
+    color: #ffffff; 
+    border-color: #f14747;
+    border-radius: 9999px;
+}
+
+.attendance-label[data-state="no_response"] {
+    background-color: #e2e2e2; 
+    color: #333333; 
+    border-color: #e2e2e2;
+    border-radius: 9999px;
+}
+
+/* Dark theme styles */
+body.dark-theme .attendance-label[data-state="coming"] {
+    background-color: #10ca61; 
+    color: #ffffff; 
+    border-color: #10ca61;
+}
+
+body.dark-theme .attendance-label[data-state="not_coming"] {
+    background-color: #f14747; 
+    color: #ffffff; 
+    border-color: #f14747;
+}
+
+body.dark-theme .attendance-label[data-state="no_response"] {
+    background-color: #555555; 
+    color: #e2e2e2; 
+    border-color: #555555;
+}
+
+/* Dark theme emoji controls */
+body.dark-theme .emoji-control-container {
+    background-color: transparent;
+}
+
+body.dark-theme .emoji-arrow {
+    background-color: #374151;
+    color: #d1d5db;
+    border: 1px solid #4b5563;
+}
+
+body.dark-theme .emoji-arrow:hover {
+    background-color: #4b5563;
+}
+
+body.dark-theme .emoji-arrow svg {
+    color: #d1d5db;
+}
+
+body.dark-theme .emoji-label {
+    background-color: #1f2937;
+    border: 1px solid #4b5563;
+    color: #f3f4f6;
+}
+
+body.dark-theme .emoji-label:hover {
+    background-color: #374151;
+    border-color: #6b7280;
+}
+
+/* Dark theme attendance label specific states */
+body.dark-theme .attendance-label.attendance-geldi {
+    background-color: #166534; 
+    color: #dcfce7; 
+    border-color: #4ade80;
+}
+
+body.dark-theme .attendance-label.attendance-gelmedi {
+    background-color: #991b1b; 
+    color: #fee2e2; 
+    border-color: #f87171;
+}
+
+body.dark-theme .attendance-label.attendance-belirsiz {
+    background-color: #4b5563; 
+    color: #e5e7eb; 
+    border-color: #6b7280;
+}
+
+body.dark-theme .attendance-label[data-state="coming"] {
+    background-color: #10ca61; 
+    color: #ffffff; 
+    border-color: #10ca61;
+}
+
+body.dark-theme .attendance-label[data-state="not_coming"] {
+    background-color: #f14747; 
+    color: #ffffff; 
+    border-color: #f14747;
+}
+
+body.dark-theme .attendance-label[data-state="no_response"] {
+    background-color: #555555; 
+    color: #e2e2e2; 
+    border-color: #555555;
+}
+
+/* Dark theme table rows for "evde yok" players */
+body.dark-theme .styled-table tr.bg-red-100 {
+    background-color: rgba(185, 28, 28, 0.3) !important; /* Dark red with transparency */
+}
+
+body.dark-theme .styled-table tr.bg-red-100:hover {
+    background-color: rgba(220, 38, 38, 0.4) !important; /* Slightly lighter red on hover */
+}
+
+body.dark-theme .styled-table tr.bg-red-100 td {
+    border-color: rgba(185, 28, 28, 0.4);
+}
+
+body.dark-theme .styled-table tr.bg-red-100 td:first-child {
+    background-color: rgba(185, 28, 28, 0.3) !important; /* Match row color for sticky column */
+}
+
+body.dark-theme .styled-table tr.bg-red-100:hover td:first-child {
+    background-color: rgba(220, 38, 38, 0.4) !important; /* Match hover for sticky column */
+}
+
+/* Light theme styles for "evde yok" players */
+.styled-table tr.bg-red-100 {
+    background-color: #fee2e2 !important; /* Light pink background */
+}
+
+.styled-table tr.bg-red-100:hover {
+    background-color: #fecaca !important; /* Slightly darker pink on hover */
+}
+
+.styled-table tr.bg-red-100 td:first-child {
+    background-color: #fee2e2 !important; /* Match row color for sticky column */
+}
+
+.styled-table tr.bg-red-100:hover td:first-child {
+    background-color: #fecaca !important; /* Match hover for sticky column */
+}
+
+/* === Dark Theme Adjustments for Team Picker Page === */
+
+/* Available Players Table (Dark Theme) - Corrected Structure */
+body.dark-theme .page-content-container {
+    background-color: #1f2937;
+    border-color: #374151;
+}
+
+/* Table base styles for dark theme */
+body.dark-theme #available-players table {
+    background-color: #1e293b;
+    border-color: #374151;
+}
+
+/* Header styling */
+body.dark-theme #available-players table thead tr {
+    background-color: #1e293b !important;
+}
+
+body.dark-theme #available-players table thead th {
+    background-color: #1e293b !important;
+    color: #94a3b8;
+    border-color: #374151;
+    font-weight: 600;
+}
+
+/* Row styling */
+body.dark-theme #available-players table tbody tr {
+    background-color: #1e293b;
+    border-color: #374151;
+}
+
+body.dark-theme #available-players table tbody tr:nth-child(even) {
+    background-color: #1e293b;
+}
+
+body.dark-theme #available-players table tbody tr:hover {
+    background-color: #2d3747 !important;
+}
+
+/* Cell styling */
+body.dark-theme #available-players table td {
+    color: #94a3b8;
+    border-color: #374151;
+}
+
+/* Player name column styling */
+body.dark-theme #available-players table tbody td:first-child {
+    background-color: #1e293b !important;
+    color: #94a3b8;
+}
+
+body.dark-theme #available-players table tbody tr:hover td:first-child {
+    background-color: #2d3747 !important;
+    color: #e2e8f0;
+}
+
+/* Ensure even rows maintain consistent styling */
+body.dark-theme #available-players table tbody tr:nth-child(even) td:first-child {
+    background-color: #1e293b !important;
+}
+
+/* Sticky header corner */
+body.dark-theme #available-players table thead th:first-child {
+    background-color: #1e293b !important;
+    color: #94a3b8;
+    z-index: 3;
+}
+
+/* Team indicators */
+body.dark-theme #available-players table td[data-team="A"] {
+    color: #e2e8f0;
+}
+
+body.dark-theme #available-players table td[data-team="B"] {
+    color: #8ecacd;
+}
+
+/* Action buttons */
+body.dark-theme #available-players .remove-button,
+body.dark-theme #available-players .assign-button {
+    color: #9ca3af;
+    transition: color 0.2s;
+}
+
+body.dark-theme #available-players .remove-button:hover,
+body.dark-theme #available-players .assign-button:hover {
+    color: #e5e7eb;
+}
+
+/* Stat numbers */
+body.dark-theme #available-players table td:not(:first-child):not(:last-child) {
+    color: #94a3b8;
+}
+
+/* Team Selection Containers (Dark Theme) */
+body.dark-theme .team-container .bg-blue-100 { /* Team A Container */
+    background-color: #334155; /* Slate-700 */
+    border: 1px solid #64748b; /* Slate-500 */
+}
+body.dark-theme .team-container .bg-green-100 { /* Team B Container */
+    background-color: #1e3a3a; /* Custom darker teal */
+    border: 1px solid #2d5c5c; /* Custom muted teal border */
+}
+body.dark-theme .team-container h3.text-blue-600 { /* Team A Header */
+    color: #e2e8f0; /* Slate-200 */
+}
+body.dark-theme .team-container h3.text-green-600 { /* Team B Header */
+    color: #8ecacd; /* Muted teal text */
+}
+body.dark-theme .team-container h3 { /* Fallback if color class removed */
+    color: #e5e7eb; /* Lighter heading */
+}
+body.dark-theme .team-container label {
+    color: #d1d5db; /* Lighter label text */
+}
+body.dark-theme .team-container .form-select {
+    background-color: rgba(30, 41, 59, 0.8); /* Slate-800 with opacity */
+    border-color: #475569; /* Slate-600 */
+    color: #f1f5f9; /* Slate-100 */
+}
+body.dark-theme .team-container .form-select option {
+    background-color: #374151;
+    color: #e5e7eb;
+}
+
+/* Team Player Lists (Dark Theme) */
+body.dark-theme .team-list {
+    border-color: #4b5563;
+}
+body.dark-theme #team-a-players { /* Team A List BG */
+    background-color: rgba(51, 65, 85, 0.6); /* Slate-700 with opacity */
+    border-color: #64748b; /* Slate-500 */
+}
+body.dark-theme #team-b-players { /* Team B List BG */
+    background-color: rgba(30, 58, 58, 0.6); /* Custom darker teal with opacity */
+    border-color: #2d5c5c; /* Custom muted teal */
+}
+body.dark-theme .team-list table { /* Target table within team list */
+    background-color: transparent; /* Make table bg transparent */
+}
+body.dark-theme .team-list thead tr {
+    /* Background is now handled by specific team rules below */
+}
+body.dark-theme .team-list thead th {
+    color: #f3f4f6;
+    border-color: #4b5563;
+}
+body.dark-theme .team-list tbody tr {
+    background-color: transparent !important; /* Override blue/green row bg */
+    border-color: #4b5563;
+}
+body.dark-theme .team-list tbody td {
+    color: #d1d5db;
+}
+body.dark-theme .team-list .remove-button {
+    color: #6b9799; /* Muted teal */
+}
+body.dark-theme .team-list .remove-button:hover {
+    color: #8ecacd; /* Brighter on hover */
+}
+
+/* Dark-theme: Team A header uses a darker slate */
+body.dark-theme #team-a-players table thead tr {
+    background-color: rgba(31, 41, 55, 0.8) !important; /* Slate-800 with opacity */
+}
+
+/* Dark-theme: Team B header uses a darker teal */
+body.dark-theme #team-b-players table thead tr {
+    background-color: rgba(16, 31, 31, 0.8) !important; /* Custom darker teal with more opacity */
+}
+
+/* Team Average Rows */
+body.dark-theme tfoot tr#team-a-averages-row {
+    background-color: rgba(30, 38, 49, 0.8); /* Slate-700 with more opacity */
+    color: #e2e8f0; /* Slate-200 */
+    border-top: 1px solid #64748b; /* Slate-500 */
+}
+body.dark-theme tfoot tr#team-b-averages-row {
+    background-color: rgba(16, 31, 31, 0.8); /* Custom darker teal with more opacity */
+    color: #8ecacd; /* Muted teal text */
+    border-top: 1px solid #2d5c5c; /* Custom muted teal */
+}
+
+/* Stat Difference Box (Dark Theme) */
+body.dark-theme #team-stats-diff {
+    background-color: #374151;
+    border-color: #4b5563;
+}
+body.dark-theme #team-stats-diff h4 {
+    color: #e5e7eb; /* Heading text */
+}
+/* Header cells inside the grid */
+body.dark-theme #team-stats-diff .grid > div.font-medium:not([data-diff-stat]) {
+    color: #e5e7eb; /* Column header text */
+}
+/* Diff value colors (text-red-600, text-green-600) remain specific */
+
+/* Map Selection Boxes (Dark Theme) */
+body.dark-theme .map-container .bg-gray-50 {
+    background-color: #374151; /* Dark Gray */
+    border-color: #4b5563;
+}
+body.dark-theme .map-container h4 {
+    color: #e5e7eb;
+}
+body.dark-theme .map-container label {
+    color: #d1d5db;
+}
+body.dark-theme .map-container .form-select {
+    background-color: #1f2937; /* Darker input bg */
+    color: #e5e7eb;
+    border-color: #4b5563;
+}
+body.dark-theme .map-container .form-select option {
+    background-color: #1f2937;
+    color: #e5e7eb;
+}
+body.dark-theme .map-container option.text-blue-600 {
+    color: #93c5fd !important; /* Lighter blue for dark mode options */
+}
+body.dark-theme .map-container option.text-green-600 {
+    color: #a7f3d0 !important; /* Lighter green for dark mode options */
+}
+
+/* Team Comparison Chart (Dark Theme) */
+body.dark-theme #team-pentagon-comparison h4 {
+     color: #e5e7eb;
+}
+body.dark-theme #team-picker-pentagon-chart {
+     /* Chart.js options control most colors, but ensure background isn't forced */
+}
+/* Adjust Radar chart point labels for dark theme */
+body.dark-theme .chartjs-render-monitor + div, /* Might need adjustment based on Chart.js structure */
+body.dark-theme canvas + div { /* Fallback */
+   color: #d1d5db !important; /* Ensure point labels are light */
+}/* More specific targeting if needed */
+body.dark-theme #team-picker-pentagon-chart + .chartjs-tooltip, /* Tooltip styles */
+body.dark-theme #team-picker-pentagon-chart ~ * { /* Point labels might be siblings */
+   /* Adjust styles if needed */
+}/* Note: Chart.js v3 uses scale 'r' options for pointLabels */
+/* Options in JS should handle colors ideally */
+
+/* === End Dark Theme Adjustments for Team Picker === */
+
+
+body.dark-theme #create-match-button:hover {
+    background-color: #b91c1c;
+}
+
+body.dark-theme .page-content-container > h2.text-blue-600 {
+    color: #93c5fd !important; /* Lighter blue for dark mode headers */
+}
+
+/* Dark Theme Scoreboard Background */
+body.dark-theme #page-sonmac .bg-gray-100 {
+    background-color: #374151; /* Dark Gray-Blue for scoreboard */
+    color: #d1d5db; /* Ensure text inside is light */
+    border: 1px solid #4b5563; /* Add a subtle border */
+}
+
+body.dark-theme #page-sonmac .bg-gray-100 .text-gray-500 {
+    color: #9ca3af; /* Adjust 'vs' text color */
+}
+
+body.dark-theme #page-sonmac .bg-gray-100 h3 {
+    color: #f3f4f6; /* Lighter team names */
+}
+
+/* Dark Theme for Stat Selector Dropdowns */
+body.dark-theme #night-avg-stat-selector,
+body.dark-theme #last10-stat-selector,
+body.dark-theme #season-avg-stat-selector {
+    background-color: #1f2937; /* Darker background */
+    border-color: #4b5563; /* Darker border */
+}
+
+body.dark-theme #night-avg-stat-selector h3,
+body.dark-theme #last10-stat-selector h3,
+body.dark-theme #season-avg-stat-selector h3 {
+    color: #e5e7eb; /* Lighter heading text */
+}
+
+body.dark-theme #night-avg-stat-selector svg,
+body.dark-theme #last10-stat-selector svg,
+body.dark-theme #season-avg-stat-selector svg {
+    color: #9ca3af; /* Lighter arrow icon */
+}
+
+body.dark-theme #night-avg-stat-selector-content p,
+body.dark-theme #last10-stat-selector-content p,
+body.dark-theme #season-avg-stat-selector-content p {
+    color: #d1d5db; /* Lighter paragraph text */
+}
+
+body.dark-theme #night-avg-stat-selector-content .text-gray-700,
+body.dark-theme #last10-stat-selector-content .text-gray-700,
+body.dark-theme #season-avg-stat-selector-content .text-gray-700 {
+    color: #d1d5db !important; /* Lighter checkbox label text */
+}
+
+/* Dark Theme for Player Card Backgrounds in Graph Grids */
+body.dark-theme #night-avg-player-grid .player-card,
+body.dark-theme #last10-player-grid .player-card,
+body.dark-theme #season-avg-player-grid .player-card {
+    background-color: #374151; /* Dark Gray-Blue background for cards */
+    border-color: #4b5563; /* Darker border */
+}
+
+body.dark-theme #night-avg-player-grid .player-card span,
+body.dark-theme #last10-player-grid .player-card span,
+body.dark-theme #season-avg-player-grid .player-card span {
+    color: #f3f4f6; /* Lighter text color for player names */
+}
+
+/* After existing stat-diff rules */
+body.dark-theme #team-stats-diff .grid > div.text-gray-600 {
+    color: #e5e7eb !important;
+}
+
+/* Dark Theme for Performance Graphs Metric Selector */
+body.dark-theme #page-performance_graphs .bg-gray-50 {
+    background-color: #1f2937 !important; /* Dark background */
+    border-color: #4b5563 !important;     /* Darker border */
+}
+
+body.dark-theme #page-performance_graphs .text-gray-700 {
+    color: #e5e7eb !important; /* Light gray text */
+}
+
+/* Style the radio buttons for dark mode */
+body.dark-theme #page-performance_graphs .form-radio {
+    background-color: #374151; /* Darker radio circle */
+    border-color: #6b7280;     /* Medium gray border */
+    color: #60a5fa;           /* Use accent color for the dot */
+}
+
+body.dark-theme #page-performance_graphs .form-radio:checked {
+    background-color: #60a5fa; /* Accent color when checked */
+    border-color: #60a5fa;
+}
+
+body.dark-theme #page-performance_graphs label span.ml-2 {
+    color: #d1d5db; /* Ensure label text is light */
+}
+
+/* --- Dark Theme Duello Grid Styles --- */
+/* Header Cells (Top Row & First Column) */
+body.dark-theme #duello-table th,
+body.dark-theme #duello-sezon-table th {
+    background-color: #374151 !important; /* Darker header bg */
+    color: #f3f4f6 !important;       /* Light header text */
+    border-color: #4b5563 !important;   /* Darker border */
+}
+
+/* Ensure sticky headers maintain background */
+body.dark-theme #duello-table thead th,
+body.dark-theme #duello-sezon-table thead th {
+    background-color: #374151 !important;
+}
+body.dark-theme #duello-table tbody th,
+body.dark-theme #duello-sezon-table tbody th {
+    background-color: #374151 !important;
+}
+
+/* Fix sticky corner */
+body.dark-theme #duello-table thead th:first-child,
+body.dark-theme #duello-sezon-table thead th:first-child {
+    background-color: #374151 !important; /* Ensure corner matches */
+    z-index: 21; /* Ensure corner is above other sticky parts */
+}
+
+/* Empty cells (diagonal self-vs-self) */
+body.dark-theme #duello-table td[style*="background-color: rgb(243, 244, 246)"],
+body.dark-theme #duello-sezon-table td[style*="background-color: rgb(243, 244, 246)"] {
+    background-color: #1f2937 !important; /* Match page background */
+    border-color: #4b5563 !important;
+}
+
+/* Style Sezon table cells */
+body.dark-theme #duello-sezon-table td {
+     color: #d1d5db; /* Lighter gray for default text */
+     border-color: #4b5563 !important; /* Darker border for all cells */
+}
+
+/* Style Son Mac table cells separately */
+body.dark-theme #duello-table td {
+     color: #d1d5db; /* Lighter gray for default text */
+     border-color: #4b5563 !important; /* Darker border for all cells */
+}
+
+/* Main grid container background and border */
+body.dark-theme #duello-grid-container {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+/* Style for duello-kill and duello-death values */
+body.dark-theme .duello-kill,
+body.dark-theme .duello-circle.bg-green-600 {
+    color: #ffffff !important; /* White text for better contrast */
+    background-color: #059669 !important; /* Darker green for kills in dark mode */
+}
+
+body.dark-theme .duello-death,
+body.dark-theme .duello-circle.bg-red-600 {
+    color: #ffffff !important; /* White text for better contrast */
+    background-color: #dc2626 !important; /* Darker red for deaths in dark mode */
+}
+
+body.dark-theme .duello-circle.bg-gray-400 {
+    background-color: #4b5563 !important; /* Darker gray for circles */
+    color: #e5e7eb !important; /* Light text */
+}
+
+/* Make duel cell backgrounds transparent and override SVG background */
+body.dark-theme #duello-table td,
+body.dark-theme #duello-sezon-table td {
+    background-color: transparent !important;
+}
+
+/* Override SVG backgrounds */
+body.dark-theme #duello-table td[style*="background-image"],
+body.dark-theme #duello-sezon-table td[style*="background-image"] {
+    background-image: none !important;
+    background: #1f2937 !important;
+    position: relative;
+}
+
+/* Use ::before for better duello cell backgrounds */
+body.dark-theme #duello-table td:not([class*="text-gray-400"]):not([style*="background-color"]),
+body.dark-theme #duello-sezon-table td:not([class*="text-gray-400"]):not([style*="background-color"]) {
+    position: relative;
+    overflow: hidden;
+    background: transparent !important;
+}
+
+/* Create diagonal split with pseudo-elements for non-empty cells */
+body.dark-theme #duello-table td:has(.duello-circle)::before,
+body.dark-theme #duello-sezon-table td:has(.duello-circle)::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to top right, 
+                               rgba(6, 78, 59, 0.2) 0%, 
+                               rgba(6, 78, 59, 0.2) 49.5%, 
+                               #1f2937 50%, 
+                               rgba(127, 29, 29, 0.2) 50.5%, 
+                               rgba(127, 29, 29, 0.2) 100%);
+    z-index: 0;
+}
+
+/* Ensure the circles appear above the background */
+body.dark-theme .duello-circle {
+    position: relative;
+    z-index: 1;
+}
+
+/* Fix cell coloring with dynamically set RGB values */
+body.dark-theme #duello-table td[style*="background-color:"],
+body.dark-theme #duello-sezon-table td[style*="background-color:"] {
+    background-color: #1f2937 !important;
+}
+
+/* Table background color */
+body.dark-theme #duello-table,
+body.dark-theme #duello-sezon-table {
+    background-color: #1f2937;
+    border-color: #4b5563;
+}
+
+/* Empty/dash cells */
+body.dark-theme .duello-data-cell.text-gray-400,
+body.dark-theme #duello-table td.text-gray-400,
+body.dark-theme #duello-sezon-table td.text-gray-400 {
+    color: #6b7280 !important; /* Lighter gray for dash/empty indicators */
+    background-color: #1f2937 !important;
+}
+
+/* Tab navigation for duello */
+body.dark-theme #duello-tabs .tab-nav-item {
+    color: #9ca3af;
+}
+
+body.dark-theme #duello-tabs .tab-nav-item.active {
+    color: #60a5fa; 
+    border-bottom-color: #60a5fa;
+    background-color: #1e40af;
+}
+
+/* Make sure the diagonal line in cells is visible */
+body.dark-theme #duello-table td::after,
+body.dark-theme #duello-sezon-table td::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border-top: 1px solid #374151;
+    transform: rotate(-45deg);
+    transform-origin: top left;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Cell hover effect */
+body.dark-theme #duello-table td:hover,
+body.dark-theme #duello-sezon-table td:hover {
+    background-color: #374151 !important;
+}
+
+/* Fix for any remaining light backgrounds in the Duello area */
+body.dark-theme #page-duello .bg-white,
+body.dark-theme #page-duello [class*="bg-gray-"] {
+    background-color: #1f2937 !important;
+}
+
+/* Fix tab buttons specifically */
+body.dark-theme #duello-tabs #tab-son-mac,
+body.dark-theme #duello-tabs #tab-sezon {
+    background-color: transparent;
+}
+
+body.dark-theme #duello-tabs #tab-son-mac.active,
+body.dark-theme #duello-tabs #tab-sezon.active {
+    background-color: #1e40af;
+}
+
+/* Ensure content area has dark theme */
+body.dark-theme #duello-content-area {
+    background-color: #1f2937;
+    color: #d1d5db;
+}
+
+/* End of Duello dark theme styles */
+
+/* --- Duello Son Maç Grid Styles --- */
+/* Make header row and first column match in color */
+#duello-table th,
+#duello-sezon-table th {
+    background-color: #f9fafb !important; /* Light gray background */
+}
+
+/* Fixed width for name cells in Duello tables */
+#duello-table th:first-child,
+#duello-table tbody td:first-child,
+#duello-sezon-table th:first-child,
+#duello-sezon-table tbody td:first-child {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Standardize borders for both Duello tables */
+#duello-table,
+#duello-sezon-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#duello-table th,
+#duello-table td,
+#duello-sezon-table th,
+#duello-sezon-table td {
+    border: 1px solid #e5e7eb !important; /* Set consistent border width and color */
+}
+
+#duello-table,
+#duello-sezon-table {
+    border: 1px solid #e5e7eb !important; /* Consistent outer border */
+}
+
+/* Ensure sticky positioning still works with fixed width */
+#duello-table thead th:first-child,
+#duello-sezon-table thead th:first-child {
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 20;
+}
+
+#duello-table tbody th:first-child,
+#duello-sezon-table tbody th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 10;
+    text-align: left;
+    padding-left: 1rem;
+}
+
+/* Dark theme adjustments for all header cells */
+body.dark-theme #duello-table th,
+body.dark-theme #duello-sezon-table th {
+    background-color: #1e293b !important; /* Dark blue-gray background */
+}
+
+/* Dark theme border adjustments */
+body.dark-theme #duello-table,
+body.dark-theme #duello-sezon-table {
+    border-color: #4b5563 !important; /* Darker border for dark theme */
+}
+
+body.dark-theme #duello-table th,
+body.dark-theme #duello-table td,
+body.dark-theme #duello-sezon-table th,
+body.dark-theme #duello-sezon-table td {
+    border-color: #4b5563 !important; /* Darker border for dark theme */
+}
+
+/* Add tooltip on hover to show full name */
+#duello-table tbody th:first-child,
+#duello-sezon-table tbody th:first-child {
+    position: relative;
+}
+
+#duello-table tbody th:first-child:hover::after,
+#duello-sezon-table tbody th:first-child:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 100%;
+    top: 0;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 30;
+    pointer-events: none;
 }
