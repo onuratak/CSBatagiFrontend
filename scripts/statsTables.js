@@ -161,6 +161,7 @@ const StatsTables = (() => {
                      const numValue = parseFloat(value);
                      if (!isNaN(numValue)) {
                         cell.classList.add(numValue > 0 ? 'text-green-600' : numValue < 0 ? 'text-red-600' : 'text-gray-500');
+                        cell.classList.add('font-bold'); // Add bold font style
                      }
                 }
             });

@@ -133,9 +133,9 @@
 /* Styles for the span containing the badge */
 .stat-badge {
     display: inline-block;
-    padding: 4px 8px;
+    padding: 8px 6px; /* Updated padding */
     border-radius: 0.375rem; /* Match the rounded-md in attendance */
-    font-size: 0.85em;
+    font-size: 1em;
     font-weight: bold;
     /* color: #fff; */ /* Default white text removed - will be set by JS */
     min-width: 50px; /* Ensure consistent width */

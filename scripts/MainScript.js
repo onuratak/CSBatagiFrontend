@@ -274,10 +274,30 @@ function getLuminance(hexColor) {
  * @param {string} bgColorHex (#RRGGBB)
  * @returns {string} '#ffffff' (white) or '#000000' (black)
  */
-function calculateTextColor(bgColorHex) {
-    const luminance = getLuminance(bgColorHex);
-    // Threshold slightly adjusted from pure 0.5 for better aesthetics in some cases
-    return (luminance > 0.4) ? '#000000' : '#ffffff';
+function calculateTextColor(bgColorHex, darkenFactor = 0.5) {
+    // Ensure the factor is within bounds
+    const factor = Math.max(0, Math.min(1, darkenFactor));
+
+    // Remove '#' if present
+    const hex = bgColorHex.startsWith('#') ? bgColorHex.substring(1) : bgColorHex;
+
+    // Parse hex to RGB
+    const bigint = parseInt(hex, 16);
+    let r = (bigint >> 16) & 255;
+    let g = (bigint >> 8) & 255;
+    let b = bigint & 255;
+
+    // Darken each component
+    r = Math.floor(r * factor);
+    g = Math.floor(g * factor);
+    b = Math.floor(b * factor);
+
+    // Convert back to hex, ensuring 2 digits per component
+    const rHex = r.toString(16).padStart(2, '0');
+    const gHex = g.toString(16).padStart(2, '0');
+    const bHex = b.toString(16).padStart(2, '0');
+
+    return `#${rHex}${gHex}${bHex}`;
 }
 
 
