@@ -133,7 +133,7 @@
 /* Styles for the span containing the badge */
 .stat-badge {
     display: inline-block;
-    padding: 8px 6px; /* Updated padding */
+    padding: 4px 6px; /* Updated padding */
     border-radius: 0.375rem; /* Match the rounded-md in attendance */
     font-size: 1em;
     font-weight: bold;
