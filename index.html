@@ -774,8 +774,78 @@
             </div>
             <!-- END Performance Graphs Page -->
 
-        </div> </div>
+        </div> 
+    </div> <!-- Close max-w-7xl container -->
 
+    <!-- NEW: Player Stat Edit Modal -->
+    <div id="edit-player-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Edit Player Stats (Session Only)</h3>
+                <p class="text-sm text-gray-500 mb-4">Changes only apply to this team picking session.</p>
+                <form id="edit-player-form" class="mt-2 space-y-3">
+                    <input type="hidden" id="edit-player-steamid">
+                    
+                    <div class="grid grid-cols-2 gap-4 text-left">
+                        <div>
+                            <label for="edit-L10_HLTV2" class="block text-sm font-medium text-gray-700">L10 HLTV</label>
+                            <input type="text" inputmode="decimal" id="edit-L10_HLTV2" name="L10_HLTV2" class="mt-1 form-input w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label for="edit-L10_ADR" class="block text-sm font-medium text-gray-700">L10 ADR</label>
+                            <input type="text" inputmode="decimal" id="edit-L10_ADR" name="L10_ADR" class="mt-1 form-input w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label for="edit-L10_KD" class="block text-sm font-medium text-gray-700">L10 K/D</label>
+                            <input type="text" inputmode="decimal" id="edit-L10_KD" name="L10_KD" class="mt-1 form-input w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label for="edit-S_HLTV2" class="block text-sm font-medium text-gray-700">S HLTV</label>
+                            <input type="text" inputmode="decimal" id="edit-S_HLTV2" name="S_HLTV2" class="mt-1 form-input w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                            <label for="edit-S_ADR" class="block text-sm font-medium text-gray-700">S ADR</label>
+                            <input type="text" inputmode="decimal" id="edit-S_ADR" name="S_ADR" class="mt-1 form-input w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                         <div>
+                            <label for="edit-S_KD" class="block text-sm font-medium text-gray-700">S K/D</label>
+                            <input type="text" inputmode="decimal" id="edit-S_KD" name="S_KD" class="mt-1 form-input w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                
+                    <div class="items-center px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button id="save-player-edits-btn" type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Save Changes
+                        </button>
+                        <button id="cancel-player-edits-btn" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- END Player Stat Edit Modal -->
+
+    <!-- IMPORTANT: Add your Firebase project configuration here -->
+    <script>
+      // Make sure to replace these with your actual Firebase config values
+      const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com", // Or your specific region
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+      };
+    </script>
+
+    <!-- Firebase SDKs (Load BEFORE MainScript) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script>
+
+    <!-- Core Application Logic -->
     <script src="scripts/MainScript.js" defer></script>
     <script src="scripts/attendance.js" defer></script>
     <script src="scripts/statsTables.js" defer></script>
@@ -786,9 +856,9 @@
     <script src="scripts/performanceGraphs.js" defer></script>
     <script src="scripts/themeToggle.js" defer></script>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script>
+    <!-- Firebase SDKs (REMOVED FROM HERE) -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script> -->
+    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script> -->
 
 </body>
 </html>

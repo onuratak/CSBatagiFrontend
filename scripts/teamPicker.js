@@ -217,7 +217,7 @@ const TeamPicker = {
             const teamAKabileSelect = document.getElementById('team-a-kabile');
             if(teamAKabileSelect) teamAKabileSelect.value = teamAData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
-            console.log("Team A listener: Calling updateStatsDifferenceDisplay");
+            console.log("Team A listener: Calling updateStatsDifferenceDisplay explicitly after update");
             TeamPicker.updateStatsDifferenceDisplay();
         });
 
@@ -232,7 +232,7 @@ const TeamPicker = {
             const teamBKabileSelect = document.getElementById('team-b-kabile');
             if(teamBKabileSelect) teamBKabileSelect.value = teamBData.kabile || "";
             TeamPicker.updateMapSideTeamNames();
-            console.log("Team B listener: Calling updateStatsDifferenceDisplay");
+            console.log("Team B listener: Calling updateStatsDifferenceDisplay explicitly after update");
             TeamPicker.updateStatsDifferenceDisplay();
         });
 
@@ -290,6 +290,27 @@ const TeamPicker = {
         if (createMatchBtn) {
             createMatchBtn.addEventListener('click', TeamPicker.createMatchFromUI);
         }
+        
+        // NEW: Player Stat Edit Modal Listeners
+        const editModal = document.getElementById('edit-player-modal');
+        const editForm = document.getElementById('edit-player-form');
+        const cancelEditBtn = document.getElementById('cancel-player-edits-btn');
+        
+        if (editForm) {
+            // Use submit event for the form itself for save
+            editForm.addEventListener('submit', TeamPicker.savePlayerEdits);
+        }
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', TeamPicker.closeEditModal);
+        }
+        // Optional: Close modal if clicking outside the content
+        if (editModal) {
+            editModal.addEventListener('click', (event) => {
+                if (event.target === editModal) { // Check if the click is on the backdrop
+                    TeamPicker.closeEditModal();
+                }
+            });
+        }
     },
     
     /**
@@ -319,6 +340,14 @@ const TeamPicker = {
 
         if (!steamId) return; // Need steamId to proceed
 
+        // --- NEW: Handle Edit Button Click ---
+        const editButton = event.target.closest('button.edit-player-button');
+        if (editButton) {
+            TeamPicker.handleEditPlayerClick(steamId);
+            return; // Don't process assign/remove if edit was clicked
+        }
+        // --- END NEW ---
+
         // Find the full player data from the availablePlayers map
         const playerData = TeamPicker.availablePlayers[steamId]; 
         if (!playerData) {
@@ -337,10 +366,8 @@ const TeamPicker = {
             const targetTeamPath = targetTeam === 'a' ? 'teamA' : 'teamB';
             const sourceTeamPath = targetTeam === 'a' ? 'teamB' : 'teamA';
 
-            // Ensure player data has stats merged before assigning
-            const playerWithStats = TeamPicker.mergePlayerWithStats(playerData); // Pass the object {name, steamId, status}
-
-            updates[`${TeamPicker.DB_PATH}/${targetTeamPath}/players/${steamId}`] = playerWithStats; // Store the full object
+            // Use playerData directly, which now contains the potentially edited stats
+            updates[`${TeamPicker.DB_PATH}/${targetTeamPath}/players/${steamId}`] = playerData; // Store the full object with edits
             updates[`${TeamPicker.DB_PATH}/${sourceTeamPath}/players/${steamId}`] = null; // Remove from the other team
 
             database.ref().update(updates)
@@ -560,6 +587,7 @@ const TeamPicker = {
                 actionCell.innerHTML = `
                     <button data-target-team="a" class="assign-button text-blue-500 hover:text-blue-700 px-1 text-xs">->A</button>
                     <button data-target-team="b" class="assign-button text-green-500 hover:text-green-700 px-1 text-xs">->B</button>
+                    <button data-steam-id="${steamId}" class="edit-player-button text-gray-500 hover:text-gray-700 px-1 text-xs ml-1">Edit</button> 
                 `;
             }
         });
@@ -579,19 +607,19 @@ const TeamPicker = {
         // Determine initial assignment state (will be updated by updateAssignedPlayersInAvailableList)
         const teamText = '-';
         const teamClass = 'text-gray-500';
+        const stats = player.stats || {}; // Ensure stats object exists
 
         row.innerHTML = `
             <td class="px-1 py-1 font-medium text-gray-900 whitespace-nowrap">${player.name}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_HLTV2, 2)}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_ADR, 0)}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.L10_KD)}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_HLTV2, 2)}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_ADR, 0)}</td>
-            <td class="px-1 py-1 text-center">${formatStat(player.stats?.S_KD)}</td>
+            <td class="px-1 py-1 text-center stat-cell" data-stat-key="L10_HLTV2">${formatStat(stats.L10_HLTV2, 2)}</td>
+            <td class="px-1 py-1 text-center stat-cell" data-stat-key="L10_ADR">${formatStat(stats.L10_ADR, 0)}</td>
+            <td class="px-1 py-1 text-center stat-cell" data-stat-key="L10_KD">${formatStat(stats.L10_KD)}</td>
+            <td class="px-1 py-1 text-center stat-cell" data-stat-key="S_HLTV2">${formatStat(stats.S_HLTV2, 2)}</td>
+            <td class="px-1 py-1 text-center stat-cell" data-stat-key="S_ADR">${formatStat(stats.S_ADR, 0)}</td>
+            <td class="px-1 py-1 text-center stat-cell" data-stat-key="S_KD">${formatStat(stats.S_KD)}</td>
             <td class="player-team-cell px-1 py-1 text-center ${teamClass}">${teamText}</td>
             <td class="player-action-cell px-1 py-1 text-center whitespace-nowrap">
-                <button data-target-team="a" class="assign-button text-blue-500 hover:text-blue-700 px-1 text-xs">->A</button>
-                <button data-target-team="b" class="assign-button text-green-500 hover:text-green-700 px-1 text-xs">->B</button>
+                <!-- Actions updated dynamically by updateAssignedPlayersInAvailableList -->
             </td>
         `;
         return row;
@@ -716,8 +744,6 @@ const TeamPicker = {
              return;
          }
 
-        const teamPlayersWithStats = teamPlayerArray.map(p => TeamPicker.mergePlayerWithStats(p));
-
         const statsToAverage = ['L10_HLTV2', 'L10_ADR', 'L10_KD', 'S_HLTV2', 'S_ADR', 'S_KD'];
         const sums = {};
         const counts = {};
@@ -727,9 +753,11 @@ const TeamPicker = {
             counts[stat] = 0;
         });
 
-        teamPlayersWithStats.forEach(player => {
+        // Use teamPlayerArray directly, assuming stats object exists from assignment/edit
+        teamPlayerArray.forEach(player => { 
             statsToAverage.forEach(stat => {
-                const value = player.stats?.[stat];
+                // Access stats directly from the player object in the team list
+                const value = player.stats?.[stat]; 
                 if (value !== undefined && value !== null && !isNaN(value)) {
                     sums[stat] += value;
                     counts[stat]++;
@@ -751,8 +779,6 @@ const TeamPicker = {
                  delete targetAvgObject[statKey]; // Remove if no valid data
             }
         });
-        // Update the difference display whenever a team's stats are updated
-        TeamPicker.updateStatsDifferenceDisplay(); 
     },
 
     /**
@@ -1348,6 +1374,130 @@ const TeamPicker = {
     },
 
     // ==================================================
-    // --- END NEW Match Creation Logic ---
+    // --- NEW: Player Stat Editing Logic ---
+    // ==================================================
+    handleEditPlayerClick: function(steamId) {
+        const player = TeamPicker.availablePlayers[steamId];
+        if (!player || !player.stats) {
+            console.error(`Cannot edit stats for player ${steamId}: Data not found.`);
+            showMessage('Error: Player data not found for editing.', 'error');
+            return;
+        }
+
+        console.log(`Editing stats for ${player.name} (ID: ${steamId})`);
+
+        // Populate modal
+        document.getElementById('edit-player-steamid').value = steamId;
+        document.getElementById('modal-title').textContent = `Edit Stats for ${player.name} (Session Only)`;
+        
+        const form = document.getElementById('edit-player-form');
+        form.elements['L10_HLTV2'].value = player.stats.L10_HLTV2 ?? '';
+        form.elements['L10_ADR'].value = player.stats.L10_ADR ?? '';
+        form.elements['L10_KD'].value = player.stats.L10_KD ?? '';
+        form.elements['S_HLTV2'].value = player.stats.S_HLTV2 ?? '';
+        form.elements['S_ADR'].value = player.stats.S_ADR ?? '';
+        form.elements['S_KD'].value = player.stats.S_KD ?? '';
+
+        // Show modal
+        document.getElementById('edit-player-modal').classList.remove('hidden');
+    },
+
+    savePlayerEdits: function(event) {
+        event.preventDefault(); // Prevent form submission
+        const form = document.getElementById('edit-player-form');
+        const steamId = form.elements['edit-player-steamid'].value;
+
+        if (!steamId || !TeamPicker.availablePlayers[steamId]) {
+            console.error('Cannot save edits: Missing SteamID or player data.');
+            showMessage('Error saving player edits.', 'error');
+            TeamPicker.closeEditModal();
+            return;
+        }
+
+        const updatedStats = {};
+        let parseError = false;
+
+        // Read and parse values
+        ['L10_HLTV2', 'L10_ADR', 'L10_KD', 'S_HLTV2', 'S_ADR', 'S_KD'].forEach(key => {
+            const inputElement = form.elements[key];
+            const valueStr = inputElement.value.trim();
+            if (valueStr === '') {
+                updatedStats[key] = null; // Allow clearing stats
+            } else {
+                const valueNum = parseFloat(valueStr);
+                if (isNaN(valueNum)) {
+                    console.error(`Invalid number format for ${key}: ${valueStr}`);
+                    inputElement.classList.add('border-red-500'); // Highlight error
+                    parseError = true;
+                } else {
+                    updatedStats[key] = valueNum;
+                    inputElement.classList.remove('border-red-500');
+                }
+            }
+        });
+
+        if (parseError) {
+            showMessage('Please enter valid numbers for all stats or leave them blank.', 'warning');
+            return; // Don't save if there are errors
+        }
+
+        // --- Update ONLY the session data in availablePlayers --- 
+        // Ensure the stats object exists
+        if (!TeamPicker.availablePlayers[steamId].stats) {
+             TeamPicker.availablePlayers[steamId].stats = {};
+        }
+        // Merge new stats
+        Object.assign(TeamPicker.availablePlayers[steamId].stats, updatedStats);
+        console.log(`Updated session stats for ${steamId}:`, TeamPicker.availablePlayers[steamId].stats);
+
+        // --- Update the specific row in the UI --- 
+        const availablePlayersTbody = document.getElementById('available-players-tbody');
+        const playerRow = availablePlayersTbody?.querySelector(`tr[data-steam-id="${steamId}"]`);
+        if (playerRow) {
+            playerRow.querySelectorAll('td.stat-cell').forEach(cell => {
+                const statKey = cell.dataset.statKey;
+                const newValue = updatedStats[statKey];
+                const decimals = statKey.includes('ADR') ? 0 : (statKey.includes('HLTV') || statKey.includes('KD')) ? 2 : 1;
+                cell.textContent = formatStat(newValue, decimals); // Use existing formatStat
+            });
+        } else {
+            console.warn(`Could not find row for steamId ${steamId} in available players list to update UI.`);
+        }
+
+        // --- Check if player is on a team and trigger team stat update --- 
+        let playerTeamId = null;
+        if (TeamPicker.teamAPlayersData[steamId]) {
+            playerTeamId = 'a';
+            // Update the stats in the team data as well
+            Object.assign(TeamPicker.teamAPlayersData[steamId].stats, updatedStats);
+        } else if (TeamPicker.teamBPlayersData[steamId]) {
+            playerTeamId = 'b';
+            // Update the stats in the team data as well
+            Object.assign(TeamPicker.teamBPlayersData[steamId].stats, updatedStats);
+        }
+
+        if (playerTeamId) {
+             console.log(`Player ${steamId} is on Team ${playerTeamId.toUpperCase()}, updating team stats.`);
+             // Re-render the team list row (optional but good for consistency)
+             TeamPicker.updatePlayerSlots(`team-${playerTeamId}-players`, 
+                                        playerTeamId === 'a' ? TeamPicker.teamAPlayersData : TeamPicker.teamBPlayersData, 
+                                        playerTeamId);
+             // updatePlayerSlots calls updateTeamStats, which recalculates averages and updates diff/chart
+        } 
+        // If player wasn't on a team, averages don't need recalculating yet.
+
+        TeamPicker.closeEditModal();
+        showMessage('Player session stats updated.', 'success');
+    },
+
+    closeEditModal: function() {
+        const modal = document.getElementById('edit-player-modal');
+        modal.classList.add('hidden');
+        // Clear potential error highlights
+        modal.querySelectorAll('.border-red-500').forEach(el => el.classList.remove('border-red-500'));
+        document.getElementById('edit-player-form').reset(); // Reset form fields
+    },
+    // ==================================================
+    // --- END Player Stat Editing Logic ---
     // ==================================================
 }; 
