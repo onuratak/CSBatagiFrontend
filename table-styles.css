@@ -414,9 +414,18 @@ body.dark-theme #header-home-link h1 {
     animation: spin 8s linear infinite; /* Apply spin animation, maybe slightly slower */
     vertical-align: middle; /* Align with text */
     margin-left: 0.5rem; /* Add some space */
-    /* Color is now set dynamically via JS */
-    /* color: #4b5563; */ /* Default color removed */
+    /* Color is now set directly below */
 }
+
+#teker-dondu-indicator {
+    /* color: #000000 !important; */ /* We target the SVG paths directly now */
+}
+
+/* Force the SVG paths within the indicator to be black */
+#teker-dondu-indicator svg path {
+    fill: #000000 !important; 
+}
+
 /* Ensure SVG inside fills the container */
 .wheel-spinner svg {
      width: 100%;

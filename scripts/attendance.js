@@ -406,24 +406,14 @@ const Attendance = {
 
         // --- Update Summary --- 
         summaryTextSpan.textContent = `Gelen oyuncu: ${countComing}  Belirsiz: ${countNoResponse}`;
-        let summaryBgClass = 'bg-red-100';
-        let summaryTextClass = 'text-red-800';
-        let wheelColorClass = 'text-red-800'; 
         
+        // Use the summary-ok class for green state
         if (countComing >= this.TEKER_DONDU_THRESHOLD) { 
-            summaryBgClass = 'bg-green-100';
-            summaryTextClass = 'text-green-800';
-            wheelColorClass = 'text-green-800';
+            attendanceSummaryDiv.classList.add('summary-ok'); // Add the OK class
             tekerDonduIndicator.classList.remove('hidden');
         } else {
+            attendanceSummaryDiv.classList.remove('summary-ok'); // Remove the OK class
             tekerDonduIndicator.classList.add('hidden');
-        }
-
-        attendanceSummaryDiv.classList.remove('bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'text-gray-700');
-        tekerDonduIndicator.classList.remove('text-green-800', 'text-red-800', 'text-gray-600'); 
-        attendanceSummaryDiv.classList.add(summaryBgClass, summaryTextClass);
-        if (!tekerDonduIndicator.classList.contains('hidden')) {
-             tekerDonduIndicator.classList.add(wheelColorClass);
         }
 
         // Initialize any missing emoji statuses in Firebase
