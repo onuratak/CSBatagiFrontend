@@ -33,6 +33,6 @@ jobs:
         run: |
           git config --local user.email "github-actions@github.com"
           git config --local user.name "GitHub Actions Bot"
-          git add data/season_avg.json data/last10.json data/night_avg.json data/sonmac.json data/duello_sezon.json data/duello_son_mac.json
+          git add data/season_avg.json data/last10.json data/night_avg.json data/sonmac.json data/duello_sezon.json data/duello_son_mac.json data/performance_data.json
           git diff --quiet && git diff --staged --quiet || git commit -m "Auto-update stats data [skip ci]"
           git push 
