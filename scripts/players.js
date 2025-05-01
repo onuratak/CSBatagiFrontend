@@ -211,6 +211,131 @@ const PlayerCharts = {
             data: chartData,
             options: options
         });
+    },
+
+    /**
+     * Renders an overlay pentagon chart comparing two players on a specific canvas.
+     * @param {object} player1Data - The first player's stats.
+     * @param {object} player2Data - The second player's stats.
+     * @param {string} canvasId - The ID of the canvas element.
+     * @param {Object.<string, {label: string, format?: string}>} selectedStatsConfig - Config object for the 5 selected stats.
+     * @param {Object.<string, {min: number, max: number}>} allStatRanges - Pre-calculated ranges for ALL selectable stats.
+     */
+    renderOverlayPentagonChart: function(player1Data, player2Data, canvasId, selectedStatsConfig, allStatRanges) {
+        const ctx = document.getElementById(canvasId)?.getContext('2d');
+        if (!ctx) {
+            console.error(`Overlay pentagon chart canvas with id '${canvasId}' not found!`);
+            return;
+        }
+
+        const labels = Object.values(selectedStatsConfig).map(config => config.label);
+        const statKeys = Object.keys(selectedStatsConfig);
+
+        // Normalize data for both players using the comprehensive ranges
+        const data1 = statKeys.map(statKey =>
+            this.normalizeStat(player1Data[statKey], statKey, allStatRanges)
+        );
+        const data2 = statKeys.map(statKey =>
+            this.normalizeStat(player2Data[statKey], statKey, allStatRanges)
+        );
+
+        const chartData = {
+            labels: labels,
+            datasets: [
+                {
+                    label: `${player1Data.name}`,
+                    data: data1,
+                    fill: true,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)', // Blue
+                    borderColor: 'rgb(54, 162, 235)',
+                    pointBackgroundColor: 'rgb(54, 162, 235)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(54, 162, 235)',
+                    borderWidth: 1.5,
+                    pointRadius: 2,
+                    pointHoverRadius: 4
+                },
+                {
+                    label: `${player2Data.name}`,
+                    data: data2,
+                    fill: true,
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)', // Red
+                    borderColor: 'rgb(255, 99, 132)',
+                    pointBackgroundColor: 'rgb(255, 99, 132)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgb(255, 99, 132)',
+                    borderWidth: 1.5,
+                    pointRadius: 2,
+                    pointHoverRadius: 4
+                }
+            ]
+        };
+
+        const isDarkMode = document.body.classList.contains('dark-theme');
+
+        const options = {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                r: {
+                    angleLines: { display: true, lineWidth: 0.5, color: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.4)' },
+                    suggestedMin: 0,
+                    suggestedMax: 100,
+                    ticks: { display: false, stepSize: 25, backdropColor: 'rgba(0, 0, 0, 0)' },
+                    pointLabels: { font: { size: 9, weight: 'bold' }, color: isDarkMode ? '#f3f4f6' : '#1f2937' }, // Slightly larger font
+                    grid: { color: isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.3)', lineWidth: 0.5 }
+                }
+            },
+            plugins: {
+                legend: { // Display legend for comparison
+                    display: true,
+                    position: 'top',
+                    labels: {
+                         color: isDarkMode ? '#f3f4f6' : '#1f2937',
+                         boxWidth: 12,
+                         padding: 10,
+                         font: { size: 10 }
+                     }
+                 },
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label: (context) => {
+                            const datasetLabel = context.dataset.label || 'Player';
+                            const statKey = statKeys[context.dataIndex];
+                            // Determine which player's data this point belongs to
+                            const playerData = (context.datasetIndex === 0) ? player1Data : player2Data;
+                            const originalValueRaw = playerData[statKey];
+                            let originalValueFormatted = 'N/A';
+                            const statConfig = selectedStatsConfig[statKey];
+
+                            if (typeof originalValueRaw === 'number' && !isNaN(originalValueRaw)) {
+                                if (statConfig?.format === 'percent') originalValueFormatted = originalValueRaw.toFixed(1) + '%';
+                                else if (statConfig?.format === 'decimal2') originalValueFormatted = originalValueRaw.toFixed(2);
+                                else if (statConfig?.format === 'decimal1') originalValueFormatted = originalValueRaw.toFixed(1);
+                                else originalValueFormatted = (originalValueRaw % 1 === 0) ? originalValueRaw.toFixed(0) : originalValueRaw.toFixed(2);
+                            }
+                            return `${datasetLabel} - ${context.label}: ${originalValueFormatted}`;
+                        }
+                    }
+                }
+            },
+            layout: { padding: 10 } // Increased padding for labels/legend
+        };
+
+        // Destroy previous chart instance
+        if (this.playerChartInstances[canvasId]) {
+            this.playerChartInstances[canvasId].destroy();
+        }
+
+        // Create new chart instance
+        this.playerChartInstances[canvasId] = new Chart(ctx, {
+            type: 'radar',
+            data: chartData,
+            options: options
+        });
     }
 };
 

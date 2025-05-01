@@ -558,6 +558,9 @@
                         <li class="mr-2" role="presentation">
                             <button class="map-tab-button tab-nav-item inline-block  border-b-2 rounded-t-lg" id="season-avg-graph-tab" data-tabs-target="#season-avg-tab-graph" type="button" role="tab" aria-controls="season-avg-tab-graph" aria-selected="false">Graph</button>
                         </li>
+                        <li class="mr-2" role="presentation">
+                            <button class="map-tab-button tab-nav-item inline-block  border-b-2 rounded-t-lg" id="season-avg-head2head-tab" data-tabs-target="#season-avg-tab-head2head" type="button" role="tab" aria-controls="season-avg-tab-head2head" aria-selected="false">Head-to-Head</button>
+                        </li>
                     </ul>
                 </div>
 
@@ -627,6 +630,47 @@
                         <!-- Player card grid will be populated here by JS -->
                         <div id="season-avg-player-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
                             <div class="text-center py-8 text-gray-500 col-span-full">Select 5 stats and click "Update Graphs".</div>
+                        </div>
+                    </div>
+                    <!-- Head-to-Head Content (Initially Hidden) -->
+                    <div id="season-avg-tab-head2head" class="season-avg-tab-pane hidden" role="tabpanel" aria-labelledby="season-avg-head2head-tab">
+                        <!-- Player Selection -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div>
+                                <label for="season-avg-h2h-player1-select" class="block mb-2 text-sm font-medium text-gray-900">Select Player 1</label>
+                                <select id="season-avg-h2h-player1-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="" disabled selected>Loading players...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="season-avg-h2h-player2-select" class="block mb-2 text-sm font-medium text-gray-900">Select Player 2</label>
+                                <select id="season-avg-h2h-player2-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                    <option value="" disabled selected>Loading players...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Stat Selection for Pentagon -->
+                        <div id="season-avg-h2h-stat-selector" class="mb-6 p-4 border rounded-lg bg-gray-50 shadow-sm">
+                            <div class="flex justify-between items-center cursor-pointer" id="season-avg-h2h-stat-selector-toggle">
+                                <h3 class="text-lg font-semibold text-gray-800">Customize Comparison Stats</h3>
+                                <svg id="season-avg-h2h-stat-arrow" class="w-5 h-5 text-gray-500 transform transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </div>
+                            <div id="season-avg-h2h-stat-selector-content" class="mt-3 hidden">
+                                <p class="text-sm text-gray-600 mb-3">Select exactly 5 stats to compare:</p>
+                                <div id="season-avg-h2h-pentagon-stat-checkboxes" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-2 mb-4">
+                                    <div class="text-gray-500 text-sm col-span-full">Loading stat options...</div>
+                                </div>
+                                <div id="season-avg-h2h-stat-validation-msg" class="text-sm text-red-600 h-4 mb-3"></div>
+                                <button id="update-season-avg-h2h-graph-btn" class="action-button" disabled>Update Comparison</button>
+                            </div>
+                        </div>
+
+                        <!-- Chart Container -->
+                        <div id="season-avg-h2h-chart-container" class="mb-6 flex justify-center items-center min-h-[400px]">
+                             <div class="text-center py-8 text-gray-500 col-span-full">Select two players and 5 stats, then click "Update Comparison".</div>
                         </div>
                     </div>
                 </div>
