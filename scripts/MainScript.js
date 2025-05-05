@@ -518,26 +518,24 @@ document.addEventListener('DOMContentLoaded', () => {
           serviceWorkerRegistration: registration
         }).then((currentToken) => {
           if (currentToken) {
-            console.log('FCM Token:', currentToken);
-            // Store the token in the database for push notifications
-            if (database) { 
-              console.log('Attempting to save token. Database object:', database);
-              const tokenPath = 'fcmTokens/' + currentToken;
-              console.log('Attempting to write to path:', tokenPath);
-              database.ref(tokenPath).set(true)
-                .then(() => {
-                  console.log('FCM Token successfully saved to Realtime Database.');
-                })
+
+            // Store the token in the database for push notifications (silently)
+            if (database) {
+              database.ref('fcmTokens/' + currentToken).set(true)
                 .catch((dbError) => {
-                  console.error('Error saving FCM Token to Realtime Database:', dbError);
+                  // Log only if database save fails
+                  console.error('Error saving FCM Token to DB:', dbError);
                 });
             } else {
-              console.error('Cannot save FCM Token: Realtime Database reference is missing or not initialized.');
+              // Log only if database object is missing
+              console.error('DB not initialized, cannot save FCM token.');
             }
           } else {
+            // Keep this log: Important for knowing why no token was generated
             console.log('No registration token available. Request permission to generate one.');
           }
         }).catch((err) => {
+          // Keep this log: Important for token retrieval errors (like the 401)
           console.log('An error occurred while retrieving token. ', err);
         });
       }
