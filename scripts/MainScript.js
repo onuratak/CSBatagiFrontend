@@ -521,7 +521,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('FCM Token:', currentToken);
             // Store the token in the database for push notifications
             if (window.database) {
-              window.database.ref('fcmTokens/' + currentToken).set(true)
+              console.log('Attempting to save token. Database object:', window.database);
+              const tokenPath = 'fcmTokens/' + currentToken;
+              console.log('Attempting to write to path:', tokenPath);
+              window.database.ref(tokenPath).set(true)
                 .then(() => {
                   console.log('FCM Token successfully saved to Realtime Database.');
                 })
