@@ -520,11 +520,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (currentToken) {
             console.log('FCM Token:', currentToken);
             // Store the token in the database for push notifications
-            if (window.database) {
-              console.log('Attempting to save token. Database object:', window.database);
+            if (database) { 
+              console.log('Attempting to save token. Database object:', database);
               const tokenPath = 'fcmTokens/' + currentToken;
               console.log('Attempting to write to path:', tokenPath);
-              window.database.ref(tokenPath).set(true)
+              database.ref(tokenPath).set(true)
                 .then(() => {
                   console.log('FCM Token successfully saved to Realtime Database.');
                 })
@@ -532,7 +532,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   console.error('Error saving FCM Token to Realtime Database:', dbError);
                 });
             } else {
-              console.error('Cannot save FCM Token: Realtime Database not initialized.');
+              console.error('Cannot save FCM Token: Realtime Database reference is missing or not initialized.');
             }
           } else {
             console.log('No registration token available. Request permission to generate one.');
