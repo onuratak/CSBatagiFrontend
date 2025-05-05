@@ -44,6 +44,21 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
+      .catch(err => {
+        console.error('Cache addAll failed:', err);
+        if (err && err.name === 'TypeError') {
+          // Try to identify which file failed
+          Promise.all(
+            urlsToCache.map(url =>
+              fetch(url)
+                .then(r => {
+                  if (!r.ok) throw new Error(url + ' failed with status ' + r.status);
+                })
+                .catch(e => console.error('Failed to fetch:', url, e))
+            )
+          );
+        }
+      })
   );
 });
 
