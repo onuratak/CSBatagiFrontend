@@ -502,21 +502,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const messaging = firebase.messaging();
 
       navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
-        askNotificationPermissionAndGetToken(registration);
+        // Always request notification permission on page load
+        Notification.requestPermission().then((permission) => {
+          if (permission === 'granted') {
+            getTokenAndLog(registration);
+          } else {
+            console.log('Notification permission not granted:', permission);
+          }
+        });
       });
-
-      function askNotificationPermissionAndGetToken(registration) {
-        console.log('Requesting notification permission...');
-        if (Notification.permission === 'granted') {
-          getTokenAndLog(registration);
-        } else if (Notification.permission !== 'denied') {
-          Notification.requestPermission().then((permission) => {
-            if (permission === 'granted') {
-              getTokenAndLog(registration);
-            }
-          });
-        }
-      }
 
       function getTokenAndLog(registration) {
         messaging.getToken({
