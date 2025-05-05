@@ -478,14 +478,14 @@ function handleSortClick(event) {
 document.addEventListener('DOMContentLoaded', () => {
     // --- Firebase Initialization (Moved Here) ---
     const firebaseConfig = {
-      apiKey: "AIzaSyAJpmATHX2Zugnm4c1WhU5Kg9iMOruiZBU",
-      authDomain: "csbatagirealtimedb.firebaseapp.com",
-      databaseURL: "https://csbatagirealtimedb-default-rtdb.europe-west1.firebasedatabase.app", 
-      projectId: "csbatagirealtimedb",
-      storageBucket: "csbatagirealtimedb.appspot.com",
-      messagingSenderId: "408840223663",
-      appId: "1:408840223663:web:bdcf576d64b3a1fb6c4d5a"
-    };
+        apiKey: "AIzaSyAJpmATHX2Zugnm4c1WhU5Kg9iMOruiZBU",
+        authDomain: "csbatagirealtimedb.firebaseapp.com",
+        databaseURL: "https://csbatagirealtimedb-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "csbatagirealtimedb",
+        storageBucket: "csbatagirealtimedb.firebasestorage.app",
+        messagingSenderId: "408840223663",
+        appId: "1:408840223663:web:bdcf576d64b3a1fb6c4d5a"
+      };
     try {
         const firebaseApp = firebase.initializeApp(firebaseConfig);
         database = firebase.database(); // Assign to the globally declared variable
@@ -514,7 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       function getTokenAndLog(registration) {
         messaging.getToken({
-          vapidKey: 'BCz8Hz_JNoeLvHc34XX5c2F9gtlakm_CXMh2lgNYb9l4AAbJR-iIZRW-2wYTMZz0Sv7NMVSBewKW0xPxPmpjCgA',
+          vapidKey: 'BOBSX1e7RIaNamSRVADSxWzasn6IXp2Q7QH0wqsi856l1bdairiUTC5IBqIe7gpdgnwK9dTqyAk-aYMV7r19a20',
           serviceWorkerRegistration: registration
         }).then((currentToken) => {
           if (currentToken) {
