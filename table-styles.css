@@ -417,9 +417,6 @@ body.dark-theme #header-home-link h1 {
     /* Color is now set directly below */
 }
 
-#teker-dondu-indicator {
-    /* color: #000000 !important; */ /* We target the SVG paths directly now */
-}
 
 /* Force the SVG paths within the indicator to be black */
 #teker-dondu-indicator svg path {

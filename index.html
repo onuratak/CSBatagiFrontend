@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="table-styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" defer></script>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
 </head>
 <body class="p-4 md:p-8">
 
@@ -888,6 +890,7 @@
     <!-- Firebase SDKs (Load BEFORE MainScript) -->
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js" defer></script>
 
     <!-- Core Application Logic -->
     <script src="scripts/MainScript.js" defer></script>
@@ -903,6 +906,18 @@
     <!-- Firebase SDKs (REMOVED FROM HERE) -->
     <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script> -->
     <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script> -->
+
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          }, function(err) {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+        });
+      }
+    </script>
 
 </body>
 </html>

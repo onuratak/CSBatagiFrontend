@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
       authDomain: "csbatagirealtimedb.firebaseapp.com",
       databaseURL: "https://csbatagirealtimedb-default-rtdb.europe-west1.firebasedatabase.app", 
       projectId: "csbatagirealtimedb",
-      storageBucket: "csbatagirealtimedb.firebasestorage.app",
+      storageBucket: "csbatagirealtimedb.appspot.com",
       messagingSenderId: "408840223663",
       appId: "1:408840223663:web:bdcf576d64b3a1fb6c4d5a"
     };
@@ -493,19 +493,67 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (error) {
         console.error("Firebase initialization failed:", error);
         showMessage("Critical Error: Could not connect to Firebase.", 'error', 10000);
-        // Optionally disable features that depend on Firebase
         return; // Stop further initialization if Firebase fails
     }
     // --- End Firebase Initialization ---
-    
+
+    // --- Firebase Messaging (Push Notifications) ---
+    if (window.firebase && firebase.messaging) {
+      const messaging = firebase.messaging();
+
+      navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
+        askNotificationPermissionAndGetToken(registration);
+      });
+
+      function askNotificationPermissionAndGetToken(registration) {
+        console.log('Requesting notification permission...');
+        if (Notification.permission === 'granted') {
+          getTokenAndLog(registration);
+        } else if (Notification.permission !== 'denied') {
+          Notification.requestPermission().then((permission) => {
+            if (permission === 'granted') {
+              getTokenAndLog(registration);
+            }
+          });
+        }
+      }
+
+      function getTokenAndLog(registration) {
+        messaging.getToken({
+          vapidKey: 'BCz8Hz_JNoeLvHc34XX5c2F9gtlakm_CXMh2lgNYb9l4AAbJR-iIZRW-2wYTMZz0Sv7NMVSBewKW0xPxPmpjCgA',
+          serviceWorkerRegistration: registration
+        }).then((currentToken) => {
+          if (currentToken) {
+            console.log('FCM Token:', currentToken);
+            // Store the token in the database for push notifications
+            if (window.database) {
+              window.database.ref('fcmTokens/' + currentToken).set(true);
+            }
+          } else {
+            console.log('No registration token available. Request permission to generate one.');
+          }
+        }).catch((err) => {
+          console.log('An error occurred while retrieving token. ', err);
+        });
+      }
+
+      // Foreground message handler
+      messaging.onMessage((payload) => {
+        console.log('Message received. ', payload);
+        if (Notification.permission === 'granted' && payload.notification) {
+          new Notification(payload.notification.title, {
+            body: payload.notification.body,
+            icon: '/images/BatakLogo192.png'
+          });
+        }
+      });
+    }
+
     showPage(DEFAULT_PAGE); // Show the initial page
     Attendance.init(); // Initialize Attendance module
     StatsTables.init(); // Initialize StatsTables module
     SonMac.init(); // Initialize SonMac module
-    // loadAndRenderDuelloSonMacGrid(); // REMOVED - Handled by Duello.init()
-    // loadAndRenderDuelloSezonGrid(); // REMOVED - Handled by Duello.init()
     Duello.init(); // Initialize Duello module
-    
     adjustNavLayout(); // Set initial navigation visibility
     setupGlobalEventListeners(); // Setup global event listeners
 });

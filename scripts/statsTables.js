@@ -299,7 +299,6 @@ const StatsTables = (() => {
              // NEW: Process data into map after fetching
             last10StatsBySteamId = processStatsIntoMap(last10Stats, 'steam_id');
             console.log("Processed last 10 stats by SteamID:", last10StatsBySteamId);
-            checkAndRenderLast10Graph(); // Trigger graph check if needed
         }
     }
 

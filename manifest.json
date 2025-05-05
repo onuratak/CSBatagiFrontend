@@ -1,0 +1,21 @@
+{
+  "name": "CS Batağı App",
+  "short_name": "CSBatağı",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#2563eb",
+  "description": "Attendance and team picker for CSBatagi, with Firebase sync.",
+  "icons": [
+    {
+      "src": "images/BatakLogo192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/BatakLogo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+} 
