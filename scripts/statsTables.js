@@ -326,24 +326,60 @@ const StatsTables = (() => {
         if (!seasonStats || Object.keys(seasonAvgAllStatRanges).length > 0) {
             return;
         }
-
-        console.log("Calculating Season Avg stat ranges...");
-        const allPlayersSeasonData = convertStatsArrayToObject(seasonStats);
-
-        // Ensure selectable stats config is generated if needed (e.g., H2H visited first)
-        if (Object.keys(seasonAvgSelectableStats).length === 0) {
-            console.log("Generating seasonAvgSelectableStats before range calculation.");
-            seasonAvgSelectableStats = generateSelectableStatsConfig(commonColumns);
+        console.log("Calculating Season Avg H2H stat ranges...");
+        const allPlayersData = convertStatsArrayToObject(seasonStats);
+        // Ensure H2H selectable stats config is generated if needed
+        if (Object.keys(seasonAvgH2HSelectableStats).length === 0) {
+            console.log("Generating seasonAvgH2HSelectableStats before range calculation.");
+            seasonAvgH2HSelectableStats = generateSelectableStatsConfig(commonColumns);
         }
-
-        const allSelectableStatKeys = Object.keys(seasonAvgSelectableStats);
-        if (allSelectableStatKeys.length === 0) {
-             console.warn("Cannot calculate ranges: No selectable stats found.");
+        const allSelectableKeys = Object.keys(seasonAvgH2HSelectableStats);
+        if (allSelectableKeys.length === 0) {
+             console.warn("Cannot calculate H2H ranges for Season Avg: No selectable H2H stats found.");
              return;
         }
+        seasonAvgAllStatRanges = PlayerCharts.calculateStatRanges(allPlayersData, allSelectableKeys);
+        console.log("Calculated all H2H stat ranges for Season Avg:", seasonAvgAllStatRanges);
+    }
 
-        seasonAvgAllStatRanges = PlayerCharts.calculateStatRanges(allPlayersSeasonData, allSelectableStatKeys);
-        console.log("Calculated all stat ranges for Season Avg:", seasonAvgAllStatRanges);
+    // --- NEW: Helper function to calculate Last 10 Stat Ranges if needed ---
+    function ensureLast10StatRangesCalculated() {
+        if (!last10Stats || Object.keys(last10AllStatRanges).length > 0) {
+            return;
+        }
+        console.log("Calculating Last 10 H2H stat ranges...");
+        const allPlayersData = convertStatsArrayToObject(last10Stats);
+        if (Object.keys(last10H2HSelectableStats).length === 0) {
+            console.log("Generating last10H2HSelectableStats before range calculation.");
+            last10H2HSelectableStats = generateSelectableStatsConfig(commonColumns);
+        }
+        const allSelectableKeys = Object.keys(last10H2HSelectableStats);
+        if (allSelectableKeys.length === 0) {
+            console.warn("Cannot calculate H2H ranges for Last 10: No selectable H2H stats found.");
+            return;
+        }
+        last10AllStatRanges = PlayerCharts.calculateStatRanges(allPlayersData, allSelectableKeys);
+        console.log("Calculated all H2H stat ranges for Last 10:", last10AllStatRanges);
+    }
+
+    // --- NEW: Helper function to calculate Night Avg Stat Ranges if needed ---
+    function ensureNightAvgStatRangesCalculated() {
+        if (!nightAvgStats || Object.keys(nightAvgAllStatRanges).length > 0) {
+            return;
+        }
+        console.log("Calculating Night Avg H2H stat ranges...");
+        const allPlayersData = convertStatsArrayToObject(nightAvgStats);
+        if (Object.keys(nightAvgH2HSelectableStats).length === 0) {
+            console.log("Generating nightAvgH2HSelectableStats before range calculation.");
+            nightAvgH2HSelectableStats = generateSelectableStatsConfig(nightAvgColumns);
+        }
+        const allSelectableKeys = Object.keys(nightAvgH2HSelectableStats);
+        if (allSelectableKeys.length === 0) {
+            console.warn("Cannot calculate H2H ranges for Night Avg: No selectable H2H stats found.");
+            return;
+        }
+        nightAvgAllStatRanges = PlayerCharts.calculateStatRanges(allPlayersData, allSelectableKeys);
+        console.log("Calculated all H2H stat ranges for Night Avg:", nightAvgAllStatRanges);
     }
 
     // --- Season Avg Graph View Logic ---
@@ -455,6 +491,7 @@ const StatsTables = (() => {
 
     // --- Event Handlers ---
     function handleSeasonAvgSubTabClick(event) {
+        console.log('[DEBUG] SeasonAvg subtab click handler fired');
         const clickedTab = event.target.closest('.map-tab-button'); // Find closest map-tab-button
         if (!clickedTab || !clickedTab.closest('#season-avg-sub-tabs')) return; // Ensure it's within the correct tab list
 
@@ -790,6 +827,7 @@ const StatsTables = (() => {
 
     // --- NEW Event Handler for Last 10 Tabs ---
     function handleLast10SubTabClick(event) {
+        console.log('[DEBUG] Last10 subtab click handler fired');
         const clickedTab = event.target.closest('.map-tab-button');
         if (!clickedTab || !clickedTab.closest('#last10-sub-tabs')) return;
         event.preventDefault();
@@ -810,7 +848,9 @@ const StatsTables = (() => {
             console.error(`Target pane not found for selector: ${targetPaneSelector}`);
         }
         if (targetPaneSelector === '#last10-tab-graph') {
-            renderLast10GraphView(); // Call specific render function
+            renderLast10GraphView();
+        } else if (targetPaneSelector === '#last10-tab-head2head') {
+            renderLast10H2HView();
         }
     }
 
@@ -961,6 +1001,7 @@ const StatsTables = (() => {
 
     // --- NEW Event Handler for Night Avg Tabs ---
     function handleNightAvgSubTabClick(event) {
+        console.log('[DEBUG] NightAvg subtab click handler fired');
         const clickedTab = event.target.closest('.map-tab-button');
         if (!clickedTab || !clickedTab.closest('#night-avg-sub-tabs')) return;
         event.preventDefault();
@@ -981,7 +1022,9 @@ const StatsTables = (() => {
             console.error(`Target pane not found for selector: ${targetPaneSelector}`);
         }
         if (targetPaneSelector === '#night-avg-tab-graph') {
-            renderNightAvgGraphView(); // Call specific render function
+            renderNightAvgGraphView();
+        } else if (targetPaneSelector === '#night-avg-tab-head2head') {
+            renderNightAvgH2HView();
         }
     }
 
@@ -1000,279 +1043,376 @@ const StatsTables = (() => {
 
     // --- NEW: Season Avg Head-to-Head View Logic ---
 
-    // Populate Player Select Dropdowns for H2H
-    function populateSeasonAvgH2HPlayerSelectors() {
-        if (!seasonStats || !seasonAvgH2HPlayer1Select || !seasonAvgH2HPlayer2Select) return;
+    // --- Generic H2H View Factory ---
+    function createH2HView({
+      tabPrefix,
+      getStats,
+      getStatsBySteamId,
+      columns,
+      getStatRanges,
+      ensureStatRanges,
+      selectableStats,
+      statLimit = 5
+    }) {
+      // DOM element IDs - Update to match the new HTML structure
+      const player1SelectId = `${tabPrefix}-h2h-player1-select`;
+      const player2SelectId = `${tabPrefix}-h2h-player2-select`;
+      const checkboxesId = `${tabPrefix}-h2h-pentagon-stat-checkboxes`;
+      const updateBtnId = `update-${tabPrefix}-h2h-graph-btn`;
+      const validationMsgId = `${tabPrefix}-h2h-stat-validation-msg`;
+      const chartContainerId = `${tabPrefix}-h2h-chart-container`;
+      const statSelectorToggleId = `${tabPrefix}-h2h-stat-selector-toggle`;
+      const statSelectorContentId = `${tabPrefix}-h2h-stat-selector-content`;
+      const statSelectorArrowId = `${tabPrefix}-h2h-stat-arrow`;
+      
+      // The tab content container and the tab itself
+      const tabId = `${tabPrefix}-tab-head2head`;
+      
+      let initialRenderDone = false;
 
-        const activePlayers = seasonStats
-            .filter(p => p && typeof p.matches === 'number' && p.matches > 0)
-            .sort((a, b) => a.name.localeCompare(b.name));
+      // --- Helpers ---
+      function generateSelectableStatsConfig(columns) {
+        const config = {};
+        let defaultCount = 0;
+        columns.forEach(col => {
+          if (col.key && col.label && col.key !== 'name') {
+            const isDefault = defaultCount < statLimit;
+            config[col.key] = {
+              label: col.label,
+              default: isDefault,
+              format: col.isPercentage ? 'percent' : (col.decimals === 2 ? 'decimal2' : (col.decimals === 1 ? 'decimal1' : 'decimal0'))
+            };
+            if (isDefault) defaultCount++;
+          }
+        });
+        return config;
+      }
 
-        // Clear existing options
-        seasonAvgH2HPlayer1Select.innerHTML = '<option value="" disabled selected>Select Player 1</option>';
-        seasonAvgH2HPlayer2Select.innerHTML = '<option value="" disabled selected>Select Player 2</option>';
+      function getSelectedStats() {
+        const selectedConfig = {};
+        const checkboxes = document.getElementById(checkboxesId)?.querySelectorAll('input[type="checkbox"]:checked') || [];
+        checkboxes.forEach(cb => {
+          const key = cb.dataset.statKey;
+          if (selectableStats[key]) {
+            selectedConfig[key] = selectableStats[key];
+          }
+        });
+        return selectedConfig;
+      }
+
+      function updateStatSelectionUI() {
+        const container = document.getElementById(checkboxesId);
+        const validationMsg = document.getElementById(validationMsgId);
+        const updateBtn = document.getElementById(updateBtnId);
+        if (!container || !validationMsg || !updateBtn) return;
+        const selectedCount = Object.keys(getSelectedStats()).length;
+        const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+        if (selectedCount === statLimit) {
+          validationMsg.textContent = '';
+          updateBtn.disabled = false;
+          updateBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+          checkboxes.forEach(cb => { cb.disabled = !cb.checked; });
+        } else {
+          validationMsg.textContent = `Select ${statLimit} stats (${selectedCount} selected)`;
+          updateBtn.disabled = true;
+          updateBtn.classList.add('opacity-50', 'cursor-not-allowed');
+          checkboxes.forEach(cb => { cb.disabled = false; });
+        }
+      }
+
+      function handleCheckboxChange() {
+        updateStatSelectionUI();
+        // Auto-update H2H graph if both players and 5 stats are selected
+        const p1 = document.getElementById(player1SelectId)?.value;
+        const p2 = document.getElementById(player2SelectId)?.value;
+        const selectedStatCount = Object.keys(getSelectedStats()).length;
+        if (p1 && p2 && selectedStatCount === statLimit) {
+          handleUpdateGraphClick();
+        }
+      }
+
+      function populatePlayerSelectors() {
+        const stats = getStats();
+        const player1Select = document.getElementById(player1SelectId);
+        const player2Select = document.getElementById(player2SelectId);
+
+        if (!stats || !player1Select || !player2Select) {
+            console.warn(`Cannot populate H2H player selectors for ${tabPrefix}: Stats or select elements not found.`);
+            player1Select.innerHTML = '<option value="" disabled selected>Data loading...</option>';
+            player2Select.innerHTML = '<option value="" disabled selected>Data loading...</option>';
+            return;
+        }
+
+        // Filter players differently based on the tab
+        let activePlayers = [];
+        if (tabPrefix === 'night-avg') {
+            // Night avg doesn't have 'matches', assume all players are active
+            activePlayers = stats.sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+            // Season and Last10 require matches > 0
+            activePlayers = stats.filter(p => p && typeof p.matches === 'number' && p.matches > 0).sort((a, b) => a.name.localeCompare(b.name));
+        }
+
+        if (activePlayers.length === 0) {
+             console.warn(`No active players found for ${tabPrefix} H2H selectors.`);
+             player1Select.innerHTML = '<option value="" disabled selected>No players</option>';
+             player2Select.innerHTML = '<option value="" disabled selected>No players</option>';
+             return;
+        }
+
+        // Store current selections
+        const currentP1 = player1Select.value;
+        const currentP2 = player2Select.value;
+
+        // Populate options
+        player1Select.innerHTML = '<option value="" disabled selected>Select Player 1</option>';
+        player2Select.innerHTML = '<option value="" disabled selected>Select Player 2</option>';
 
         activePlayers.forEach(player => {
+            if (!player || !player.steam_id || !player.name) {
+                console.warn("Skipping invalid player data during H2H selector population:", player);
+                return;
+            }
             const option1 = document.createElement('option');
             option1.value = player.steam_id;
             option1.textContent = player.name;
-            seasonAvgH2HPlayer1Select.appendChild(option1);
+            player1Select.appendChild(option1);
 
             const option2 = document.createElement('option');
             option2.value = player.steam_id;
             option2.textContent = player.name;
-            seasonAvgH2HPlayer2Select.appendChild(option2);
+            player2Select.appendChild(option2);
         });
 
-        // Add listeners to disable selecting the same player
+        // Restore previous selections if possible
+        player1Select.value = currentP1 || "";
+        player2Select.value = currentP2 || "";
+
+        // Define change handler
         const handlePlayerSelectionChange = () => {
-            const p1 = seasonAvgH2HPlayer1Select.value;
-            const p2 = seasonAvgH2HPlayer2Select.value;
+            const p1 = player1Select.value;
+            const p2 = player2Select.value;
 
-            Array.from(seasonAvgH2HPlayer2Select.options).forEach(opt => {
-                opt.disabled = (opt.value === p1 && p1 !== '');
-            });
-            Array.from(seasonAvgH2HPlayer1Select.options).forEach(opt => {
-                opt.disabled = (opt.value === p2 && p2 !== '');
-            });
-            updateSeasonAvgH2HStatSelectionUI(); // Also update button state based on player selection
+            // Disable selecting the same player
+            Array.from(player2Select.options).forEach(opt => { opt.disabled = (opt.value === p1 && p1 !== ''); });
+            Array.from(player1Select.options).forEach(opt => { opt.disabled = (opt.value === p2 && p2 !== ''); });
 
-            // Auto-update H2H graph if both players and 5 stats are selected
-            const selectedStatCount = Object.keys(getSelectedSeasonAvgH2HStats()).length;
-            if (p1 && p2 && selectedStatCount === PENTAGON_STAT_LIMIT_STATS) {
-                handleUpdateSeasonAvgH2HGraphClick();
+            updateStatSelectionUI(); // Update button state based on player selection
+
+            // Auto-update graph if players and stats are valid
+            const selectedStatCount = Object.keys(getSelectedStats()).length;
+            if (p1 && p2 && selectedStatCount === statLimit) {
+                handleUpdateGraphClick();
             }
         };
 
-        seasonAvgH2HPlayer1Select.removeEventListener('change', handlePlayerSelectionChange); // Prevent duplicates
-        seasonAvgH2HPlayer1Select.addEventListener('change', handlePlayerSelectionChange);
-        seasonAvgH2HPlayer2Select.removeEventListener('change', handlePlayerSelectionChange); // Prevent duplicates
-        seasonAvgH2HPlayer2Select.addEventListener('change', handlePlayerSelectionChange);
-    }
+        // Remove old listeners before adding new ones to prevent duplicates
+        player1Select.removeEventListener('change', handlePlayerSelectionChange);
+        player1Select.addEventListener('change', handlePlayerSelectionChange);
+        player2Select.removeEventListener('change', handlePlayerSelectionChange);
+        player2Select.addEventListener('change', handlePlayerSelectionChange);
 
+        // Initial call to set disabled options correctly
+        handlePlayerSelectionChange();
+      }
 
-    // Get Selected Stats Config for H2H
-    function getSelectedSeasonAvgH2HStats() {
-        const selectedConfig = {};
-        if (!seasonAvgH2HCheckboxContainer) return selectedConfig;
-        const checkboxes = seasonAvgH2HCheckboxContainer.querySelectorAll('.season-avg-h2h-pentagon-stat-option:checked');
-        checkboxes.forEach(cb => {
-            const key = cb.dataset.statKey;
-            if (seasonAvgH2HSelectableStats[key]) {
-                selectedConfig[key] = seasonAvgH2HSelectableStats[key];
-            }
+      function populateStatCheckboxes() {
+        const container = document.getElementById(checkboxesId);
+        if (!container) return;
+        container.innerHTML = '';
+        Object.entries(selectableStats).forEach(([key, config]) => {
+          const div = document.createElement('div');
+          const label = document.createElement('label');
+          label.className = 'inline-flex items-center';
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.className = `form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 ${tabPrefix}-h2h-pentagon-stat-option`;
+          input.dataset.statKey = key;
+          input.dataset.statLabel = config.label;
+          input.checked = config.default;
+          input.addEventListener('change', handleCheckboxChange);
+          const span = document.createElement('span');
+          span.className = 'ml-2 text-sm text-gray-700';
+          span.textContent = config.label;
+          label.appendChild(input);
+          label.appendChild(span);
+          div.appendChild(label);
+          container.appendChild(div);
         });
-        return selectedConfig;
-    }
+        updateStatSelectionUI();
+      }
 
-    // Update UI State for H2H Stat Selection
-    function updateSeasonAvgH2HStatSelectionUI() {
-        if (!seasonAvgH2HCheckboxContainer || !seasonAvgH2HValidationMsg || !seasonAvgH2HUpdateButton || !seasonAvgH2HPlayer1Select || !seasonAvgH2HPlayer2Select) return;
-
-        const selectedStatCount = Object.keys(getSelectedSeasonAvgH2HStats()).length;
-        const checkboxes = seasonAvgH2HCheckboxContainer.querySelectorAll('.season-avg-h2h-pentagon-stat-option');
-        const player1Selected = seasonAvgH2HPlayer1Select.value !== '';
-        const player2Selected = seasonAvgH2HPlayer2Select.value !== '';
-
-        const canUpdate = selectedStatCount === PENTAGON_STAT_LIMIT_STATS && player1Selected && player2Selected;
-
-        if (canUpdate) {
-            seasonAvgH2HValidationMsg.textContent = '';
-            seasonAvgH2HUpdateButton.disabled = false;
-            seasonAvgH2HUpdateButton.classList.remove('opacity-50', 'cursor-not-allowed');
-            checkboxes.forEach(cb => { cb.disabled = !cb.checked; });
-        } else {
-            let message = '';
-            if (!player1Selected || !player2Selected) {
-                message = 'Select two players. ';
-            }
-            if (selectedStatCount !== PENTAGON_STAT_LIMIT_STATS) {
-                 message += `Select ${PENTAGON_STAT_LIMIT_STATS} stats (${selectedStatCount} selected).`;
-            }
-            seasonAvgH2HValidationMsg.textContent = message.trim();
-            seasonAvgH2HUpdateButton.disabled = true;
-            seasonAvgH2HUpdateButton.classList.add('opacity-50', 'cursor-not-allowed');
-            checkboxes.forEach(cb => { cb.disabled = false; });
+      function handleUpdateGraphClick() {
+        const validationMsg = document.getElementById(validationMsgId);
+        const chartContainer = document.getElementById(chartContainerId);
+        const player1Select = document.getElementById(player1SelectId);
+        const player2Select = document.getElementById(player2SelectId);
+        const selectedStatsConfig = getSelectedStats();
+        const player1Id = player1Select.value;
+        const player2Id = player2Select.value;
+        if (Object.keys(selectedStatsConfig).length !== statLimit || !player1Id || !player2Id) {
+          updateStatSelectionUI();
+          return;
         }
-    }
-
-    // Handle Checkbox Change for H2H
-    function handleSeasonAvgH2HCheckboxChange() {
-        updateSeasonAvgH2HStatSelectionUI();
-        // Auto-update H2H graph if both players and 5 stats are selected
-        const p1 = seasonAvgH2HPlayer1Select && seasonAvgH2HPlayer1Select.value;
-        const p2 = seasonAvgH2HPlayer2Select && seasonAvgH2HPlayer2Select.value;
-        const selectedStatCount = Object.keys(getSelectedSeasonAvgH2HStats()).length;
-        if (p1 && p2 && selectedStatCount === PENTAGON_STAT_LIMIT_STATS) {
-            handleUpdateSeasonAvgH2HGraphClick();
+        if (!getStatsBySteamId || !chartContainer || !PlayerCharts || typeof PlayerCharts.renderOverlayPentagonChart !== 'function') {
+          validationMsg.textContent = 'Error: Required resources missing.';
+          return;
         }
-    }
-
-    // Handle Update Button Click for H2H Graph
-    function handleUpdateSeasonAvgH2HGraphClick() {
-        console.log("Updating Season Avg H2H graph...");
-        const selectedStatsConfig = getSelectedSeasonAvgH2HStats();
-        const player1Id = seasonAvgH2HPlayer1Select.value;
-        const player2Id = seasonAvgH2HPlayer2Select.value;
-
-        if (Object.keys(selectedStatsConfig).length !== PENTAGON_STAT_LIMIT_STATS || !player1Id || !player2Id) {
-            updateSeasonAvgH2HStatSelectionUI(); // Re-run validation to show appropriate message
-            return;
-        }
-
-        if (!seasonStatsBySteamId || !seasonAvgH2HChartContainer || !PlayerCharts || typeof PlayerCharts.renderOverlayPentagonChart !== 'function') {
-            console.error("Cannot update H2H graph: Data, container, or PlayerCharts.renderOverlayPentagonChart missing.");
-            seasonAvgH2HValidationMsg.textContent = "Error: Required resources missing.";
-            return;
-        }
-
-        const player1Data = seasonStatsBySteamId[player1Id];
-        const player2Data = seasonStatsBySteamId[player2Id];
-
+        const player1Data = getStatsBySteamId(player1Id);
+        const player2Data = getStatsBySteamId(player2Id);
         if (!player1Data || !player2Data) {
-             console.error("Could not find data for selected players:", player1Id, player2Id);
-             seasonAvgH2HValidationMsg.textContent = "Error: Player data not found.";
-             return;
+          validationMsg.textContent = 'Error: Player data not found.';
+          return;
         }
-
-        // Ensure the chart canvas exists within the container
-        let canvasId = 'season-avg-h2h-chart-canvas';
+        let canvasId = `${tabPrefix}-h2h-chart-canvas`;
         let canvas = document.getElementById(canvasId);
         if (!canvas) {
-             seasonAvgH2HChartContainer.innerHTML = ''; // Clear previous content
-             canvas = document.createElement('canvas');
-             canvas.id = canvasId;
-             canvas.width = 400; // Adjust size as needed
-             canvas.height = 384;
-             seasonAvgH2HChartContainer.appendChild(canvas);
+          chartContainer.innerHTML = '';
+          canvas = document.createElement('canvas');
+          canvas.id = canvasId;
+          canvas.width = 400;
+          canvas.height = 384;
+          chartContainer.appendChild(canvas);
         }
-
-        // We need the stat ranges calculated from the 'Graph' tab's logic.
-        ensureSeasonAvgStatRangesCalculated();
-
-        // Check if ranges were successfully calculated (might fail if seasonStats isn't ready)
-        if (Object.keys(seasonAvgAllStatRanges).length === 0) {
-            console.error("Cannot update H2H graph: Stat ranges could not be calculated.");
-            seasonAvgH2HValidationMsg.textContent = "Error: Stat ranges unavailable. Data might still be loading.";
-            return;
+        ensureStatRanges();
+        const statRanges = getStatRanges();
+        if (Object.keys(statRanges).length === 0) {
+          validationMsg.textContent = 'Error: Stat ranges unavailable. Data might still be loading.';
+          return;
         }
-
-        // Render the overlay chart
         setTimeout(() => {
-            PlayerCharts.renderOverlayPentagonChart(
-                player1Data,
-                player2Data,
-                canvasId,
-                selectedStatsConfig,
-                seasonAvgAllStatRanges // Use the globally calculated ranges
-            );
+          PlayerCharts.renderOverlayPentagonChart(
+            player1Data,
+            player2Data,
+            canvasId,
+            selectedStatsConfig,
+            statRanges
+          );
         }, 0);
+        validationMsg.textContent = 'Comparison updated!';
+        setTimeout(() => { validationMsg.textContent = ''; }, 2000);
+      }
 
-        seasonAvgH2HValidationMsg.textContent = 'Comparison updated!';
-        setTimeout(() => { seasonAvgH2HValidationMsg.textContent = ''; }, 2000);
-    }
+      function render() {
+        // Ensure H2H selectable stats config is generated if needed
+        if (Object.keys(selectableStats).length === 0) {
+            console.log(`Generating ${tabPrefix} H2H selectable stats...`);
+            const newConfig = generateSelectableStatsConfig(columns);
 
-    // Populate Stat Checkboxes for H2H
-    function populateSeasonAvgH2HStatCheckboxes() {
-        if (!seasonAvgH2HCheckboxContainer || Object.keys(seasonAvgH2HSelectableStats).length === 0) return;
-        seasonAvgH2HCheckboxContainer.innerHTML = ''; // Clear
+            // *** FIX: Modify the object referenced by selectableStats directly ***
+            // Clear existing keys (should be empty, but good practice)
+            Object.keys(selectableStats).forEach(key => delete selectableStats[key]);
+            // Assign new keys from the generated config
+            Object.assign(selectableStats, newConfig);
+            // Removed the call to setSelectableStats
 
-        Object.entries(seasonAvgH2HSelectableStats).forEach(([key, config]) => {
-            const div = document.createElement('div');
-            const label = document.createElement('label');
-            label.className = 'inline-flex items-center';
-            const input = document.createElement('input');
-            input.type = 'checkbox';
-            // Use a unique class for H2H checkboxes
-            input.className = 'form-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 season-avg-h2h-pentagon-stat-option';
-            input.dataset.statKey = key;
-            input.dataset.statLabel = config.label;
-            input.checked = config.default; // Use defaults from H2H config
-            input.addEventListener('change', handleSeasonAvgH2HCheckboxChange);
-            const span = document.createElement('span');
-            span.className = 'ml-2 text-sm text-gray-700';
-            span.textContent = config.label;
-            label.appendChild(input);
-            label.appendChild(span);
-            div.appendChild(label);
-            seasonAvgH2HCheckboxContainer.appendChild(div);
-        });
-        updateSeasonAvgH2HStatSelectionUI(); // Set initial state
-    }
-
-
-    // Main Rendering Function for H2H View
-    function renderSeasonAvgH2HView() {
-        if (!seasonAvgH2HInitialRenderDone) {
-            console.log("Performing initial setup for Season Avg H2H View...");
-            // Get DOM elements for H2H tab
-            seasonAvgH2HPlayer1Select = document.getElementById('season-avg-h2h-player1-select');
-            seasonAvgH2HPlayer2Select = document.getElementById('season-avg-h2h-player2-select');
-            seasonAvgH2HCheckboxContainer = document.getElementById('season-avg-h2h-pentagon-stat-checkboxes');
-            seasonAvgH2HUpdateButton = document.getElementById('update-season-avg-h2h-graph-btn');
-            seasonAvgH2HValidationMsg = document.getElementById('season-avg-h2h-stat-validation-msg');
-            seasonAvgH2HChartContainer = document.getElementById('season-avg-h2h-chart-container');
-            seasonAvgH2HStatSelectorToggle = document.getElementById('season-avg-h2h-stat-selector-toggle');
-            seasonAvgH2HStatSelectorContent = document.getElementById('season-avg-h2h-stat-selector-content');
-            seasonAvgH2HStatSelectorArrow = document.getElementById('season-avg-h2h-stat-arrow'); // Assuming same arrow ID structure
-
-             // Basic element check
-            if (!seasonAvgH2HPlayer1Select || !seasonAvgH2HPlayer2Select || !seasonAvgH2HCheckboxContainer || !seasonAvgH2HUpdateButton || !seasonAvgH2HValidationMsg || !seasonAvgH2HChartContainer || !seasonAvgH2HStatSelectorToggle || !seasonAvgH2HStatSelectorContent || !seasonAvgH2HStatSelectorArrow) {
-                console.error("Missing required elements for Season Avg H2H tab setup!");
-                const h2hTab = document.getElementById('season-avg-tab-head2head');
-                if(h2hTab) h2hTab.innerHTML = '<p class="text-red-500 p-4">Error: UI elements missing for H2H view.</p>';
-                return; // Stop setup
-            }
-
-            // Generate selectable stats config (using the same source as Graph tab)
-            // It's important these stats are comparable, so use commonColumns
-            seasonAvgH2HSelectableStats = generateSelectableStatsConfig(commonColumns);
-
-            // Populate player dropdowns
-            populateSeasonAvgH2HPlayerSelectors();
-
-            // Populate stat checkboxes
-            populateSeasonAvgH2HStatCheckboxes();
-
-            // Add listener to the update button
-            seasonAvgH2HUpdateButton.addEventListener('click', handleUpdateSeasonAvgH2HGraphClick);
-
-             // Add listener for the collapsible stat selector
-            seasonAvgH2HStatSelectorToggle.addEventListener('click', () => {
-                seasonAvgH2HStatSelectorContent.classList.toggle('hidden');
-                seasonAvgH2HStatSelectorArrow.classList.toggle('rotate-180');
-            });
-
-            seasonAvgH2HInitialRenderDone = true; // Mark setup as complete
+            console.log(`${tabPrefix} H2H selectable stats generated:`, selectableStats);
         }
 
-        // --- Data Dependent Logic --- (Runs every time tab is viewed)
-        if (!seasonStats) {
-             console.warn("Season stats not loaded yet for H2H view.");
-             // Display a loading message in the main container or specific area
-             if(seasonAvgH2HChartContainer) seasonAvgH2HChartContainer.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Season data is still loading...</div>';
-             if(seasonAvgH2HPlayer1Select) seasonAvgH2HPlayer1Select.disabled = true; // Disable selects while loading
-             if(seasonAvgH2HPlayer2Select) seasonAvgH2HPlayer2Select.disabled = true;
-             if(seasonAvgH2HUpdateButton) seasonAvgH2HUpdateButton.disabled = true; // Disable button
-             return;
+        if (!initialRenderDone) {
+          console.log(`Performing initial setup for ${tabPrefix} H2H View...`);
+          // Get DOM elements
+          const player1Select = document.getElementById(player1SelectId);
+          const player2Select = document.getElementById(player2SelectId);
+          const checkboxesContainer = document.getElementById(checkboxesId);
+          const updateBtn = document.getElementById(updateBtnId);
+          const validationMsg = document.getElementById(validationMsgId);
+          const chartContainer = document.getElementById(chartContainerId);
+          const statSelectorToggle = document.getElementById(statSelectorToggleId);
+          const statSelectorContent = document.getElementById(statSelectorContentId);
+          const statSelectorArrow = document.getElementById(statSelectorArrowId);
+          if (!player1Select || !player2Select || !checkboxesContainer || !updateBtn || !validationMsg || !chartContainer || !statSelectorToggle || !statSelectorContent || !statSelectorArrow) {
+            const h2hTab = document.getElementById(tabId);
+            if (h2hTab) h2hTab.innerHTML = '<p class="text-red-500 p-4">Error: UI elements missing for H2H view.</p>';
+            return;
+          }
+          populatePlayerSelectors();
+          populateStatCheckboxes();
+          updateBtn.addEventListener('click', handleUpdateGraphClick);
+          statSelectorToggle.addEventListener('click', () => {
+            statSelectorContent.classList.toggle('hidden');
+            statSelectorArrow.classList.toggle('rotate-180');
+          });
+          initialRenderDone = true;
+        }
+        // Data dependent logic
+        const stats = getStats();
+        const player1Select = document.getElementById(player1SelectId);
+        const player2Select = document.getElementById(player2SelectId);
+        const updateBtn = document.getElementById(updateBtnId);
+        const chartContainer = document.getElementById(chartContainerId);
+        if (!stats) {
+          if (chartContainer) chartContainer.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Season data is still loading...</div>';
+          if (player1Select) player1Select.disabled = true;
+          if (player2Select) player2Select.disabled = true;
+          if (updateBtn) updateBtn.disabled = true;
+          return;
         } else {
-             // Re-enable elements if they were disabled during loading
-             if(seasonAvgH2HPlayer1Select) seasonAvgH2HPlayer1Select.disabled = false;
-             if(seasonAvgH2HPlayer2Select) seasonAvgH2HPlayer2Select.disabled = false;
-             // Update button state depends on selections, call UI update
-             updateSeasonAvgH2HStatSelectionUI();
-
-             // If players aren't populated yet (e.g., data loaded after initial render attempt)
-             if (seasonAvgH2HPlayer1Select && seasonAvgH2HPlayer1Select.options.length <= 1) {
-                 populateSeasonAvgH2HPlayerSelectors();
-             }
+          if (player1Select) player1Select.disabled = false;
+          if (player2Select) player2Select.disabled = false;
+          updateStatSelectionUI();
+          // Re-populate selectors if data loaded after initial render but selectors are empty
+          if (player1Select && player1Select.options.length <= 1 && stats) {
+              console.log(`Repopulating ${tabPrefix} H2H player selectors as data is now available.`);
+              populatePlayerSelectors();
+          }
         }
-
-        // Ensure the placeholder or existing chart is displayed correctly.
-        // The actual chart update happens on button click.
-        if (seasonAvgH2HChartContainer && !seasonAvgH2HChartContainer.querySelector('canvas')) {
-            seasonAvgH2HChartContainer.innerHTML = '<div class="text-center py-8 text-gray-500 col-span-full">Select two players and 5 stats, then click "Update Comparison".</div>';
+        if (chartContainer && !chartContainer.querySelector('canvas')) {
+          chartContainer.innerHTML = '<div class="text-center py-8 text-gray-500 col-span-full">Select two players and 5 stats, then click "Update Comparison".</div>';
         }
+      }
+
+      return { render };
+    }
+
+    // --- Main Rendering Function for H2H View (Season Avg) ---
+    const seasonAvgH2HView = createH2HView({
+      tabPrefix: 'season-avg',
+      getStats: () => seasonStats,
+      getStatsBySteamId: (id) => seasonStatsBySteamId[id],
+      columns: commonColumns,
+      getStatRanges: () => seasonAvgAllStatRanges,
+      ensureStatRanges: ensureSeasonAvgStatRangesCalculated,
+      selectableStats: seasonAvgH2HSelectableStats,
+      statLimit: PENTAGON_STAT_LIMIT_STATS
+    });
+
+    function renderSeasonAvgH2HView() {
+      seasonAvgH2HView.render();
+    }
+
+    // --- Main Rendering Function for H2H View (Last 10) ---
+    let last10H2HSelectableStats = {};
+    const last10H2HView = createH2HView({
+      tabPrefix: 'last10',
+      getStats: () => last10Stats,
+      getStatsBySteamId: (id) => last10StatsBySteamId[id],
+      columns: commonColumns,
+      getStatRanges: () => last10AllStatRanges,
+      ensureStatRanges: ensureLast10StatRangesCalculated,
+      selectableStats: last10H2HSelectableStats,
+      statLimit: PENTAGON_STAT_LIMIT_STATS
+    });
+
+    function renderLast10H2HView() {
+      last10H2HView.render();
+    }
+
+    // --- Main Rendering Function for H2H View (Night Avg) ---
+    let nightAvgH2HSelectableStats = {};
+    const nightAvgH2HView = createH2HView({
+      tabPrefix: 'night-avg',
+      getStats: () => nightAvgStats,
+      getStatsBySteamId: (id) => nightAvgStatsBySteamId[id],
+      columns: nightAvgColumns, // Use night-specific columns
+      getStatRanges: () => nightAvgAllStatRanges,
+      ensureStatRanges: ensureNightAvgStatRangesCalculated,
+      selectableStats: nightAvgH2HSelectableStats,
+      statLimit: PENTAGON_STAT_LIMIT_STATS
+    });
+
+    function renderNightAvgH2HView() {
+      nightAvgH2HView.render();
     }
 
     // --- Initialization ---
@@ -1284,18 +1424,21 @@ const StatsTables = (() => {
         // Add event listener for season average sub-tabs
         const seasonAvgTabsContainer = document.getElementById('season-avg-sub-tabs');
         if (seasonAvgTabsContainer) {
+            seasonAvgTabsContainer.removeEventListener('click', handleSeasonAvgSubTabClick);
             seasonAvgTabsContainer.addEventListener('click', handleSeasonAvgSubTabClick);
         }
 
         // Add event listener for last 10 sub-tabs
         const last10TabsContainer = document.getElementById('last10-sub-tabs');
         if (last10TabsContainer) {
+            last10TabsContainer.removeEventListener('click', handleLast10SubTabClick);
             last10TabsContainer.addEventListener('click', handleLast10SubTabClick);
         }
 
         // Add event listener for night average sub-tabs
         const nightAvgTabsContainer = document.getElementById('night-avg-sub-tabs');
         if (nightAvgTabsContainer) {
+            nightAvgTabsContainer.removeEventListener('click', handleNightAvgSubTabClick);
             nightAvgTabsContainer.addEventListener('click', handleNightAvgSubTabClick);
         }
     }

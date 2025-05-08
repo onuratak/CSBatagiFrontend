@@ -584,6 +584,12 @@ function setupGlobalEventListeners() {
         const subTabContent = subTabNav.parentElement.nextElementSibling; // Assumes content follows nav
         if (!subTabContent) return;
 
+        // --- FIX: Skip stats tabs, let statsTables.js handle them ---
+        const statsTabIds = ['season-avg-sub-tabs', 'last10-sub-tabs', 'night-avg-sub-tabs'];
+        if (statsTabIds.includes(subTabNav.id)) {
+            return; // Let statsTables.js handle these
+        }
+
         // Get target pane ID from button
         const targetPaneId = tabButton.getAttribute('data-tabs-target');
         const targetPane = subTabContent.querySelector(targetPaneId);
