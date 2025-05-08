@@ -43,7 +43,7 @@ const PlayerCharts = {
 
         // Handle case where no players meet criteria or input was empty
         if (playersToConsider.length === 0) {
-             console.warn("No players found to calculate ranges from after filtering (or initial data empty).");
+            //  console.warn("No players found to calculate ranges from after filtering (or initial data empty).");
              // Return ranges with default 0-1 values to avoid errors, though charts might be blank
              statsToProcess.forEach(stat => {
                  ranges[stat] = { min: 0, max: 1 };
@@ -137,7 +137,7 @@ const PlayerCharts = {
         };
 
         const isDarkMode = document.body.classList.contains('dark-theme');
-        console.log(`[renderPentagonChart - ${canvasId}] isDarkMode:`, isDarkMode); // <<< Log the theme status
+        // console.log(`[renderPentagonChart - ${canvasId}] isDarkMode:`, isDarkMode); // <<< Log the theme status
 
         const options = {
             responsive: true,
@@ -198,7 +198,7 @@ const PlayerCharts = {
             layout: { padding: 5 }
         };
 
-        console.log(`[renderPentagonChart - ${canvasId}] Assigned pointLabel color:`, options.scales.r.pointLabels.color); // <<< Log the assigned color
+        // console.log(`[renderPentagonChart - ${canvasId}] Assigned pointLabel color:`, options.scales.r.pointLabels.color); // <<< Log the assigned color
 
         // Destroy previous chart instance for this canvas if it exists
         if (this.playerChartInstances[canvasId]) {

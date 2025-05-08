@@ -107,10 +107,10 @@ const StatsTables = (() => {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            console.log(`${description} data fetched successfully:`, data);
+            // console.log(`${description} data fetched successfully:`, data);
             return data;
         } catch (error) {
-            console.error(`Error fetching ${description} data from ${url}:`, error);
+            // console.error(`Error fetching ${description} data from ${url}:`, error);
             showMessage(`Failed to load ${description} data. Please try refreshing.`, 'error');
             return null; // Indicate failure
         }
@@ -280,7 +280,7 @@ const StatsTables = (() => {
             fillSeasonAvgTable(seasonStats, tbody);
             // NEW: Process data into map after fetching
             seasonStatsBySteamId = processStatsIntoMap(seasonStats, 'steam_id');
-            console.log("Processed season stats by SteamID:", seasonStatsBySteamId);
+            // console.log("Processed season stats by SteamID:", seasonStatsBySteamId);
             // Potentially trigger initial graph render if graph tab exists and is active (though unlikely on initial load)
             checkAndRenderSeasonGraph();
         }
@@ -298,7 +298,7 @@ const StatsTables = (() => {
             fillLast10Table(last10Stats, tbody);
              // NEW: Process data into map after fetching
             last10StatsBySteamId = processStatsIntoMap(last10Stats, 'steam_id');
-            console.log("Processed last 10 stats by SteamID:", last10StatsBySteamId);
+            // console.log("Processed last 10 stats by SteamID:", last10StatsBySteamId);
         }
     }
 
@@ -315,31 +315,30 @@ const StatsTables = (() => {
              // NEW: Process data into map after fetching
             // Assuming night_avg.json also includes steam_id now
             nightAvgStatsBySteamId = processStatsIntoMap(nightAvgStats, 'steam_id');
-            console.log("Processed night average stats by SteamID:", nightAvgStatsBySteamId);
+            // console.log("Processed night average stats by SteamID:", nightAvgStatsBySteamId);
             checkAndRenderNightAvgGraph(); // Trigger graph check if needed
         }
     }
 
     // --- NEW: Helper function to calculate Season Avg Stat Ranges if needed ---
     function ensureSeasonAvgStatRangesCalculated() {
-        // Only calculate if stats are loaded and ranges don't exist yet
         if (!seasonStats || Object.keys(seasonAvgAllStatRanges).length > 0) {
             return;
         }
-        console.log("Calculating Season Avg H2H stat ranges...");
+        // console.log("Calculating Season Avg H2H stat ranges...");
         const allPlayersData = convertStatsArrayToObject(seasonStats);
         // Ensure H2H selectable stats config is generated if needed
         if (Object.keys(seasonAvgH2HSelectableStats).length === 0) {
-            console.log("Generating seasonAvgH2HSelectableStats before range calculation.");
+            // console.log("Generating seasonAvgH2HSelectableStats before range calculation.");
             seasonAvgH2HSelectableStats = generateSelectableStatsConfig(commonColumns);
         }
         const allSelectableKeys = Object.keys(seasonAvgH2HSelectableStats);
         if (allSelectableKeys.length === 0) {
-             console.warn("Cannot calculate H2H ranges for Season Avg: No selectable H2H stats found.");
+            //  console.warn("Cannot calculate H2H ranges for Season Avg: No selectable H2H stats found.");
              return;
         }
         seasonAvgAllStatRanges = PlayerCharts.calculateStatRanges(allPlayersData, allSelectableKeys);
-        console.log("Calculated all H2H stat ranges for Season Avg:", seasonAvgAllStatRanges);
+        // console.log("Calculated all H2H stat ranges for Season Avg:", seasonAvgAllStatRanges);
     }
 
     // --- NEW: Helper function to calculate Last 10 Stat Ranges if needed ---
@@ -347,19 +346,19 @@ const StatsTables = (() => {
         if (!last10Stats || Object.keys(last10AllStatRanges).length > 0) {
             return;
         }
-        console.log("Calculating Last 10 H2H stat ranges...");
+        // console.log("Calculating Last 10 H2H stat ranges...");
         const allPlayersData = convertStatsArrayToObject(last10Stats);
         if (Object.keys(last10H2HSelectableStats).length === 0) {
-            console.log("Generating last10H2HSelectableStats before range calculation.");
+            // console.log("Generating last10H2HSelectableStats before range calculation.");
             last10H2HSelectableStats = generateSelectableStatsConfig(commonColumns);
         }
         const allSelectableKeys = Object.keys(last10H2HSelectableStats);
         if (allSelectableKeys.length === 0) {
-            console.warn("Cannot calculate H2H ranges for Last 10: No selectable H2H stats found.");
+            // console.warn("Cannot calculate H2H ranges for Last 10: No selectable H2H stats found.");
             return;
         }
         last10AllStatRanges = PlayerCharts.calculateStatRanges(allPlayersData, allSelectableKeys);
-        console.log("Calculated all H2H stat ranges for Last 10:", last10AllStatRanges);
+        // console.log("Calculated all H2H stat ranges for Last 10:", last10AllStatRanges);
     }
 
     // --- NEW: Helper function to calculate Night Avg Stat Ranges if needed ---
@@ -367,26 +366,26 @@ const StatsTables = (() => {
         if (!nightAvgStats || Object.keys(nightAvgAllStatRanges).length > 0) {
             return;
         }
-        console.log("Calculating Night Avg H2H stat ranges...");
+        // console.log("Calculating Night Avg H2H stat ranges...");
         const allPlayersData = convertStatsArrayToObject(nightAvgStats);
         if (Object.keys(nightAvgH2HSelectableStats).length === 0) {
-            console.log("Generating nightAvgH2HSelectableStats before range calculation.");
+            // console.log("Generating nightAvgH2HSelectableStats before range calculation.");
             nightAvgH2HSelectableStats = generateSelectableStatsConfig(nightAvgColumns);
         }
         const allSelectableKeys = Object.keys(nightAvgH2HSelectableStats);
         if (allSelectableKeys.length === 0) {
-            console.warn("Cannot calculate H2H ranges for Night Avg: No selectable H2H stats found.");
+            // console.warn("Cannot calculate H2H ranges for Night Avg: No selectable H2H stats found.");
             return;
         }
         nightAvgAllStatRanges = PlayerCharts.calculateStatRanges(allPlayersData, allSelectableKeys);
-        console.log("Calculated all H2H stat ranges for Night Avg:", nightAvgAllStatRanges);
+        // console.log("Calculated all H2H stat ranges for Night Avg:", nightAvgAllStatRanges);
     }
 
     // --- Season Avg Graph View Logic ---
     function renderSeasonAvgGraphView() {
         // Initial setup (run only once when tab is first viewed or data arrives)
         if (!seasonAvgInitialRenderDone) {
-             console.log("Performing initial setup for Season Avg Graph View...");
+            //  console.log("Performing initial setup for Season Avg GraphView...");
             // Get DOM elements
             seasonAvgCheckboxContainer = document.getElementById('season-avg-pentagon-stat-checkboxes');
             seasonAvgUpdateButton = document.getElementById('update-season-avg-graphs-btn');
@@ -425,7 +424,7 @@ const StatsTables = (() => {
         // --- Data Dependent Rendering --- (Runs every time the function is called if data is ready)
 
         if (!seasonStats) {
-            console.warn("Season stats not loaded yet for graph view.");
+            // console.warn("Season stats not loaded yet for graph view.");
             seasonAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Season data is still loading. Please wait...</div>';
             return; // Don't proceed further until data is loaded
         }
@@ -439,7 +438,7 @@ const StatsTables = (() => {
         if (!seasonAvgGraphPopulated) {
             // If exactly 5 are selected by default, trigger the initial render
             if (Object.keys(getSelectedSeasonAvgStats()).length === PENTAGON_STAT_LIMIT_STATS) {
-                 console.log("Triggering initial graph render for Season Avg.");
+                //  console.log("Triggering initial graph render for Season Avg.");
                  handleUpdateSeasonAvgGraphsClick(); // Render initial graphs
                  seasonAvgGraphPopulated = true;
             } else {
@@ -491,7 +490,7 @@ const StatsTables = (() => {
 
     // --- Event Handlers ---
     function handleSeasonAvgSubTabClick(event) {
-        console.log('[DEBUG] SeasonAvg subtab click handler fired');
+        // console.log('[DEBUG] SeasonAvg subtab click handler fired');
         const clickedTab = event.target.closest('.map-tab-button'); // Find closest map-tab-button
         if (!clickedTab || !clickedTab.closest('#season-avg-sub-tabs')) return; // Ensure it's within the correct tab list
 
@@ -562,7 +561,7 @@ const StatsTables = (() => {
 
         // If fewer than 5 defaults were found (e.g., very few numeric columns),
         // this logic doesn't automatically select more. The user must choose 5.
-        console.log(`Generated selectable stats config for columns:`, columns, config);
+        // console.log(`Generated selectable stats config for columns:`, columns, config);
         return config;
     }
 
@@ -604,7 +603,7 @@ const StatsTables = (() => {
     }
 
     function handleUpdateSeasonAvgGraphsClick() {
-        console.log("Updating Season Avg graphs...");
+        // console.log("Updating Season Avg graphs...");
         const selectedStatsConfig = getSelectedSeasonAvgStats(); // Get the rich config object
 
         if (Object.keys(selectedStatsConfig).length !== PENTAGON_STAT_LIMIT_STATS) {
@@ -719,7 +718,7 @@ const StatsTables = (() => {
     }
 
     function handleUpdateLast10GraphsClick() {
-        console.log("Updating Last 10 graphs...");
+        // console.log("Updating Last 10 graphs...");
         const selectedStatsConfig = getSelectedLast10Stats(); // Get the rich config object
         if (Object.keys(selectedStatsConfig).length !== PENTAGON_STAT_LIMIT_STATS) {
             last10ValidationMsg.textContent = `Error: Select exactly ${PENTAGON_STAT_LIMIT_STATS} stats.`;
@@ -775,7 +774,7 @@ const StatsTables = (() => {
     // --- Main Rendering Logic for Last 10 Graph ---
     function renderLast10GraphView() {
         if (!last10InitialRenderDone) {
-            console.log("Performing initial setup for Last 10 Graph View...");
+            // console.log("Performing initial setup for Last 10 Graph View...");
             last10CheckboxContainer = document.getElementById('last10-pentagon-stat-checkboxes');
             last10UpdateButton = document.getElementById('update-last10-graphs-btn');
             last10ValidationMsg = document.getElementById('last10-stat-validation-msg');
@@ -802,7 +801,7 @@ const StatsTables = (() => {
         }
 
         if (!last10Stats) {
-            console.warn("Last 10 stats not loaded yet for graph view.");
+            // console.warn("Last 10 stats not loaded yet for graph view.");
             last10PlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Last 10 data is still loading. Please wait...</div>';
             return;
         }
@@ -816,7 +815,7 @@ const StatsTables = (() => {
 
         if (!last10GraphPopulated) {
             if (Object.keys(getSelectedLast10Stats()).length === PENTAGON_STAT_LIMIT_STATS) {
-                 console.log("Triggering initial graph render for Last 10.");
+                //  console.log("Triggering initial graph render for Last 10.");
                  handleUpdateLast10GraphsClick();
                  last10GraphPopulated = true;
             } else {
@@ -827,7 +826,7 @@ const StatsTables = (() => {
 
     // --- NEW Event Handler for Last 10 Tabs ---
     function handleLast10SubTabClick(event) {
-        console.log('[DEBUG] Last10 subtab click handler fired');
+        // console.log('[DEBUG] Last10 subtab click handler fired');
         const clickedTab = event.target.closest('.map-tab-button');
         if (!clickedTab || !clickedTab.closest('#last10-sub-tabs')) return;
         event.preventDefault();
@@ -890,7 +889,7 @@ const StatsTables = (() => {
     }
 
     function handleUpdateNightAvgGraphsClick() {
-        console.log("Updating Night Avg graphs...");
+        // console.log("Updating Night Avg graphs...");
         const selectedStatsConfig = getSelectedNightAvgStats(); // Get the rich config object
         if (Object.keys(selectedStatsConfig).length !== PENTAGON_STAT_LIMIT_STATS) {
             nightAvgValidationMsg.textContent = `Error: Select exactly ${PENTAGON_STAT_LIMIT_STATS} stats.`;
@@ -947,8 +946,10 @@ const StatsTables = (() => {
 
     // --- Main Rendering Logic for Night Avg Graph ---
     function renderNightAvgGraphView() {
+        // Initial setup (run only once when tab is first viewed or data arrives)
         if (!nightAvgInitialRenderDone) {
-            console.log("Performing initial setup for Night Avg Graph View...");
+            // console.log("Performing initial setup for Night Avg Graph View...");
+            // Get DOM elements
             nightAvgCheckboxContainer = document.getElementById('night-avg-pentagon-stat-checkboxes');
             nightAvgUpdateButton = document.getElementById('update-night-avg-graphs-btn');
             nightAvgValidationMsg = document.getElementById('night-avg-stat-validation-msg');
@@ -960,10 +961,10 @@ const StatsTables = (() => {
             if (!nightAvgCheckboxContainer || !nightAvgUpdateButton || !nightAvgValidationMsg || !nightAvgPlayerGrid || !nightAvgSelectorToggle || !nightAvgSelectorContent || !nightAvgSelectorArrow) {
                 console.error("Missing required elements for Night Avg graph tab setup!");
                 const graphTab = document.getElementById('night-avg-tab-graph');
-                if(graphTab) graphTab.innerHTML = '<p class="text-red-500 p-4">Error: UI elements missing.</p>';
+                if (graphTab) graphTab.innerHTML = '<p class="text-red-500 p-4">Error: UI elements missing for graph view.</p>';
                 return;
             }
-            // Generate selectable stats using nightAvgColumns definition
+
             nightAvgSelectableStats = generateSelectableStatsConfig(nightAvgColumns);
             populateNightAvgStatCheckboxes();
             nightAvgUpdateButton.addEventListener('click', handleUpdateNightAvgGraphsClick);
@@ -975,33 +976,35 @@ const StatsTables = (() => {
         }
 
         if (!nightAvgStats) {
-            console.warn("Night Avg stats not loaded yet for graph view.");
-            nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Night Avg data is still loading...</div>';
+            // console.warn("Night Avg stats not loaded yet for graph view.");
+            if (nightAvgPlayerGrid) nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Night Avg data is still loading...</div>';
             return;
         }
 
-        if (Object.keys(nightAvgAllStatRanges).length === 0) {
-            const allPlayersNightAvgData = convertStatsArrayToObject(nightAvgStats);
-            const allSelectableStatKeys = Object.keys(nightAvgSelectableStats);
-            // Calculate ranges using the correct data and keys
-            nightAvgAllStatRanges = PlayerCharts.calculateStatRanges(allPlayersNightAvgData, allSelectableStatKeys);
-            console.log("Calculated all stat ranges for Night Avg:", nightAvgAllStatRanges);
-        }
+        ensureNightAvgStatRangesCalculated();
 
         if (!nightAvgGraphPopulated) {
             if (Object.keys(getSelectedNightAvgStats()).length === PENTAGON_STAT_LIMIT_STATS) {
-                 console.log("Triggering initial graph render for Night Avg.");
-                 handleUpdateNightAvgGraphsClick();
-                 nightAvgGraphPopulated = true;
+                // console.log("Triggering initial graph render for Night Avg.");
+                handleUpdateNightAvgGraphsClick();
+                nightAvgGraphPopulated = true;
             } else {
-                nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-gray-500 col-span-full">Select 5 stats and click "Update Graphs".</div>';
+                if (nightAvgPlayerGrid) nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-gray-500 col-span-full">Select 5 stats and click "Update Graphs".</div>';
             }
+        }
+    }
+
+    // Check if the graph tab is active and needs rendering
+    function checkAndRenderNightAvgGraph() {
+        const graphTabButton = document.getElementById('night-avg-graph-tab');
+        if (graphTabButton && graphTabButton.getAttribute('aria-selected') === 'true') {
+            renderNightAvgGraphView();
         }
     }
 
     // --- NEW Event Handler for Night Avg Tabs ---
     function handleNightAvgSubTabClick(event) {
-        console.log('[DEBUG] NightAvg subtab click handler fired');
+        // console.log('[DEBUG] NightAvg subtab click handler fired');
         const clickedTab = event.target.closest('.map-tab-button');
         if (!clickedTab || !clickedTab.closest('#night-avg-sub-tabs')) return;
         event.preventDefault();
@@ -1296,7 +1299,7 @@ const StatsTables = (() => {
       function render() {
         // Ensure H2H selectable stats config is generated if needed
         if (Object.keys(selectableStats).length === 0) {
-            console.log(`Generating ${tabPrefix} H2H selectable stats...`);
+            // console.log(`Generating ${tabPrefix} H2H selectable stats...`);
             const newConfig = generateSelectableStatsConfig(columns);
 
             // *** FIX: Modify the object referenced by selectableStats directly ***
@@ -1306,11 +1309,11 @@ const StatsTables = (() => {
             Object.assign(selectableStats, newConfig);
             // Removed the call to setSelectableStats
 
-            console.log(`${tabPrefix} H2H selectable stats generated:`, selectableStats);
+            // console.log(`${tabPrefix} H2H selectable stats generated:`, selectableStats);
         }
 
         if (!initialRenderDone) {
-          console.log(`Performing initial setup for ${tabPrefix} H2H View...`);
+        //   console.log(`Performing initial setup for ${tabPrefix} H2H View...`);
           // Get DOM elements
           const player1Select = document.getElementById(player1SelectId);
           const player2Select = document.getElementById(player2SelectId);
@@ -1353,7 +1356,7 @@ const StatsTables = (() => {
           updateStatSelectionUI();
           // Re-populate selectors if data loaded after initial render but selectors are empty
           if (player1Select && player1Select.options.length <= 1 && stats) {
-              console.log(`Repopulating ${tabPrefix} H2H player selectors as data is now available.`);
+            //   console.log(`Repopulating ${tabPrefix} H2H player selectors as data is now available.`);
               populatePlayerSelectors();
           }
         }
