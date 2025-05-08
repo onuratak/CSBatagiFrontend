@@ -1996,3 +1996,93 @@ body.dark-theme #duello-sezon-table td {
     z-index: 30;
     pointer-events: none;
 }
+
+body.dark-theme .page-content-container > h2.text-blue-600 {
+    color: #93c5fd !important; /* Lighter blue for dark mode headers */
+}
+
+/* --- Dark Theme H2H Subtabs --- */
+
+/* Select Dropdowns & Labels */
+body.dark-theme #last10-h2h-player1-select,
+body.dark-theme #last10-h2h-player2-select,
+body.dark-theme #night-avg-h2h-player1-select,
+body.dark-theme #night-avg-h2h-player2-select,
+body.dark-theme #season-avg-h2h-player1-select,
+body.dark-theme #season-avg-h2h-player2-select {
+    background-color: #1f2937; /* Darker input bg */
+    color: #e5e7eb;
+    border-color: #4b5563;
+}
+
+body.dark-theme #last10-h2h-player1-select option,
+body.dark-theme #last10-h2h-player2-select option,
+body.dark-theme #night-avg-h2h-player1-select option,
+body.dark-theme #night-avg-h2h-player2-select option,
+body.dark-theme #season-avg-h2h-player1-select option,
+body.dark-theme #season-avg-h2h-player2-select option {
+    background-color: #1f2937;
+    color: #e5e7eb;
+}
+
+body.dark-theme label[for$="-h2h-player1-select"],
+body.dark-theme label[for$="-h2h-player2-select"] {
+    color: #d1d5db; /* Lighter label text */
+}
+
+/* H2H Stat Selector Box (similar to Graph tab selector) */
+body.dark-theme #last10-h2h-stat-selector,
+body.dark-theme #night-avg-h2h-stat-selector,
+body.dark-theme #season-avg-h2h-stat-selector {
+    background-color: #1f2937; /* Darker background */
+    border-color: #4b5563; /* Darker border */
+}
+
+body.dark-theme #last10-h2h-stat-selector h3,
+body.dark-theme #night-avg-h2h-stat-selector h3,
+body.dark-theme #season-avg-h2h-stat-selector h3 {
+    color: #e5e7eb; /* Lighter heading text */
+}
+
+body.dark-theme #last10-h2h-stat-arrow,
+body.dark-theme #night-avg-h2h-stat-arrow,
+body.dark-theme #season-avg-h2h-stat-arrow {
+    color: #9ca3af; /* Lighter arrow icon */
+}
+
+body.dark-theme #last10-h2h-stat-selector-content p,
+body.dark-theme #night-avg-h2h-stat-selector-content p,
+body.dark-theme #season-avg-h2h-stat-selector-content p {
+    color: #d1d5db; /* Lighter paragraph text */
+}
+
+body.dark-theme #last10-h2h-pentagon-stat-checkboxes .text-gray-700,
+body.dark-theme #night-avg-h2h-pentagon-stat-checkboxes .text-gray-700,
+body.dark-theme #season-avg-h2h-pentagon-stat-checkboxes .text-gray-700 {
+    color: #d1d5db !important; /* Lighter checkbox label text */
+}
+
+/* H2H Validation Messages */
+body.dark-theme #last10-h2h-stat-validation-msg,
+body.dark-theme #night-avg-h2h-stat-validation-msg,
+body.dark-theme #season-avg-h2h-stat-validation-msg {
+    color: #fca5a5; /* Light red for errors */
+}
+
+/* H2H Update Button (inherits .action-button dark theme) */
+
+/* H2H Chart Placeholder Text */
+body.dark-theme #last10-h2h-chart-container .text-gray-500,
+body.dark-theme #night-avg-h2h-chart-container .text-gray-500,
+body.dark-theme #season-avg-h2h-chart-container .text-gray-500 {
+    color: #9ca3af !important; /* Lighter gray placeholder text */
+}
+
+/* --- End Dark Theme H2H Subtabs --- */
+
+/* Dark Theme Scoreboard Background */
+body.dark-theme #page-sonmac .bg-gray-100 {
+    background-color: #374151; /* Dark Gray-Blue for scoreboard */
+    color: #d1d5db; /* Ensure text inside is light */
+    border: 1px solid #4b5563; /* Add a subtle border */
+}
