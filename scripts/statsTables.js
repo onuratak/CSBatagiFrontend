@@ -1035,7 +1035,13 @@ const StatsTables = (() => {
             Array.from(seasonAvgH2HPlayer1Select.options).forEach(opt => {
                 opt.disabled = (opt.value === p2 && p2 !== '');
             });
-             updateSeasonAvgH2HStatSelectionUI(); // Also update button state based on player selection
+            updateSeasonAvgH2HStatSelectionUI(); // Also update button state based on player selection
+
+            // Auto-update H2H graph if both players and 5 stats are selected
+            const selectedStatCount = Object.keys(getSelectedSeasonAvgH2HStats()).length;
+            if (p1 && p2 && selectedStatCount === PENTAGON_STAT_LIMIT_STATS) {
+                handleUpdateSeasonAvgH2HGraphClick();
+            }
         };
 
         seasonAvgH2HPlayer1Select.removeEventListener('change', handlePlayerSelectionChange); // Prevent duplicates
@@ -1093,6 +1099,13 @@ const StatsTables = (() => {
     // Handle Checkbox Change for H2H
     function handleSeasonAvgH2HCheckboxChange() {
         updateSeasonAvgH2HStatSelectionUI();
+        // Auto-update H2H graph if both players and 5 stats are selected
+        const p1 = seasonAvgH2HPlayer1Select && seasonAvgH2HPlayer1Select.value;
+        const p2 = seasonAvgH2HPlayer2Select && seasonAvgH2HPlayer2Select.value;
+        const selectedStatCount = Object.keys(getSelectedSeasonAvgH2HStats()).length;
+        if (p1 && p2 && selectedStatCount === PENTAGON_STAT_LIMIT_STATS) {
+            handleUpdateSeasonAvgH2HGraphClick();
+        }
     }
 
     // Handle Update Button Click for H2H Graph
