@@ -23,9 +23,7 @@ let currentTimeoutId = null; // For showMessage
 // --- DOM Elements (Globally used) ---
 const playerListBody = document.getElementById('player-list');
 const pageContentArea = document.getElementById('page-content-area');
-const updateButton = document.getElementById('update-stats-button');
 const messageArea = document.getElementById('message-area');
-const spinner = document.getElementById('spinner');
 const attendanceSummaryDiv = document.getElementById('attendance-summary');
 const summaryTextSpan = document.getElementById('summary-text');
 const tekerDonduIndicator = document.getElementById('teker-dondu-indicator');
@@ -564,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Helper function to consolidate global event listener setup
 function setupGlobalEventListeners() {
     // updateButton.addEventListener('click', fetchStatsFromSheet);
-    updateButton.addEventListener('click', () => Attendance.fetchStatsFromSheet()); // UPDATED
+    // REMOVED: updateButton.addEventListener('click', () => Attendance.fetchStatsFromSheet()); // UPDATED line causing error
     // playerListBody.addEventListener('click', handlePlayerListClick); 
     playerListBody.addEventListener('click', (e) => Attendance.handlePlayerListClick(e)); // UPDATED
     navLinksContainer.addEventListener('click', handleNavLinkClick); // Main navigation

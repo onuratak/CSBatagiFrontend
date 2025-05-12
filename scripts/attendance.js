@@ -57,7 +57,7 @@ const Attendance = {
      */
     init: async function() {
         // Fetch essential player list from sheet first
-        await this.fetchPlayerListFromSheet(); // NEW
+        await this.loadPlayerListFromJson(); // NEW: Renamed and loads from JSON
 
         // Attach Firebase listener only once
         if (!this.attendanceListenersAttached) {
@@ -431,50 +431,34 @@ const Attendance = {
      * Updates the global `players` array.
      * Uses global `spinner`, `updateButton`, `showMessage`.
      */
-    fetchPlayerListFromSheet: async function() {
-        if (!spinner || !updateButton) {
-            console.error("Spinner or Update Button not found");
-            // Potentially show a message to the user or return a rejected promise
-            return;
-        }
-        // Show spinner and disable button if they are relevant for this initial fetch
-        spinner.classList.remove('hidden');
-        updateButton.disabled = true; 
+    loadPlayerListFromJson: async function() {
+        // Removed spinner/button logic - these elements should be removed from HTML
         try {
-            const response = await fetch(APPS_SCRIPT_URL); // Uses global constant
+            // Fetch from the local JSON file
+            const response = await fetch('./data/players.json'); 
             if (!response.ok) {
-                let errorDetails = `HTTP error! Status: ${response.status}`;
-                try {
-                    const errorData = await response.json();
-                    errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
-                } catch (e) { /* Ignore parsing error for error response */ }
-                throw new Error(errorDetails);
+                // Handle potential fetch errors (e.g., file not found)
+                throw new Error(`HTTP error! Status: ${response.status} fetching players.json`);
             }
             const data = await response.json();
             if (!Array.isArray(data)) {
                 console.error("Received player list data is not an array:", data);
-                throw new Error("Invalid player list data format received from server.");
+                throw new Error("Invalid player list data format received from players.json.");
             }
             
             // Update the global players array with essential info
+            // Ensure steamId is correctly assigned (JSON key matches desired property)
             players = data.map(player => ({
                 name: player.name,
                 status: player.status, // Keep status for 'adam evde yok' logic
-                steamId: player.steamid // Map steamid to steamId
+                steamId: player.steamId // Assuming JSON has "steamId"
             }));
-            console.log("Fetched and processed player list:", players); // Debug log
+            console.log("Loaded and processed player list from JSON:", players); // Debug log
             
             // No Firebase sync here, and no direct UI update.
-            // Listeners will handle UI based on Firebase state.
-            // showMessage('Player list loaded!', 'success'); // Optional: if feedback is needed for this step
-
-        } catch (err) {
-            console.error('Failed to fetch player list:', err);
-            showMessage(`Error loading player list: ${err.message}`, 'error');
             // Global `players` array might be empty or outdated, UI might not render correctly.
         } finally {
-            spinner.classList.add('hidden');
-            updateButton.disabled = false; // Re-enable button
+             // Removed spinner/button logic
         }
     },
 
@@ -713,7 +697,7 @@ const Attendance = {
             // without a page reload, but for now, rely on the initially fetched list.
             if (!players || players.length === 0) {
                 // Attempt to fetch if players array is empty/not populated
-                await this.fetchPlayerListFromSheet();
+                await this.loadPlayerListFromJson();
                 if (!players || players.length === 0) {
                      throw new Error("Player list could not be loaded from sheet for clearing.");
                 }
