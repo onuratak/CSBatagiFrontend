@@ -56,10 +56,10 @@ const Attendance = {
      * Initializes the attendance module (e.g., fetches initial data, attaches listeners)
      */
     init: async function() {
-        // Fetch essential player list from sheet first
-        await this.loadPlayerListFromJson(); // NEW: Renamed and loads from JSON
+        // Fetch essential player list from local JSON first
+        await this.loadPlayerListFromJson(); 
 
-        // Attach Firebase listener only once
+        // Attach Firebase listener for attendance changes (handles initial data load & UI)
         if (!this.attendanceListenersAttached) {
             this.attachFirebaseListener();
             this.attendanceListenersAttached = true;
@@ -71,8 +71,10 @@ const Attendance = {
             this.emojiListenersAttached = true;
         }
         
-        // Force emoji initialization (in case Firebase listener hasn't triggered yet)
-        // This might need to be called after emoji listener confirms connection or initial data
+        // Initialize emoji statuses (ensures default states exist in Firebase)
+        // This is called after listeners are attached, 
+        // but it might run before the listeners have received initial data.
+        // It includes logic to avoid overwriting existing Firebase data.
         this.initializeEmojiStatuses(); 
     },
 
@@ -282,7 +284,6 @@ const Attendance = {
         players.forEach((player) => {
             const playerName = player.name;
             // Get current attendance from Firebase data, default to no_response
-            // OLD WAY: const currentAttendance = attendanceData[playerName] || 'no_response';
 
             // --- NEW WAY: Look up using steamId if possible --- 
             let currentAttendance = 'no_response'; // Default
@@ -293,12 +294,11 @@ const Attendance = {
                     currentAttendance = attendanceData[steamIdStr].status || 'no_response';
                 } else {
                      // Player with steamId exists locally, but not found in Firebase data or format is wrong
-                     console.warn(`Could not find status for ${playerName} (ID: ${steamIdStr}) in Firebase data object:`, attendanceData);
+                     console.warn(`Could not find status for ${playerName} (ID: ${steamIdStr}) in Firebase data object or data is not in the expected format:`, attendanceData);
                 }
             } else {
-                // Fallback if player object is missing steamId (shouldn't happen ideally)
-                console.warn(`Player object for ${playerName} is missing steamId, falling back to name lookup.`);
-                currentAttendance = 'no_response'; // Set default if steamId missing
+                // Fallback if player object is missing steamId (shouldn't happen with JSON loading)
+                console.warn(`Player object for ${playerName} is missing steamId. Attendance cannot be determined from Firebase.`);
             }
             // --- End NEW WAY ---
 
@@ -417,16 +417,6 @@ const Attendance = {
     },
 
     /**
-     * Renders the player list - Now just a placeholder, Firebase listener handles rendering.
-     * Kept for potential future use or if direct rendering is needed elsewhere.
-     */
-    renderPlayers: function() {
-        // console.log("renderPlayers called, but UI update is now handled by Firebase listener.");
-        // The actual rendering logic is now in updateAttendanceUIFromFirebase
-        // If needed, could potentially trigger an update by fetching latest FB state here?
-    },
-
-    /**
      * NEW: Fetches essential player data (name, steamId, status) from the Google Apps Script endpoint.
      * Updates the global `players` array.
      * Uses global `spinner`, `updateButton`, `showMessage`.
@@ -434,7 +424,7 @@ const Attendance = {
     loadPlayerListFromJson: async function() {
         // Removed spinner/button logic - these elements should be removed from HTML
         try {
-            // Fetch from the local JSON file
+            // Fetch player list from the local JSON file
             const response = await fetch('./data/players.json'); 
             if (!response.ok) {
                 // Handle potential fetch errors (e.g., file not found)
@@ -455,10 +445,15 @@ const Attendance = {
             }));
             console.log("Loaded and processed player list from JSON:", players); // Debug log
             
-            // No Firebase sync here, and no direct UI update.
+            // No Firebase sync needed here. UI updates are handled by Firebase listeners after this runs.
+            // Global `players` array might be empty or outdated if fetch fails, potentially impacting UI rendering or clear logic.
+            // showMessage('Player list loaded from JSON!', 'success'); // Optional: Feedback is likely not needed for local file load
+        } catch (err) {
+            console.error('Failed to load player list from JSON:', err);
+            showMessage(`Error loading player list: ${err.message}`, 'error');
             // Global `players` array might be empty or outdated, UI might not render correctly.
         } finally {
-             // Removed spinner/button logic
+             // No cleanup needed (removed spinner/button logic)
         }
     },
 
@@ -690,16 +685,13 @@ const Attendance = {
         showMessage("Clearing attendance...", "info");
 
         try {
-            // 1. Fetch Player List (including status) from Sheet
-            // Use the same mechanism as init to ensure we have the latest player list
-            // This assumes fetchPlayerListFromSheet correctly populates the global `players`
-            // Note: We might want to refetch *specifically* here in case the list changed
-            // without a page reload, but for now, rely on the initially fetched list.
+            // 1. Ensure Player List is Loaded (including status for 'adam evde yok')
+            // Relies on the global `players` array populated by `loadPlayerListFromJson`.
+            // Attempt to load if it's missing.
             if (!players || players.length === 0) {
-                // Attempt to fetch if players array is empty/not populated
                 await this.loadPlayerListFromJson();
                 if (!players || players.length === 0) {
-                     throw new Error("Player list could not be loaded from sheet for clearing.");
+                     throw new Error("Player list could not be loaded from JSON for clearing.");
                 }
             }
 
@@ -712,7 +704,7 @@ const Attendance = {
             const firebaseUpdates = {};
             const sheetUpdates = []; // Array to store { steamId, attendance } for POST
 
-            // 3. Iterate through global players list (fetched from sheet)
+            // 3. Iterate through global players list (contains status from JSON)
             for (const player of players) {
                 if (!player.steamId || !player.name) {
                     console.warn("Skipping player in clear operation due to missing steamId or name:", player);
