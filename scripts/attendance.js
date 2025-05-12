@@ -153,6 +153,15 @@ const Attendance = {
 
             // If needed, update Firebase with initial emoji states
             if (needsSync) {
+                // --- AUTH CHECK --- 
+                if (!firebase.auth().currentUser) {
+                    console.warn("User not logged in. Skipping initial emoji state sync to Firebase.");
+                    // Maybe show a message? Depends on whether this is critical.
+                    // showMessage("Please log in to initialize data.", "error");
+                    return; 
+                }
+                // --- END AUTH CHECK --- 
+                
                 emojiRef.update(initialEmojiState)
                     .then(() => {
                         console.log("Initial emoji states synced to Firebase");
@@ -463,6 +472,14 @@ const Attendance = {
      * @param {string} newEmojiState - The new emoji status.
      */
     syncEmojiUpdate: async function(playerName, newEmojiState) {
+        // --- AUTH CHECK --- 
+        if (!firebase.auth().currentUser) {
+            console.error("User not logged in. Cannot sync emoji update.");
+            showMessage("You must be logged in to change status.", "error");
+            return;
+        }
+        // --- END AUTH CHECK --- 
+
         console.log(`Syncing emoji update for ${playerName} to ${newEmojiState}`);
 
         // Find player 
@@ -498,6 +515,14 @@ const Attendance = {
      * @param {string} newAttendance - The new attendance status ('coming', 'not_coming', 'no_response').
      */
     syncAttendanceUpdate: async function(playerName, newAttendance) {
+        // --- AUTH CHECK --- 
+        if (!firebase.auth().currentUser) {
+            console.error("User not logged in. Cannot sync attendance update.");
+            showMessage("You must be logged in to change status.", "error");
+            return;
+        }
+        // --- END AUTH CHECK --- 
+
         console.log(`Syncing update for ${playerName} to ${newAttendance} (Firebase & Sheet)`);
 
         // --- Find player ONCE at the beginning ---
@@ -667,6 +692,14 @@ const Attendance = {
      * Syncs changes to Firebase and Google Sheets.
      */
     clearAttendanceAndEmojis: async function() {
+        // --- AUTH CHECK --- 
+        if (!firebase.auth().currentUser) {
+            console.error("User not logged in. Cannot clear attendance and emojis.");
+            showMessage("You must be logged in to clear attendance.", "error");
+            return;
+        }
+        // --- END AUTH CHECK --- 
+
         const clearButton = document.getElementById('clear-attendance-button');
         const clearSpinner = document.getElementById('clear-spinner');
 
