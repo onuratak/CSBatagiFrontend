@@ -55,9 +55,9 @@ const Attendance = {
     /**
      * Initializes the attendance module (e.g., fetches initial data, attaches listeners)
      */
-    init: function() {
-        // Fetch initial data from sheet (which also syncs to Firebase)
-        this.fetchStatsFromSheet(); 
+    init: async function() {
+        // Fetch essential player list from sheet first
+        await this.fetchPlayerListFromSheet(); // NEW
 
         // Attach Firebase listener only once
         if (!this.attendanceListenersAttached) {
@@ -72,7 +72,8 @@ const Attendance = {
         }
         
         // Force emoji initialization (in case Firebase listener hasn't triggered yet)
-        this.initializeEmojiStatuses();
+        // This might need to be called after emoji listener confirms connection or initial data
+        this.initializeEmojiStatuses(); 
     },
 
     /**
@@ -290,19 +291,14 @@ const Attendance = {
                 // Check if the data from Firebase has steamId as key
                 if (attendanceData[steamIdStr] && typeof attendanceData[steamIdStr] === 'object') {
                     currentAttendance = attendanceData[steamIdStr].status || 'no_response';
-                } else if (typeof attendanceData[playerName] === 'string') {
-                    // Fallback for the potentially inconsistent initial state passed directly after fetch
-                    // (Ideally, the initial call should also pass the steamId-keyed data)
-                    console.warn("Attendance listener received player-name keyed data, using fallback.");
-                    currentAttendance = attendanceData[playerName] || 'no_response';
                 } else {
                      // Player with steamId exists locally, but not found in Firebase data or format is wrong
                      console.warn(`Could not find status for ${playerName} (ID: ${steamIdStr}) in Firebase data object:`, attendanceData);
                 }
             } else {
                 // Fallback if player object is missing steamId (shouldn't happen ideally)
-                currentAttendance = attendanceData[playerName] || 'no_response'; 
                 console.warn(`Player object for ${playerName} is missing steamId, falling back to name lookup.`);
+                currentAttendance = 'no_response'; // Set default if steamId missing
             }
             // --- End NEW WAY ---
 
@@ -431,17 +427,19 @@ const Attendance = {
     },
 
     /**
-     * Fetches attendance data from the Google Apps Script endpoint.
+     * NEW: Fetches essential player data (name, steamId, status) from the Google Apps Script endpoint.
      * Updates the global `players` array.
      * Uses global `spinner`, `updateButton`, `showMessage`.
      */
-    fetchStatsFromSheet: async function() {
+    fetchPlayerListFromSheet: async function() {
         if (!spinner || !updateButton) {
             console.error("Spinner or Update Button not found");
+            // Potentially show a message to the user or return a rejected promise
             return;
         }
+        // Show spinner and disable button if they are relevant for this initial fetch
         spinner.classList.remove('hidden');
-        updateButton.disabled = true;
+        updateButton.disabled = true; 
         try {
             const response = await fetch(APPS_SCRIPT_URL); // Uses global constant
             if (!response.ok) {
@@ -449,69 +447,34 @@ const Attendance = {
                 try {
                     const errorData = await response.json();
                     errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
-                } catch (e) { /* Ignore */ }
+                } catch (e) { /* Ignore parsing error for error response */ }
                 throw new Error(errorDetails);
             }
             const data = await response.json();
             if (!Array.isArray(data)) {
-                console.error("Received data is not an array:", data);
-                throw new Error("Invalid data format received from server.");
+                console.error("Received player list data is not an array:", data);
+                throw new Error("Invalid player list data format received from server.");
             }
-            // players = data; // Update the global players array
-            // NEW: Map steamid to steamId
-            players = data.map(player => ({
-                ...player, // Copy existing properties (name, status, attendance)
-                steamId: player.steamid // Add steamId property from steamid
-            }));
-            console.log("Processed players with steamId:", players); // Debug log
-
-            // --- Write Initial State to Firebase --- 
-            if (typeof database !== 'undefined' && database !== null && this.ATTENDANCE_DB_PATH) {
-                try {
-                    const initialFirebaseState = {};
-                    // NEW: Build state keyed by steamId
-                    players.forEach(player => {
-                        if (player.steamId && player.name) { // Ensure we have ID and name
-                             const steamIdStr = String(player.steamId); // Ensure string key
-                             initialFirebaseState[steamIdStr] = { 
-                                 name: player.name, 
-                                 status: player.attendance || 'no_response' 
-                             };
-                        } else {
-                             console.warn("Skipping player for initial Firebase sync due to missing steamId or name:", player);
-                        }
-                    });
-                    const attendanceRef = database.ref(this.ATTENDANCE_DB_PATH);
-                    await attendanceRef.set(initialFirebaseState);
-                    console.log("Initial attendance state (keyed by steamId) synced to Firebase.");
-                } catch (firebaseError) {
-                    console.error("Failed to sync initial attendance state to Firebase:", firebaseError);
-                    // Show a message? Maybe not critical if render still works.
-                }
-            } else {
-                 console.error('Firebase database not available or ATTENDANCE_DB_PATH not set. Skipping initial Firebase sync.');
-            }
-            // --- End Firebase Initial Sync --- 
-
-            // Initial Render: Call the UI update function AFTER fetch and initial sync are complete
-            // Rebuild the state object in the format expected by the original UI update function
-            // (The listener in *this* file expects { playerName: status })
-            const stateForLocalUI = {};
-            players.forEach(player => {
-                 if(player.name) {
-                    stateForLocalUI[player.name] = player.attendance || 'no_response';
-                 }
-            });
-            this.updateAttendanceUIFromFirebase(stateForLocalUI);
             
-            // showMessage('Attendance data loaded!', 'success');
+            // Update the global players array with essential info
+            players = data.map(player => ({
+                name: player.name,
+                status: player.status, // Keep status for 'adam evde yok' logic
+                steamId: player.steamid // Map steamid to steamId
+            }));
+            console.log("Fetched and processed player list:", players); // Debug log
+            
+            // No Firebase sync here, and no direct UI update.
+            // Listeners will handle UI based on Firebase state.
+            // showMessage('Player list loaded!', 'success'); // Optional: if feedback is needed for this step
+
         } catch (err) {
-            console.error('Failed to fetch stats:', err);
-            showMessage(`Error loading data: ${err.message}`, 'error');
-            // REMOVED: this.renderPlayers(); // Render even on error - Listener handles UI
+            console.error('Failed to fetch player list:', err);
+            showMessage(`Error loading player list: ${err.message}`, 'error');
+            // Global `players` array might be empty or outdated, UI might not render correctly.
         } finally {
             spinner.classList.add('hidden');
-            updateButton.disabled = false;
+            updateButton.disabled = false; // Re-enable button
         }
     },
 
@@ -743,7 +706,20 @@ const Attendance = {
         showMessage("Clearing attendance...", "info");
 
         try {
-            // 1. Get current state from Firebase
+            // 1. Fetch Player List (including status) from Sheet
+            // Use the same mechanism as init to ensure we have the latest player list
+            // This assumes fetchPlayerListFromSheet correctly populates the global `players`
+            // Note: We might want to refetch *specifically* here in case the list changed
+            // without a page reload, but for now, rely on the initially fetched list.
+            if (!players || players.length === 0) {
+                // Attempt to fetch if players array is empty/not populated
+                await this.fetchPlayerListFromSheet();
+                if (!players || players.length === 0) {
+                     throw new Error("Player list could not be loaded from sheet for clearing.");
+                }
+            }
+
+            // 2. Get current state from Firebase
             const attendanceSnapshot = await database.ref(this.ATTENDANCE_DB_PATH).once('value');
             const currentAttendanceData = attendanceSnapshot.val() || {};
             const emojiSnapshot = await database.ref(this.EMOJI_DB_PATH).once('value');
@@ -752,64 +728,62 @@ const Attendance = {
             const firebaseUpdates = {};
             const sheetUpdates = []; // Array to store { steamId, attendance } for POST
 
-            // 2. Iterate through global players list (contains sheet status)
+            // 3. Iterate through global players list (fetched from sheet)
             for (const player of players) {
                 if (!player.steamId || !player.name) {
-                    console.warn("Skipping player due to missing steamId or name:", player);
+                    console.warn("Skipping player in clear operation due to missing steamId or name:", player);
                     continue;
                 }
                 const steamIdStr = String(player.steamId);
-                const currentAttendance = currentAttendanceData[steamIdStr]?.status || 'no_response';
-                const currentEmoji = currentEmojiData[steamIdStr]?.status || 'normal';
+                const currentAttendance = currentAttendanceData[steamIdStr]?.status;
+                const currentEmoji = currentEmojiData[steamIdStr]?.status;
+                const currentFbAttendanceName = currentAttendanceData[steamIdStr]?.name;
+                const currentFbEmojiName = currentEmojiData[steamIdStr]?.name;
 
-                let targetAttendance = 'no_response';
+                let targetAttendance;
                 const targetEmoji = 'normal';
-
-                // Log the status being checked from the global players array
-                console.log(`Checking player: ${player.name}, Sheet Status: '${player.status}'`);
 
                 // Determine target attendance based on sheet status ('adam evde yok')
                 const sheetStatus = (player.status || '').trim().toLowerCase();
                 if (sheetStatus === 'adam evde yok') {
-                    // Always set 'adam evde yok' players to 'not_coming' on clear
                     targetAttendance = 'not_coming';
                 } else {
-                    // Set all other players to 'no_response'
                     targetAttendance = 'no_response';
                 }
 
-                // Prepare Firebase updates if changes are needed
+                // Prepare Firebase updates for attendance if state changed
                 if (targetAttendance !== currentAttendance) {
                     firebaseUpdates[`${this.ATTENDANCE_DB_PATH}/${steamIdStr}/status`] = targetAttendance;
-                    // Mark for sheet update
+                    // Mark for sheet update ONLY if attendance state changed
                     sheetUpdates.push({ steamId: steamIdStr, attendance: targetAttendance });
                 }
-                // Always ensure name is present in attendance data
-                if (!currentAttendanceData[steamIdStr]?.name) {
-                     firebaseUpdates[`${this.ATTENDANCE_DB_PATH}/${steamIdStr}/name`] = player.name;
+                 // Ensure name is present in Firebase attendance data (update if missing)
+                if (player.name !== currentFbAttendanceName) {
+                    firebaseUpdates[`${this.ATTENDANCE_DB_PATH}/${steamIdStr}/name`] = player.name;
                 }
 
+                // Prepare Firebase updates for emoji if state changed
                 if (targetEmoji !== currentEmoji) {
                     firebaseUpdates[`${this.EMOJI_DB_PATH}/${steamIdStr}/status`] = targetEmoji;
                 }
-                // Always ensure name is present in emoji data
-                 if (!currentEmojiData[steamIdStr]?.name) {
+                // Ensure name is present in Firebase emoji data (update if missing)
+                 if (player.name !== currentFbEmojiName) {
                      firebaseUpdates[`${this.EMOJI_DB_PATH}/${steamIdStr}/name`] = player.name;
                 }
             }
 
-            // 3. Perform Firebase update
+            // 4. Perform Firebase update
             if (Object.keys(firebaseUpdates).length > 0) {
-                console.log("Applying Firebase updates:", firebaseUpdates);
+                console.log("Applying Firebase updates for clear:", firebaseUpdates);
                 await database.ref().update(firebaseUpdates);
-                console.log("Firebase updated successfully.");
+                console.log("Firebase updated successfully during clear.");
             } else {
-                console.log("No Firebase updates needed.");
+                console.log("No Firebase updates needed for clear.");
             }
 
-            // 4. Perform Google Sheet updates (POST requests)
+            // 5. Perform Google Sheet updates (POST requests)
             if (sheetUpdates.length > 0) {
-                console.log("Sending updates to Google Sheet:", sheetUpdates);
+                console.log("Sending clear updates to Google Sheet:", sheetUpdates);
                 // Send updates concurrently
                 const sheetPromises = sheetUpdates.map(update =>
                     fetch(APPS_SCRIPT_URL, {
@@ -821,11 +795,11 @@ const Attendance = {
                         redirect: 'follow'
                     }).catch(err => {
                          // Log sheet errors but don't block completion
-                         console.error(`Error sending sheet update for ${update.steamId}:`, err);
+                         console.error(`Error sending sheet update during clear for ${update.steamId}:`, err);
                      })
                 );
                 await Promise.all(sheetPromises);
-                console.log("Sheet updates sent.");
+                console.log("Sheet updates sent successfully during clear.");
             }
 
             showMessage('Attendance cleared successfully!', 'success');
