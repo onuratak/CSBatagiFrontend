@@ -512,29 +512,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
       function getTokenAndLog(registration) {
         messaging.getToken({
-          vapidKey: 'BOBSX1e7RIaNamSRVADSxWzasn6IXp2Q7QH0wqsi856l1bdairiUTC5IBqIe7gpdgnwK9dTqyAk-aYMV7r19a20',
-          serviceWorkerRegistration: registration
+            vapidKey: 'BOBSX1e7RIaNamSRVADSxWzasn6IXp2Q7QH0wqsi856l1bdairiUTC5IBqIe7gpdgnwK9dTqyAk-aYMV7r19a20',
+            serviceWorkerRegistration: registration
         }).then((currentToken) => {
-          if (currentToken) {
+            if (currentToken) {
+                // Get the current user
+                const user = firebase.auth().currentUser;
+                if (!user) {
+                    console.log('No authenticated user found');
+                    return;
+                }
 
-            // Store the token in the database for push notifications (silently)
-            if (database) {
-              database.ref('fcmTokens/' + currentToken).set(true)
-                .catch((dbError) => {
-                  // Log only if database save fails
-                  console.error('Error saving FCM Token to DB:', dbError);
-                });
+                // Store the token under the user's UID
+                if (database) {
+                    database.ref(`users/${user.uid}/fcmTokens/${currentToken}`).update({
+                        enabled: true,
+                        preferences: {
+                            statusChanges: true,
+                            tekerDondu: true
+                        },
+                        lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                    }).catch((dbError) => {
+                        console.error('Error saving FCM Token to DB:', dbError);
+                    });
+                } else {
+                    console.error('DB not initialized, cannot save FCM token.');
+                }
             } else {
-              // Log only if database object is missing
-              console.error('DB not initialized, cannot save FCM token.');
+                console.log('No registration token available. Request permission to generate one.');
             }
-          } else {
-            // Keep this log: Important for knowing why no token was generated
-            console.log('No registration token available. Request permission to generate one.');
-          }
         }).catch((err) => {
-          // Keep this log: Important for token retrieval errors (like the 401)
-          console.log('An error occurred while retrieving token. ', err);
+            console.log('An error occurred while retrieving token. ', err);
         });
       }
 

@@ -416,6 +416,9 @@ const Attendance = {
         if (countComing >= this.TEKER_DONDU_THRESHOLD) { 
             attendanceSummaryDiv.classList.add('summary-ok'); // Add the OK class
             tekerDonduIndicator.classList.remove('hidden');
+            
+            // Send teker dondu notification
+            this.sendTekerDonduNotification(countComing);
         } else {
             attendanceSummaryDiv.classList.remove('summary-ok'); // Remove the OK class
             tekerDonduIndicator.classList.add('hidden');
@@ -509,6 +512,40 @@ const Attendance = {
     },
 
     /**
+     * Sends a notification to all users about a player's status change
+     * @param {string} playerName - The name of the player whose status changed
+     * @param {string} newStatus - The new status
+     */
+    sendStatusChangeNotification: async function(playerName, newStatus) {
+        await Notifications.sendNotification('status_change', {
+            notification: {
+                title: 'Player Status Update',
+                body: `${playerName} is now ${newStatus === 'coming' ? 'coming' : newStatus === 'not_coming' ? 'not coming' : 'undecided'}`
+            },
+            data: {
+                playerName: playerName,
+                status: newStatus
+            }
+        });
+    },
+
+    /**
+     * Sends a notification when teker dondu threshold is reached
+     * @param {number} countComing - The number of players coming
+     */
+    sendTekerDonduNotification: async function(countComing) {
+        await Notifications.sendNotification('teker_dondu', {
+            notification: {
+                title: 'Teker Dondu! 🎉',
+                body: `${countComing} players are coming to the match!`
+            },
+            data: {
+                countComing: countComing
+            }
+        });
+    },
+
+    /**
      * Sends an attendance update for a specific player to the Google Apps Script endpoint.
      * Uses global `APPS_SCRIPT_URL`, `showMessage`.
      * @param {string} playerName - The name of the player to update.
@@ -532,7 +569,7 @@ const Attendance = {
             console.error(`Could not find player data or SteamID for ${playerName}. Update aborted.`);
             return; // Stop if player/steamId isn't found
         }
-        const steamIdStr = String(player.steamId); // Ensure string key
+        const steamIdStr = String(player.steamId);
 
         // --- Update Firebase using steamId ---
         if (typeof database !== 'undefined' && database !== null && this.ATTENDANCE_DB_PATH) {
@@ -541,6 +578,9 @@ const Attendance = {
                 const playerStatusRef = database.ref(`${this.ATTENDANCE_DB_PATH}/${steamIdStr}/status`);
                 await playerStatusRef.set(newAttendance);
                 console.log(`Firebase attendance status updated for ${playerName} (ID: ${steamIdStr}).`);
+                
+                // Send notification about the status change
+                await this.sendStatusChangeNotification(playerName, newAttendance);
             } catch (firebaseError) {
                 console.error("Failed to update Firebase attendance status:", firebaseError);
                 showMessage(`Error syncing status for ${playerName} to database.`, "error");
