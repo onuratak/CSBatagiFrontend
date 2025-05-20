@@ -823,6 +823,21 @@ const Attendance = {
     },
 
     /**
+     * Shows a message prompting the user to log in, and clears loading states.
+     */
+    showLoginRequiredMessage: function() {
+        if (typeof playerListBody !== 'undefined' && playerListBody) {
+            playerListBody.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500">Please sign in to view attendance.</td></tr>';
+        }
+        if (typeof attendanceSummaryDiv !== 'undefined' && attendanceSummaryDiv) {
+            attendanceSummaryDiv.classList.remove('summary-ok');
+        }
+        if (typeof summaryTextSpan !== 'undefined' && summaryTextSpan) {
+            summaryTextSpan.textContent = 'Please sign in to view summary.';
+        }
+    },
+
+    /**
      * Handles authentication state changes
      * @param {Object} user - The Firebase user object, null if signed out
      */
@@ -843,16 +858,15 @@ const Attendance = {
                 this.attendanceListenersAttached = false;
                 this.emojiListenersAttached = false;
             }
+            // Show login required message
+            this.showLoginRequiredMessage();
         }
     }
 }; // End of Attendance object
 
 // --- Event Listener Setup --- 
 document.addEventListener('DOMContentLoaded', () => {
-    // Ensure Attendance.init is called only after Firebase is likely initialized
-    // We rely on MainScript.js handling the initial Firebase setup.
-    // Delaying slightly or using a custom event might be more robust if needed.
-    // setTimeout(Attendance.init, 500); // Example delay, adjust if necessary
+    // DO NOT call Attendance.init() here. It will be called after login via handleAuthStateChange.
 
     // --- Add Listener for Clear Button --- 
     const clearButton = document.getElementById('clear-attendance-button');
