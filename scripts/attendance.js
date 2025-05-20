@@ -820,6 +820,30 @@ const Attendance = {
             clearButton.disabled = false;
             clearSpinner.classList.add('hidden');
         }
+    },
+
+    /**
+     * Handles authentication state changes
+     * @param {Object} user - The Firebase user object, null if signed out
+     */
+    handleAuthStateChange: function(user) {
+        if (user) {
+            console.log("Attendance: User signed in, initializing...");
+            // Re-initialize attendance when user signs in
+            this.init();
+        } else {
+            console.log("Attendance: User signed out");
+            // Optionally clear UI or handle signed out state
+            if (this.attendanceListenersAttached) {
+                // Detach Firebase listeners when user signs out
+                if (typeof database !== 'undefined' && database !== null) {
+                    database.ref(this.ATTENDANCE_DB_PATH).off();
+                    database.ref(this.EMOJI_DB_PATH).off();
+                }
+                this.attendanceListenersAttached = false;
+                this.emojiListenersAttached = false;
+            }
+        }
     }
 }; // End of Attendance object
 

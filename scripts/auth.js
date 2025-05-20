@@ -79,13 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (googleSignInBtn) googleSignInBtn.classList.remove('hidden');
         }
         
-        // --- IMPORTANT --- 
-        // Future Step: Trigger data reloads or UI updates in other modules 
-        // (like attendance.js) based on auth state if needed.
-        // For example: 
-        // if (typeof Attendance !== 'undefined' && Attendance.handleAuthStateChange) {
-        //     Attendance.handleAuthStateChange(user);
-        // }
+        // Trigger data reloads in Attendance module based on auth state
+        if (typeof Attendance !== 'undefined' && Attendance.handleAuthStateChange) {
+            Attendance.handleAuthStateChange(user);
+        }
     });
 
 }); 
