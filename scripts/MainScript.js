@@ -474,7 +474,7 @@ function handleSortClick(event) {
 
 // --- Event Listeners & Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Firebase Initialization (Moved Here) ---
+    // --- Firebase Initialization ---
     const firebaseConfig = {
         apiKey: "AIzaSyAJpmATHX2Zugnm4c1WhU5Kg9iMOruiZBU",
         authDomain: "csbatagirealtimedb.firebaseapp.com",
@@ -494,61 +494,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return; // Stop further initialization if Firebase fails
     }
     // --- End Firebase Initialization ---
-
-    // --- Firebase Messaging (Push Notifications) ---
-    if (window.firebase && firebase.messaging) {
-      const messaging = firebase.messaging();
-
-      navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
-        // Always request notification permission on page load
-        Notification.requestPermission().then((permission) => {
-          if (permission === 'granted') {
-            getTokenAndLog(registration);
-          } else {
-            console.log('Notification permission not granted:', permission);
-          }
-        });
-      });
-
-      function getTokenAndLog(registration) {
-        messaging.getToken({
-          vapidKey: 'BOBSX1e7RIaNamSRVADSxWzasn6IXp2Q7QH0wqsi856l1bdairiUTC5IBqIe7gpdgnwK9dTqyAk-aYMV7r19a20',
-          serviceWorkerRegistration: registration
-        }).then((currentToken) => {
-          if (currentToken) {
-
-            // Store the token in the database for push notifications (silently)
-            if (database) {
-              database.ref('fcmTokens/' + currentToken).set(true)
-                .catch((dbError) => {
-                  // Log only if database save fails
-                  console.error('Error saving FCM Token to DB:', dbError);
-                });
-            } else {
-              // Log only if database object is missing
-              console.error('DB not initialized, cannot save FCM token.');
-            }
-          } else {
-            // Keep this log: Important for knowing why no token was generated
-            console.log('No registration token available. Request permission to generate one.');
-          }
-        }).catch((err) => {
-          // Keep this log: Important for token retrieval errors (like the 401)
-          console.log('An error occurred while retrieving token. ', err);
-        });
-      }
-
-      // Foreground message handler
-      messaging.onMessage((payload) => {
-        console.log('Message received. ', payload);
-        if (Notification.permission === 'granted' && payload.notification) {
-          new Notification(payload.notification.title, {
-            body: payload.notification.body,
-            icon: '/images/BatakLogo192.png'
-          });
-        }
-      });
-    }
 
     showPage(DEFAULT_PAGE); // Show the initial page
     Attendance.init(); // Initialize Attendance module

@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>CS2 Stats Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1006,18 +1010,74 @@
     <script src="scripts/performanceGraphs.js" defer></script>
     <script src="scripts/themeToggle.js" defer></script>
 
-    <!-- Firebase SDKs (REMOVED FROM HERE) -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script> -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script> -->
-
+    <!-- Service Worker Registration -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          }, function(err) {
-            console.log('ServiceWorker registration failed: ', err);
-          });
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful');
+              
+              // Check build info when the page becomes visible
+              document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                  checkBuildInfo();
+                }
+              });
+
+              // Also check when the user returns to the page
+              window.addEventListener('focus', () => {
+                checkBuildInfo();
+              });
+
+              // Check build info function
+              function checkBuildInfo() {
+                fetch('/build-info.json?t=' + new Date().getTime())
+                  .then(response => response.json())
+                  .then(data => {
+                    const currentBuild = localStorage.getItem('buildHash');
+                    if (currentBuild && currentBuild !== data.commitHash) {
+                      // New build detected, reload the page
+                      window.location.reload(true);
+                    }
+                    localStorage.setItem('buildHash', data.commitHash);
+                  })
+                  .catch(error => console.error('Error checking build info:', error));
+              }
+
+              // Initial build info check
+              checkBuildInfo();
+
+              // Initialize Firebase Messaging
+              if (window.firebase && firebase.messaging) {
+                const messaging = firebase.messaging();
+                messaging.useServiceWorker(registration);
+                
+                // Request notification permission
+                Notification.requestPermission().then((permission) => {
+                  if (permission === 'granted') {
+                    messaging.getToken({
+                      vapidKey: 'BOBSX1e7RIaNamSRVADSxWzasn6IXp2Q7QH0wqsi856l1bdairiUTC5IBqIe7gpdgnwK9dTqyAk-aYMV7r19a20'
+                    }).then((currentToken) => {
+                      if (currentToken) {
+                        // Store the token in the database
+                        if (window.database) {
+                          database.ref('fcmTokens/' + currentToken).set(true)
+                            .catch((dbError) => {
+                              console.error('Error saving FCM Token to DB:', dbError);
+                            });
+                        }
+                      }
+                    }).catch((err) => {
+                      console.log('An error occurred while retrieving token. ', err);
+                    });
+                  }
+                });
+              }
+            })
+            .catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
         });
       }
     </script>
