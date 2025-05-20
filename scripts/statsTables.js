@@ -7,10 +7,10 @@ const PENTAGON_STAT_LIMIT_STATS = 5;
 const StatsTables = (() => {
     let seasonStats = null;
     let last10Stats = null;
-    let nightAvgStats = null;
+    let nightAvgStats = null; // This will become the historical data object { "date": [...] }
     let seasonStatsBySteamId = {}; // NEW: Map for quick lookup
     let last10StatsBySteamId = {}; // NEW: Map for quick lookup
-    let nightAvgStatsBySteamId = {}; // NEW: Map for quick lookup (though not requested for picker yet)
+    let nightAvgStatsBySteamId = {}; // This will store stats for the currently selected/latest date
 
     // --- State specific to Season Avg Graph View ---
     let seasonAvgGraphPopulated = false;
@@ -304,19 +304,114 @@ const StatsTables = (() => {
 
     async function loadAndRenderNightAvgTable() {
         const tbody = document.getElementById('night-avg-table-body');
-         if (!tbody) {
-             console.error("Night Avg table body not found");
-             return;
-         }
+        const dateSelector = document.getElementById('night-avg-date-selector');
+
+        if (!tbody || !dateSelector) {
+            console.error("Night Avg table body or date selector not found");
+            if (tbody) tbody.innerHTML = `<tr><td colspan="${nightAvgColumns.length}" class="text-center py-4 text-gray-500">UI elements missing.</td></tr>`;
+            if (dateSelector) dateSelector.innerHTML = '<option>Error loading UI</option>';
+            disableNightAvgSubTabsOnError();
+            return;
+        }
+
         tbody.innerHTML = `<tr><td colspan="${nightAvgColumns.length}" class="text-center py-4 text-gray-500">Loading night average data...</td></tr>`;
-        nightAvgStats = await fetchJsonData(NIGHT_AVG_JSON_URL, 'Night Average');
-        if (nightAvgStats) {
-            fillNightAvgTable(nightAvgStats, tbody);
-             // NEW: Process data into map after fetching
-            // Assuming night_avg.json also includes steam_id now
-            nightAvgStatsBySteamId = processStatsIntoMap(nightAvgStats, 'steam_id');
-            // console.log("Processed night average stats by SteamID:", nightAvgStatsBySteamId);
-            checkAndRenderNightAvgGraph(); // Trigger graph check if needed
+        dateSelector.innerHTML = '<option>Loading dates...</option>';
+
+        const historicalNightAvgData = await fetchJsonData(NIGHT_AVG_JSON_URL, 'Night Average');
+
+        if (historicalNightAvgData === null || typeof historicalNightAvgData !== 'object' || Array.isArray(historicalNightAvgData)) {
+            console.error('Night Average data is null, not an object, or is an array (expected object keyed by date).', historicalNightAvgData);
+            dateSelector.innerHTML = '<option>Veri formatı hatalı</option>';
+            tbody.innerHTML = `<tr><td colspan="${nightAvgColumns.length}" class="text-center py-4 text-gray-500">Gece ortalaması verisi yüklenemedi veya formatı yanlış.</td></tr>`;
+            nightAvgStats = null; // Ensure global is null
+            disableNightAvgSubTabsOnError();
+            return;
+        }
+        
+        // Store historical data globally for access by graph/H2H (though they'll use latest for now)
+        nightAvgStats = historicalNightAvgData; 
+
+        const dates = Object.keys(historicalNightAvgData);
+        dateSelector.innerHTML = ''; // Clear "Loading dates..."
+
+        if (dates.length === 0) {
+            dateSelector.innerHTML = '<option>Veri bulunamadı</option>';
+            tbody.innerHTML = `<tr><td colspan="${nightAvgColumns.length}" class="text-center py-4 text-gray-500">Gece ortalaması verisi bulunamadı.</td></tr>`;
+            disableNightAvgSubTabsOnError();
+            return;
+        }
+
+        dates.sort((a, b) => b.localeCompare(a)); // Most recent first
+
+        dates.forEach(date => {
+            const option = document.createElement('option');
+            option.value = date;
+            option.textContent = date;
+            dateSelector.appendChild(option);
+        });
+
+        const initialDate = dates[0];
+        const initialDataToDisplay = historicalNightAvgData[initialDate];
+        
+        if (!Array.isArray(initialDataToDisplay)) {
+            console.error(`Data for date ${initialDate} is not an array:`, initialDataToDisplay);
+            tbody.innerHTML = `<tr><td colspan="${nightAvgColumns.length}" class="text-center py-4 text-gray-500">Format error for date ${initialDate}.</td></tr>`;
+            disableNightAvgSubTabsOnError();
+            return;
+        }
+        
+        fillNightAvgTable(initialDataToDisplay, tbody);
+        nightAvgStatsBySteamId = processStatsIntoMap(initialDataToDisplay, 'steam_id');
+
+        // Event listener for date selector
+        const newDateSelector = dateSelector.cloneNode(true); // Clone to remove listeners
+        dateSelector.parentNode.replaceChild(newDateSelector, dateSelector);
+        
+        newDateSelector.addEventListener('change', function() {
+            const selectedDate = this.value;
+            const dataForSelectedDate = historicalNightAvgData[selectedDate];
+            if (Array.isArray(dataForSelectedDate)) {
+                fillNightAvgTable(dataForSelectedDate, tbody);
+                nightAvgStatsBySteamId = processStatsIntoMap(dataForSelectedDate, 'steam_id');
+                // Graph/H2H will use the latest data for now, but if they were historical,
+                // they would be updated here with dataForSelectedDate.
+                // For now, let them re-render based on the latest, or adapt them to use selectedDate.
+                checkAndRenderNightAvgGraph(); // Re-render graph (will use latest for now)
+                checkAndRenderNightAvgH2H();   // Re-render H2H (will use latest for now)
+            } else {
+                console.error(`Data for selected date ${selectedDate} is not an array:`, dataForSelectedDate);
+                tbody.innerHTML = `<tr><td colspan="${nightAvgColumns.length}" class="text-center py-4 text-gray-500">Format error for selected date ${selectedDate}.</td></tr>`;
+            }
+        });
+        
+        enableNightAvgSubTabs();
+        checkAndRenderNightAvgGraph(); // Initial graph render with the latest data
+        checkAndRenderNightAvgH2H();   // Initial H2H render
+    }
+
+    function disableNightAvgSubTabsOnError() {
+        const graphTabButton = document.getElementById('night-avg-graph-tab');
+        const h2hTabButton = document.getElementById('night-avg-head2head-tab');
+        if (graphTabButton) {
+            graphTabButton.disabled = true;
+            graphTabButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        if (h2hTabButton) {
+            h2hTabButton.disabled = true;
+            h2hTabButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    function enableNightAvgSubTabs() {
+        const graphTabButton = document.getElementById('night-avg-graph-tab');
+        const h2hTabButton = document.getElementById('night-avg-head2head-tab');
+        if (graphTabButton) {
+            graphTabButton.disabled = false;
+            graphTabButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+        if (h2hTabButton) {
+            h2hTabButton.disabled = false;
+            h2hTabButton.classList.remove('opacity-50', 'cursor-not-allowed');
         }
     }
 
@@ -363,11 +458,22 @@ const StatsTables = (() => {
 
     // --- NEW: Helper function to calculate Night Avg Stat Ranges if needed ---
     function ensureNightAvgStatRangesCalculated() {
-        if (!nightAvgStats || Object.keys(nightAvgAllStatRanges).length > 0) {
+        // Adapt to use the latest night's data from historical object
+        if (!nightAvgStats || typeof nightAvgStats !== 'object' || Array.isArray(nightAvgStats) || Object.keys(nightAvgAllStatRanges).length > 0) {
             return;
         }
-        // console.log("Calculating Night Avg H2H stat ranges...");
-        const allPlayersData = convertStatsArrayToObject(nightAvgStats);
+        const dates = Object.keys(nightAvgStats);
+        if (dates.length === 0) return;
+        dates.sort((a, b) => b.localeCompare(a));
+        const latestNightData = nightAvgStats[dates[0]];
+
+        if (!Array.isArray(latestNightData)) {
+            console.warn("Latest night data for range calculation is not an array.");
+            return;
+        }
+
+        // console.log("Calculating Night Avg H2H stat ranges using latest date's data...");
+        const allPlayersData = convertStatsArrayToObject(latestNightData); // Use data for the latest night
         if (Object.keys(nightAvgH2HSelectableStats).length === 0) {
             // console.log("Generating nightAvgH2HSelectableStats before range calculation.");
             nightAvgH2HSelectableStats = generateSelectableStatsConfig(nightAvgColumns);
@@ -895,15 +1001,30 @@ const StatsTables = (() => {
             nightAvgValidationMsg.textContent = `Error: Select exactly ${PENTAGON_STAT_LIMIT_STATS} stats.`;
             return;
         }
-        if (!nightAvgStats || !nightAvgPlayerGrid) {
-            console.error("Cannot update graphs: Night Avg data or grid container missing.");
-            nightAvgValidationMsg.textContent = "Error: Data or container missing.";
+        if (!nightAvgStats || typeof nightAvgStats !== 'object' || Array.isArray(nightAvgStats) || !nightAvgPlayerGrid) {
+            console.error("Cannot update graphs: Night Avg historical data or grid container missing/invalid.");
+            if (nightAvgValidationMsg) nightAvgValidationMsg.textContent = "Error: Data or container missing.";
             return;
         }
-        // Convert Night Avg data (keys might have spaces, need to handle)
-        const allPlayersNightAvgData = convertStatsArrayToObject(nightAvgStats);
-        const activePlayersData = Object.values(allPlayersNightAvgData)
-            // Night avg data doesn't have matches, assume all players shown are 'active' for the night
+
+        const dates = Object.keys(nightAvgStats);
+        if (dates.length === 0) {
+            if (nightAvgValidationMsg) nightAvgValidationMsg.textContent = "Error: No dates found in data.";
+            nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-red-500 col-span-full">No night average data available for graphs.</div>';
+            return;
+        }
+        dates.sort((a, b) => b.localeCompare(a));
+        const latestNightData = nightAvgStats[dates[0]]; // Use data for the latest night
+
+        if (!Array.isArray(latestNightData)) {
+            console.error("Latest night data for graphs is not an array:", latestNightData);
+            if (nightAvgValidationMsg) nightAvgValidationMsg.textContent = "Error: Data format error for latest night.";
+            nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-red-500 col-span-full">Data format error for graphs.</div>';
+            return;
+        }
+
+        const allPlayersLatestNightData = convertStatsArrayToObject(latestNightData);
+        const activePlayersData = Object.values(allPlayersLatestNightData)
             .sort((a, b) => a.name.localeCompare(b.name));
 
         nightAvgPlayerGrid.innerHTML = '';
@@ -975,12 +1096,18 @@ const StatsTables = (() => {
             nightAvgInitialRenderDone = true;
         }
 
-        if (!nightAvgStats) {
-            // console.warn("Night Avg stats not loaded yet for graph view.");
-            if (nightAvgPlayerGrid) nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Night Avg data is still loading...</div>';
+        if (!nightAvgStats || typeof nightAvgStats !== 'object' || Array.isArray(nightAvgStats)) {
+            // console.warn("Night Avg historical stats not loaded yet for graph view.");
+            if (nightAvgPlayerGrid) nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-orange-500 col-span-full">Night Avg data is still loading or in wrong format...</div>';
             return;
         }
-
+        
+        const dates = Object.keys(nightAvgStats);
+        if (dates.length === 0) {
+            if (nightAvgPlayerGrid) nightAvgPlayerGrid.innerHTML = '<div class="text-center py-8 text-red-500 col-span-full">No night average data found.</div>';
+            return;
+        }
+        // Ensure ranges are calculated using the latest night's data
         ensureNightAvgStatRangesCalculated();
 
         if (!nightAvgGraphPopulated) {
@@ -1007,6 +1134,13 @@ const StatsTables = (() => {
         // console.log('[DEBUG] NightAvg subtab click handler fired');
         const clickedTab = event.target.closest('.map-tab-button');
         if (!clickedTab || !clickedTab.closest('#night-avg-sub-tabs')) return;
+        
+        // Prevent action if the tab is disabled (e.g., due to data load error)
+        if (clickedTab.disabled || clickedTab.classList.contains('cursor-not-allowed')) {
+            event.preventDefault();
+            return;
+        }
+
         event.preventDefault();
         const targetPaneSelector = clickedTab.dataset.tabsTarget;
         const targetPane = document.querySelector(targetPaneSelector);
@@ -1014,19 +1148,35 @@ const StatsTables = (() => {
         const allTabs = tabContainer.querySelectorAll('.map-tab-button');
         const contentContainer = document.getElementById('night-avg-tab-content');
         const allPanes = contentContainer ? contentContainer.querySelectorAll('.night-avg-tab-pane') : [];
-        allTabs.forEach(tab => { tab.classList.remove('active'); tab.setAttribute('aria-selected', 'false'); });
+        
+        allTabs.forEach(tab => { 
+            tab.classList.remove('active'); 
+            tab.setAttribute('aria-selected', 'false'); 
+        });
         clickedTab.classList.add('active');
         clickedTab.setAttribute('aria-selected', 'true');
-        allPanes.forEach(pane => { pane.classList.add('hidden'); pane.classList.remove('active'); });
+        
+        allPanes.forEach(pane => { 
+            pane.classList.add('hidden'); 
+            pane.classList.remove('active'); 
+        });
         if (targetPane) {
             targetPane.classList.remove('hidden');
             targetPane.classList.add('active');
         } else {
             console.error(`Target pane not found for selector: ${targetPaneSelector}`);
         }
+
         if (targetPaneSelector === '#night-avg-tab-graph') {
-            renderNightAvgGraphView();
+            renderNightAvgGraphView(); // Will use latest night's data for now
         } else if (targetPaneSelector === '#night-avg-tab-head2head') {
+            renderNightAvgH2HView(); // Will use latest night's data for now
+        }
+    }
+
+    function checkAndRenderNightAvgH2H() { // New function to check H2H tab
+        const h2hTabButton = document.getElementById('night-avg-head2head-tab');
+        if (h2hTabButton && h2hTabButton.getAttribute('aria-selected') === 'true') {
             renderNightAvgH2HView();
         }
     }
@@ -1405,10 +1555,19 @@ const StatsTables = (() => {
     let nightAvgH2HSelectableStats = {};
     const nightAvgH2HView = createH2HView({
       tabPrefix: 'night-avg',
-      getStats: () => nightAvgStats,
-      getStatsBySteamId: (id) => nightAvgStatsBySteamId[id],
+      getStats: () => { // Adapt to provide latest night's data array for H2H view
+        if (!nightAvgStats || typeof nightAvgStats !== 'object' || Array.isArray(nightAvgStats)) return [];
+        const dates = Object.keys(nightAvgStats);
+        if (dates.length === 0) return [];
+        dates.sort((a, b) => b.localeCompare(a));
+        return nightAvgStats[dates[0]] || []; // Return array for the latest date
+      },
+      getStatsBySteamId: (id) => { // Ensure this uses the latest night's data map
+        // nightAvgStatsBySteamId is already updated to latest when date changes or on load
+        return nightAvgStatsBySteamId[id];
+      },
       columns: nightAvgColumns, // Use night-specific columns
-      getStatRanges: () => nightAvgAllStatRanges,
+      getStatRanges: () => nightAvgAllStatRanges, // Ranges are also calculated from latest night
       ensureStatRanges: ensureNightAvgStatRangesCalculated,
       selectableStats: nightAvgH2HSelectableStats,
       statLimit: PENTAGON_STAT_LIMIT_STATS
