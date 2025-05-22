@@ -882,6 +882,20 @@ body.dark-theme .styled-table .sortable-header.sort-active {
     background-color: #5a6b7c; /* Slightly lighter active sort header */
 }
 
+/* Dark mode highlighting for selected players in "Available Players" table */
+body.dark-theme #available-players table tr.bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.3) !important; /* Blue with 30% opacity */
+}
+
+body.dark-theme #available-players table tr.bg-green-50 {
+    background-color: rgba(16, 185, 129, 0.3) !important; /* Green with 30% opacity */
+}
+
+/* Adjust opacity for dark mode if global opacity-50 is too strong */
+body.dark-theme #available-players table tr.opacity-50 {
+    opacity: 0.7 !important; /* Make it slightly less transparent than default 0.5 */
+}
+
 /* Info Panel Styles (Dark Theme Adaptation) */
 body.dark-theme .info-panel {
     background-color: #1f2937; /* Darker content background */
@@ -1437,26 +1451,59 @@ body.dark-theme #available-players table thead th:first-child {
     z-index: 3;
 }
 
-/* Team indicators */
-body.dark-theme #available-players table td[data-team="A"] {
-    color: #e2e8f0;
+/* Team indicators - Overriding utility classes within this specific table */
+body.dark-theme #available-players table .text-blue-600 {
+    color: #93c5fd !important; /* Lighter blue for Team A */
 }
 
-body.dark-theme #available-players table td[data-team="B"] {
-    color: #8ecacd;
+body.dark-theme #available-players table .text-green-600 {
+    color: #a7f3d0 !important; /* Lighter green for Team B */
 }
 
-/* Action buttons */
-body.dark-theme #available-players .remove-button,
-body.dark-theme #available-players .assign-button {
-    color: #9ca3af;
+/* Action Column Button Colors (Dark Theme) */
+/* Assign Buttons */
+body.dark-theme #available-players .assign-button[data-target-team="a"] {
+    color: #93c5fd; /* Lighter blue */
     transition: color 0.2s;
 }
-
-body.dark-theme #available-players .remove-button:hover,
-body.dark-theme #available-players .assign-button:hover {
-    color: #e5e7eb;
+body.dark-theme #available-players .assign-button[data-target-team="a"]:hover {
+    color: #bfdbfe; /* Even lighter blue */
 }
+body.dark-theme #available-players .assign-button[data-target-team="b"] {
+    color: #a7f3d0; /* Lighter green */
+    transition: color 0.2s;
+}
+body.dark-theme #available-players .assign-button[data-target-team="b"]:hover {
+    color: #d1fae5; /* Even lighter green */
+}
+
+/* Remove Button */
+body.dark-theme #available-players .remove-from-list-button {
+    color: #fca5a5; /* Lighter red/pink */
+    transition: color 0.2s;
+}
+body.dark-theme #available-players .remove-from-list-button:hover {
+    color: #fee2e2; /* Even lighter red/pink */
+}
+
+/* Edit Button */
+body.dark-theme #available-players .edit-player-button {
+    color: #d1d5db; /* Neutral light gray */
+    transition: color 0.2s;
+}
+body.dark-theme #available-players .edit-player-button:hover {
+    color: #e5e7eb; /* Slightly lighter gray */
+}
+
+/* Fallback for general .remove-button if it's used elsewhere in #available-players */
+body.dark-theme #available-players .remove-button {
+    color: #fca5a5; /* Default to lighter red/pink */
+    transition: color 0.2s;
+}
+body.dark-theme #available-players .remove-button:hover {
+    color: #fee2e2; /* Even lighter red/pink */
+}
+
 
 /* Stat numbers */
 body.dark-theme #available-players table td:not(:first-child):not(:last-child) {
