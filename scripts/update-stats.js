@@ -101,6 +101,9 @@ const queries = {
     WITH match_date_info AS (
         SELECT MAX(matches.date::date) AS latest_match_date  
         FROM matches
+    ),
+    season_start_info AS (
+        SELECT '${sezonbaslangic}'::date AS seasonstart
     )
     SELECT
         matches.date::date AS match_date,
@@ -130,7 +133,7 @@ const queries = {
         ON c.match_checksum = matches.checksum 
         AND c.clutcher_steam_id = p1.steam_id
     WHERE 
-        matches.date::date = (SELECT latest_match_date FROM match_date_info)
+        matches.date::date BETWEEN (SELECT seasonstart FROM season_start_info) AND (SELECT latest_match_date FROM match_date_info)
     GROUP BY
         matches.date::date,
         matches.map_name,
