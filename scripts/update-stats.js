@@ -101,8 +101,12 @@ const queries = {
     WITH match_date_info AS (
         SELECT MAX(matches.date::date) AS latest_match_date  
         FROM matches
+    ),
+    season_start_info AS (
+        SELECT '${sezonbaslangic}'::date AS seasonstart
     )
     SELECT
+        matches.date::date AS match_date,
         matches.map_name,
         teams.name AS team_name,
         p1.name,
@@ -129,8 +133,9 @@ const queries = {
         ON c.match_checksum = matches.checksum 
         AND c.clutcher_steam_id = p1.steam_id
     WHERE 
-        matches.date::date = (SELECT latest_match_date FROM match_date_info)
+        matches.date::date BETWEEN (SELECT seasonstart FROM season_start_info) AND (SELECT latest_match_date FROM match_date_info)
     GROUP BY
+        matches.date::date,
         matches.map_name,
         teams.name,
         teams.score,
@@ -139,6 +144,7 @@ const queries = {
         c.num_clutches,
         c.num_successful_clutches
     ORDER BY
+        matches.date::date DESC,
         matches.map_name,
         teams.name,
         HLTV_2 DESC;
@@ -846,21 +852,21 @@ async function updateLast10Stats() {
 // Process the Son Maç (Last Match) stats
 async function updateSonMacStats() {
   try {
-    console.log('Updating Son Maç stats...');
+    console.log('Updating Son Maç stats (by date)...');
 
     const results = await executeDbQuery(queries.sonmac);
 
     if (!results || !results.rows || !results.rows.length) {
       console.log('No results found for Son Maç stats.');
-      // Create an empty structure if no data
-      const emptyData = { maps: {} };
+      const emptyData = {}; // Empty object for dates
       const dataDir = path.join(__dirname, '..', 'data');
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
       }
-      const filePath = path.join(dataDir, 'sonmac.json');
+      // This will now write to sonmac_by_date.json
+      const filePath = path.join(dataDir, 'sonmac_by_date.json');
       fs.writeFileSync(filePath, JSON.stringify(emptyData, null, 2));
-      console.log('✅ Empty Son Maç stats written to data/sonmac.json');
+      console.log('✅ Empty Son Maç stats (by date) written to data/sonmac_by_date.json');
       return;
     }
 
@@ -879,49 +885,75 @@ async function updateSonMacStats() {
       return isNaN(parsedValue) ? defaultValue : parsedValue;
     };
 
-    const mapsData = {};
+    const allDatesData = {}; // Store all data grouped by date
 
     results.rows.forEach(row => {
+      const rawMatchDateValue = row[columnMap['match_date']];
+      let matchDateKey;
+      if (typeof rawMatchDateValue === 'string') {
+        matchDateKey = rawMatchDateValue.split('T')[0];
+        if (matchDateKey.length > 10) {
+            matchDateKey = matchDateKey.substring(0,10);
+        }
+      } else if (rawMatchDateValue instanceof Date) {
+        matchDateKey = rawMatchDateValue.toISOString().split('T')[0];
+      } else {
+        try {
+          matchDateKey = new Date(rawMatchDateValue).toISOString().split('T')[0];
+        } catch (e) {
+          console.warn(`Could not parse date for key in updateSonMacStats: ${rawMatchDateValue}`, e);
+          return; 
+        }
+      }
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(matchDateKey)) {
+          console.warn(`Skipping row in updateSonMacStats due to invalid date key format: ${matchDateKey} from original value: ${rawMatchDateValue}`);
+          return;
+      }
+
+      if (!allDatesData[matchDateKey]) {
+        allDatesData[matchDateKey] = { maps: {} };
+      }
+
+      const mapsDataForDate = allDatesData[matchDateKey].maps;
+
       const mapName = row[columnMap['map_name']];
       const teamName = row[columnMap['team_name']];
-      const teamScore = getData(row, 'team_score', parseInt, 0); // Assuming score is integer
+      const teamScore = getData(row, 'team_score', parseInt, 0);
       const playerName = row[columnMap['name']];
-      const steamId = row[columnMap['steam_id']]; // Get steam_id
+      const steamId = row[columnMap['steam_id']]; 
 
-      if (!mapsData[mapName]) {
-        mapsData[mapName] = { team1: null, team2: null };
+      if (!mapsDataForDate[mapName]) {
+        mapsDataForDate[mapName] = { team1: null, team2: null };
       }
 
       let teamKey = null;
-      if (mapsData[mapName].team1 === null) {
+      if (mapsDataForDate[mapName].team1 === null) {
           teamKey = 'team1';
-      } else if (mapsData[mapName].team1.name === teamName) {
+      } else if (mapsDataForDate[mapName].team1.name === teamName) {
           teamKey = 'team1';
-      } else if (mapsData[mapName].team2 === null) {
+      } else if (mapsDataForDate[mapName].team2 === null) {
           teamKey = 'team2';
-      } else if (mapsData[mapName].team2.name === teamName) {
+      } else if (mapsDataForDate[mapName].team2.name === teamName) {
           teamKey = 'team2';
       } else {
-          console.warn(`Unexpected third team (${teamName}) found for map ${mapName}. Skipping player ${playerName}.`);
-          return; // Skip this player if we already have two distinct teams
+          console.warn(`Unexpected third team (${teamName}) found for map ${mapName} on date ${matchDateKey}. Skipping player ${playerName}.`);
+          return; 
       }
       
-      // Initialize team structure if it's the first player for this team on this map
-      if (!mapsData[mapName][teamKey]) {
-        mapsData[mapName][teamKey] = {
+      if (!mapsDataForDate[mapName][teamKey]) {
+        mapsDataForDate[mapName][teamKey] = {
           name: teamName,
           score: teamScore,
           players: []
         };
       } else {
-        // Ensure score consistency if team already exists (optional, might take first score found)
-        mapsData[mapName][teamKey].score = teamScore; 
+        mapsDataForDate[mapName][teamKey].score = teamScore; 
       }
 
-      // Map player stats - matching keys expected by index.html createTeamSection
       const playerStats = {
         name: playerName,
-        steam_id: steamId, // Add steam_id here
+        steam_id: steamId, 
         hltv_2: getData(row, 'hltv_2'),
         adr: getData(row, 'adr'),
         kd: getData(row, 'kd'),
@@ -943,27 +975,25 @@ async function updateSonMacStats() {
         four_kills: getData(row, 'four_kills'),
         five_kills: getData(row, 'five_kills'),
         score: getData(row, 'score'),
-        clutches: getData(row, 'number_of_clutches', parseInt, 0), // Renamed from query
-        clutches_won: getData(row, 'number_of_successful_clutches', parseInt, 0) // Renamed from query
+        clutches: getData(row, 'number_of_clutches', parseInt, 0),
+        clutches_won: getData(row, 'number_of_successful_clutches', parseInt, 0)
       };
 
-      mapsData[mapName][teamKey].players.push(playerStats);
+      mapsDataForDate[mapName][teamKey].players.push(playerStats);
     });
 
-    // Structure for the final JSON
-    const finalData = { maps: mapsData };
-
-    // Write the result to sonmac.json
+    // Write the result to sonmac_by_date.json
     const dataDir = path.join(__dirname, '..', 'data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
-    const filePath = path.join(dataDir, 'sonmac.json');
-    fs.writeFileSync(filePath, JSON.stringify(finalData, null, 2));
-    console.log('✅ Son Maç stats written to data/sonmac.json');
+    // This will now write to sonmac_by_date.json
+    const filePath = path.join(dataDir, 'sonmac_by_date.json');
+    fs.writeFileSync(filePath, JSON.stringify(allDatesData, null, 2));
+    console.log('✅ Son Maç stats (by date) written to data/sonmac_by_date.json');
 
   } catch (error) {
-    console.error('❌ Error updating Son Maç stats:', error);
+    console.error('❌ Error updating Son Maç stats (by date):', error);
   }
 }
 

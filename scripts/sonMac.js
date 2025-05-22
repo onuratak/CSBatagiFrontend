@@ -1,146 +1,205 @@
 // scripts/sonMac.js
 
 const SonMac = {
-    SONMAC_JSON_URL: 'data/sonmac.json',
+    SONMAC_JSON_URL: 'data/sonmac_by_date.json',
+    sonMacDataByDate: {}, // To store all son mac data by date
 
     /**
-     * Initializes the Son Maç module by fetching and rendering the data.
+     * Initializes the Son Maç module.
      */
     init: function() {
-        this.loadAndRenderSonMacData();
+        // Renamed from loadAndRenderSonMacData to loadSonMacDataByDate
+        this.loadSonMacDataByDate(); 
     },
 
     /**
-     * Fetches Son Maç match stats from the local JSON file.
+     * Fetches Son Maç match stats from the local JSON file (sonmac_by_date.json).
      */
-    fetchSonMacData: async function() {
+    fetchSonMacDataByDate: async function() { // Renamed for clarity
         try {
             const response = await fetch(this.SONMAC_JSON_URL + '?_cb=' + Date.now()); // Use module constant
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-            const data = await response.json();
-            if (!data || !data.maps) {
-                throw new Error("Invalid data format received from JSON file.");
-            }
-            return data;
+            // The data is now an object with dates as keys
+            this.sonMacDataByDate = await response.json(); 
+            console.log("SonMac data by date loaded successfully:", this.sonMacDataByDate);
+            return this.sonMacDataByDate;
         } catch (err) {
-            console.error('Failed to fetch Son Maç data:', err);
-            showMessage(`Error loading Son Maç data: ${err.message}`, 'error'); // Uses global showMessage
-            return null;
+            console.error('Failed to fetch Son Maç data by date:', err);
+            showMessage(`Error loading Son Maç data: ${err.message}`, 'error');
+            const mapTabContent = document.getElementById('mapTabContent');
+            if (mapTabContent) {
+                mapTabContent.innerHTML = '<p class="text-red-500 text-center">Error loading match data. Please try again later.</p>';
+            }
+            const dateSelector = document.getElementById('sonmac-date-selector');
+            if (dateSelector) {
+                dateSelector.innerHTML = '<option>Error loading dates</option>';
+            }
+            return null; 
         }
     },
 
     /**
-     * Loads and renders the Son Maç data, including initializing tabs and sorting.
+     * Loads and renders the Son Maç data for a specific date.
+     * Populates date selector and loads the most recent date by default.
      */
-    loadAndRenderSonMacData: async function() {
-        const matchData = await this.fetchSonMacData(); // Use module's fetch
-        if (matchData) {
-            // Populate creates the structure, including tbodies with originalData
-            this.populateSonMacData(matchData); // Use module's populate
-            this.initSonMacTabs(); // Initialize tab click listeners using module's initTabs
-
-            // --- Apply heatmap and initial sort to the initially active tab ---
-            const firstActiveTab = document.querySelector('#map-tabs button.active');
-            if (firstActiveTab) {
-                const contentId = firstActiveTab.getAttribute('aria-controls');
-                const contentDiv = document.getElementById(contentId);
-                if (contentDiv) {
-                    const teamDivs = contentDiv.querySelectorAll('div.mb-6');
-                    teamDivs.forEach(teamDiv => {
-                        const tbody = teamDiv.querySelector('tbody');
-                        if (tbody && tbody.id && tbody.dataset.originalData) {
-                            let playersData = JSON.parse(tbody.dataset.originalData);
-                            // Initial sort (uses global sortData)
-                            sortData(playersData, 'hltv_2', 'desc');
-                            // Render the body with sorted data (uses module's fill)
-                            this.fillSonMacTableBody(tbody, playersData);
-                            // Set initial header indicator (uses global setInitialSortState)
-                            setInitialSortState(tbody, 'hltv_2', 'desc');
-                        }
-                    });
-                }
+    loadSonMacDataByDate: async function() {
+        const data = await this.fetchSonMacDataByDate();
+        if (data) {
+            this.populateSonMacDateSelector();
+            // Load data for the most recent date by default
+            if (Object.keys(this.sonMacDataByDate).length > 0) {
+                const dates = Object.keys(this.sonMacDataByDate).sort((a, b) => new Date(b) - new Date(a));
+                this.renderPageForDate(dates[0]); // New function to render content for a date
             }
         }
     },
 
-    /**
-     * Populates the Son Maç page with match data, creating tabs and content areas.
-     * @param {object} data - The match data object.
-     */
-    populateSonMacData: function(data) {
-        if (!data || !data.maps) return;
+    populateSonMacDateSelector: function() {
+        const dateSelector = document.getElementById('sonmac-date-selector');
+        if (!dateSelector) return;
 
-        const mapTabs = document.querySelector('#map-tabs');
-        mapTabs.innerHTML = ''; // Clear existing tabs
+        const dates = Object.keys(this.sonMacDataByDate).sort((a, b) => new Date(b) - new Date(a));
+        dateSelector.innerHTML = '';
 
-        let isFirst = true;
-        Object.keys(data.maps).forEach(mapName => {
-            const li = document.createElement('li');
-            li.className = 'mr-2';
-            li.setAttribute('role', 'presentation');
+        if (dates.length === 0) {
+            dateSelector.innerHTML = '<option>No dates available</option>';
+            return;
+        }
 
-            const button = document.createElement('button');
-            button.id = `${mapName}-tab`;
-            button.className = `tab-nav-item map-tab-button inline-block border-b-2 ${isFirst ? 'border-blue-500 active' : 'border-transparent'} rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
-            button.setAttribute('aria-controls', mapName);
-            button.textContent = mapName;
-
-            li.appendChild(button);
-            mapTabs.appendChild(li);
-
-            // Create/populate map content using module function
-            this.populateMapContent(mapName, data.maps[mapName], isFirst);
-
-            if (isFirst) isFirst = false;
+        dates.forEach(date => {
+            const option = document.createElement('option');
+            option.value = date;
+            option.textContent = this.formatDateForDisplay(date);
+            dateSelector.appendChild(option);
         });
 
-        // Re-initialize tab functionality - Handled by loadAndRenderSonMacData calling initSonMacTabs
-        // this.initSonMacTabs(); // No longer needed here
+        dateSelector.addEventListener('change', (event) => {
+            this.renderPageForDate(event.target.value);
+        });
+
+        if (dates.length > 0) {
+            dateSelector.value = dates[0];
+        }
     },
 
     /**
-     * Populates the content area for a specific map.
-     * @param {string} mapName - The name of the map.
-     * @param {object} mapData - The data for the map.
-     * @param {boolean} isActive - Whether this map tab should be initially active.
+     * Renders the Son Mac page content for a given date.
+     * @param {string} selectedDate - The YYYY-MM-DD date string.
      */
-    populateMapContent: function(mapName, mapData, isActive) {
+    renderPageForDate: function(selectedDate) {
+        console.log(`Rendering Son Mac page for date: ${selectedDate}`);
+        const dataForDate = this.sonMacDataByDate[selectedDate];
+
         const mapTabContent = document.getElementById('mapTabContent');
+        const mapTabsContainer = document.getElementById('map-tabs');
 
-        let mapDiv = document.getElementById(mapName);
-        if (!mapDiv) {
-            mapDiv = document.createElement('div');
-            mapDiv.id = mapName;
-            mapTabContent.appendChild(mapDiv);
-        } else {
-            mapDiv.innerHTML = ''; // Clear existing content
+        if (!dataForDate || !dataForDate.maps) {
+            console.error(`No data found for date: ${selectedDate}`);
+            if (mapTabContent) mapTabContent.innerHTML = '<p class="text-center text-gray-500">No match data available for the selected date.</p>';
+            if (mapTabsContainer) mapTabsContainer.innerHTML = '';
+            return;
         }
-        mapDiv.className = isActive ? 'active' : 'hidden'; // Set class based on isActive
 
-        // Create scoreboard
-        const scoreboardDiv = document.createElement('div');
-        scoreboardDiv.className = 'flex justify-between md:justify-center md:gap-16 items-center mb-6 px-4 py-3 bg-gray-100 rounded-lg overflow-x-auto';
-        scoreboardDiv.innerHTML = `
-            <div class="text-center whitespace-nowrap">
-                <h3 class="text-lg font-bold">${mapData.team1.name}</h3>
-                <div class="text-3xl font-extrabold text-blue-600">${mapData.team1.score}</div>
-            </div>
-            <div class="text-xl md:text-3xl font-semibold text-gray-500">vs</div>
-            <div class="text-center whitespace-nowrap">
-                <h3 class="text-lg font-bold">${mapData.team2.name}</h3>
-                <div class="text-3xl font-extrabold text-green-600">${mapData.team2.score}</div>
-            </div>
-        `;
-        mapDiv.appendChild(scoreboardDiv);
+        mapTabContent.innerHTML = ''; 
+        mapTabsContainer.innerHTML = '';
 
-        // Create team sections using module function
-        const team1Div = this.createTeamSection(mapName, mapData.team1, 'blue');
-        mapDiv.appendChild(team1Div);
-        const team2Div = this.createTeamSection(mapName, mapData.team2, 'green');
-        mapDiv.appendChild(team2Div);
+        const maps = dataForDate.maps;
+        const mapNames = Object.keys(maps);
+
+        if (mapNames.length > 0) {
+            mapNames.forEach((mapName, index) => {
+                const isFirstMap = index === 0;
+                const mapData = maps[mapName];
+
+                // Create Tab Button
+                const li = document.createElement('li');
+                li.className = 'mr-2';
+                li.setAttribute('role', 'presentation');
+                const tabButton = document.createElement('button');
+                tabButton.id = `map-${mapName}-tab-btn`; // Unique ID for button
+                tabButton.className = `tab-nav-item map-tab-button inline-block border-b-2 rounded-t-lg hover:text-gray-600 hover:border-gray-300`;
+                if (isFirstMap) {
+                    tabButton.classList.add('active', 'text-blue-600', 'border-blue-600');
+                    tabButton.classList.remove('border-transparent');
+                } else {
+                    tabButton.classList.add('border-transparent');
+                }
+                tabButton.setAttribute('aria-controls', `map-content-${mapName}`); // aria-controls should point to content ID
+                tabButton.textContent = mapName;
+                li.appendChild(tabButton);
+                mapTabsContainer.appendChild(li);
+
+                // Create Map Content Area (will be populated by createTeamSection)
+                const mapContentDiv = document.createElement('div');
+                mapContentDiv.id = `map-content-${mapName}`; // Unique ID for content
+                mapContentDiv.className = `p-4 rounded-lg bg-gray-50`;
+                if (!isFirstMap) {
+                    mapContentDiv.classList.add('hidden');
+                }
+                mapContentDiv.setAttribute('role', 'tabpanel');
+                mapContentDiv.setAttribute('aria-labelledby', tabButton.id);
+                
+                // Create scoreboard
+                const scoreboardDiv = document.createElement('div');
+                scoreboardDiv.className = 'flex justify-between md:justify-center md:gap-16 items-center mb-6 px-4 py-3 bg-gray-100 rounded-lg overflow-x-auto';
+                scoreboardDiv.innerHTML = `
+                    <div class="text-center whitespace-nowrap">
+                        <h3 class="text-lg font-bold">${mapData.team1.name}</h3>
+                        <div class="text-3xl font-extrabold text-blue-600">${mapData.team1.score}</div>
+                    </div>
+                    <div class="text-xl md:text-3xl font-semibold text-gray-500">vs</div>
+                    <div class="text-center whitespace-nowrap">
+                        <h3 class="text-lg font-bold">${mapData.team2.name}</h3>
+                        <div class="text-3xl font-extrabold text-green-600">${mapData.team2.score}</div>
+                    </div>
+                `;
+                mapContentDiv.appendChild(scoreboardDiv);
+
+                // Create team sections
+                const team1Div = this.createTeamSection(mapName, mapData.team1, 'blue');
+                mapContentDiv.appendChild(team1Div);
+                const team2Div = this.createTeamSection(mapName, mapData.team2, 'green');
+                mapContentDiv.appendChild(team2Div);
+                
+                mapTabContent.appendChild(mapContentDiv);
+            });
+            
+            this.initSonMacTabs(); // Initialize tab click listeners after all tabs are created
+            this.populateAndSortTablesInContent(document.querySelector(`#map-tabs .map-tab-button.active`).getAttribute('aria-controls'));
+
+
+        } else {
+            mapTabContent.innerHTML = '<p class="text-center text-gray-500">No maps played or data available for this selection.</p>';
+        }
     },
+    
+    /**
+     * Populates and sorts tables within a given content area.
+     * @param {string} contentId - The ID of the content div containing team tables.
+     */
+    populateAndSortTablesInContent: function(contentId) {
+        const contentDiv = document.getElementById(contentId);
+        if (!contentDiv) return;
+
+        const teamDivs = contentDiv.querySelectorAll('div.mb-6'); // Assuming team sections have this structure
+        teamDivs.forEach(teamDiv => {
+            const tbody = teamDiv.querySelector('tbody');
+            if (tbody && tbody.id && tbody.dataset.originalData) {
+                try {
+                    let playersData = JSON.parse(tbody.dataset.originalData);
+                    sortData(playersData, 'hltv_2', 'desc'); // global sortData
+                    this.fillSonMacTableBody(tbody, playersData);
+                    setInitialSortState(tbody, 'hltv_2', 'desc'); // global setInitialSortState
+                } catch (e) {
+                    console.error(`Error processing data for tbody ${tbody.id}:`, e);
+                    tbody.innerHTML = '<tr><td colspan="24" class="text-center text-red-600">Error loading player data.</td></tr>';
+                }
+            }
+        });
+    },
+
 
     /**
      * Creates the HTML structure for a team's section within a map tab.
@@ -151,7 +210,7 @@ const SonMac = {
      */
     createTeamSection: function(mapName, teamData, color) {
         const teamDiv = document.createElement('div');
-        teamDiv.className = 'mb-6';
+        teamDiv.className = 'mb-6'; // Keep this class if used for selection in populateAndSortTablesInContent
 
         const teamHeading = document.createElement('h3');
         teamHeading.className = `text-lg font-semibold text-${color}-600 mb-2 px-3`;
@@ -165,7 +224,6 @@ const SonMac = {
         table.className = 'styled-table min-w-full text-sm';
 
         const thead = document.createElement('thead');
-        // Add data-sort-key and sortable-header class for global sorting handler
         thead.innerHTML = `
             <tr>
                 <th class="sortable-header" data-sort-key="name">Oyuncu</th>
@@ -196,14 +254,15 @@ const SonMac = {
         `;
         table.appendChild(thead);
 
-        const tbodyId = `sonmac-${mapName}-${teamData.name.replace(/\s+/g, '_').toLowerCase()}-${color}`;
+        // Sanitize names for ID: replace spaces and ensure lowercase
+        const safeTeamName = teamData.name.replace(/\s+/g, '_').toLowerCase();
+        const tbodyId = `sonmac-${mapName}-${safeTeamName}-${color}-tbody`;
         const tbody = document.createElement('tbody');
         tbody.id = tbodyId;
-        tbody.dataset.originalData = JSON.stringify(teamData.players); // Store player data
-
-        // DO NOT fill initially. It will be filled after sorting in loadAndRenderSonMacData
-
+        // Store players data directly on the tbody for later retrieval
+        tbody.dataset.originalData = JSON.stringify(teamData.players); 
         table.appendChild(tbody);
+        
         tableContainer.appendChild(table);
         teamDiv.appendChild(tableContainer);
         return teamDiv;
@@ -213,58 +272,42 @@ const SonMac = {
      * Initializes the click listeners for the Son Maç map tabs.
      */
     initSonMacTabs: function() {
-        const mapTabs = document.querySelectorAll('#map-tabs button');
-        const mapContents = document.querySelectorAll('#mapTabContent > div');
+        const mapTabsContainer = document.getElementById('map-tabs');
+        if (!mapTabsContainer) return;
 
-        mapTabs.forEach(tab => {
-            // Store 'this' context
-            const sonMacModule = this;
-            tab.addEventListener('click', function() { // Use function() to get correct 'this' for the element
+        mapTabsContainer.addEventListener('click', (event) => {
+            const clickedTab = event.target.closest('.map-tab-button');
+            if (!clickedTab) return;
 
-                // Remove active classes from all tabs and contents
-                mapTabs.forEach(t => {
-                    t.classList.remove('active', 'border-blue-500');
-                    t.classList.add('border-transparent');
-                });
-                mapContents.forEach(c => c.classList.add('hidden'));
-
-                // Add active class to clicked tab ('this' refers to the button here)
-                this.classList.add('active', 'border-blue-500');
-                this.classList.remove('border-transparent');
-
-                // Show corresponding content
-                const contentId = this.getAttribute('aria-controls');
-                const contentDiv = document.getElementById(contentId);
-                if (contentDiv) {
-                    contentDiv.classList.remove('hidden');
-
-                    // --- Render table content for the selected map ---
-                    const teamDivs = contentDiv.querySelectorAll('div.mb-6');
-                    teamDivs.forEach(teamDiv => {
-                        const tbody = teamDiv.querySelector('tbody');
-                        if (tbody && tbody.id && tbody.dataset.originalData) {
-                            try {
-                                let playersData = JSON.parse(tbody.dataset.originalData);
-                                // Sort data (uses global sortData)
-                                sortData(playersData, 'hltv_2', 'desc');
-                                // Fill the table body (uses module's fill)
-                                sonMacModule.fillSonMacTableBody(tbody, playersData);
-                                // Set the initial sort state (uses global setInitialSortState)
-                                setInitialSortState(tbody, 'hltv_2', 'desc');
-                            } catch (e) {
-                                console.error(`Error processing data for tbody ${tbody.id}:`, e);
-                                tbody.innerHTML = '<tr><td colspan="24" class="text-center text-red-600">Error loading player data.</td></tr>';
-                            }
-                        } else {
-                            console.error(`Could not find tbody, tbody.id, or originalData in a teamDiv within ${contentId}`);
-                        }
-                    });
-                } else {
-                    console.error(`Content div with ID ${contentId} not found!`);
-                }
+            // Deactivate all tabs
+            mapTabsContainer.querySelectorAll('.map-tab-button').forEach(btn => {
+                btn.classList.remove('active', 'text-blue-600', 'border-blue-600');
+                btn.classList.add('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                btn.setAttribute('aria-selected', 'false');
             });
+
+            // Hide all content panels
+            document.querySelectorAll('#mapTabContent > div').forEach(content => {
+                content.classList.add('hidden');
+            });
+
+            // Activate clicked tab
+            clickedTab.classList.add('active', 'text-blue-600', 'border-blue-600');
+            clickedTab.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+            clickedTab.setAttribute('aria-selected', 'true');
+
+            // Show corresponding content and populate/sort its tables
+            const contentId = clickedTab.getAttribute('aria-controls');
+            const contentDiv = document.getElementById(contentId);
+            if (contentDiv) {
+                contentDiv.classList.remove('hidden');
+                this.populateAndSortTablesInContent(contentId);
+            } else {
+                 console.error(`Content div with ID ${contentId} not found for tab ${clickedTab.id}`);
+            }
         });
     },
+
 
     /**
      * Fills the table body for a Son Maç team table.
@@ -272,11 +315,13 @@ const SonMac = {
      * @param {Array} playersData - The array of player data for the team.
      */
     fillSonMacTableBody: function(tbody, playersData) {
-        tbody.innerHTML = ''; // Clear existing rows
+        // Clear only player rows, keep totals if they are already there and managed separately
+        // A better approach might be to always rebuild player rows and then totals row.
+        // For now, let's clear all then re-add players. Totals row is added in createTeamSection
+        tbody.innerHTML = ''; 
 
         playersData.forEach(player => {
             const tr = document.createElement('tr');
-            // Use global formatStat
             const formatPercent = (num) => (typeof num === 'number' ? num.toFixed(2) + '%' : 'N/A');
 
             tr.innerHTML = `
@@ -307,16 +352,25 @@ const SonMac = {
             `;
             tbody.appendChild(tr);
         });
-
-        // Re-apply heatmap AFTER rows are in the DOM (uses global applyHeatmapToColumn)
+        
         const gradient = [
             { percent: 0, color: '#EF4444' },
             { percent: 0.5, color: '#FDE68A' },
             { percent: 1, color: '#22C55E' }
         ];
-        applyHeatmapToColumn(tbody.id, 1, gradient); // HLTV2
-        applyHeatmapToColumn(tbody.id, 2, gradient); // ADR
-        applyHeatmapToColumn(tbody.id, 3, gradient); // K/D
+        applyHeatmapToColumn(tbody.id, 1, gradient);
+        applyHeatmapToColumn(tbody.id, 2, gradient);
+        applyHeatmapToColumn(tbody.id, 3, gradient);
+    },
+
+    formatDateForDisplay: function(dateString) {
+        // The dateString is already in YYYY-MM-DD format from the JSON keys
+        return dateString; 
     }
 
-}; // End of SonMac object 
+};
+
+// Ensure this is called when the script loads.
+document.addEventListener('DOMContentLoaded', () => {
+    SonMac.init(); // Call the main init function of the SonMac object
+}); 
