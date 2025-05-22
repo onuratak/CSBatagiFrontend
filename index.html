@@ -6,8 +6,8 @@
     <title>CS2 Stats Hub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="table-styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" defer></script>
+    <link id="main-css" rel="stylesheet" href="table-styles.css">
+    <script id="chartjs" src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" defer></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
 </head>
@@ -995,26 +995,52 @@
     -->
 
     <!-- Firebase SDKs (Load BEFORE MainScript) -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js" defer></script> <!-- Added Auth SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js" defer></script>
+    <script id="firebase-app" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>
+    <script id="firebase-auth" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js" defer></script> <!-- Added Auth SDK -->
+    <script id="firebase-db" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script>
+    <script id="firebase-msg" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js" defer></script>
 
     <!-- Core Application Logic -->
-    <script src="scripts/MainScript.js" defer></script>
-    <script src="scripts/auth.js" defer></script> <!-- Added Auth Script -->
-    <script src="scripts/attendance.js" defer></script>
-    <script src="scripts/statsTables.js" defer></script>
-    <script src="scripts/sonMac.js" defer></script>
-    <script src="scripts/duello.js" defer></script>
-    <script src="scripts/teamPicker.js" defer></script>
-    <script src="scripts/players.js" defer></script>
-    <script src="scripts/performanceGraphs.js" defer></script>
-    <script src="scripts/themeToggle.js" defer></script>
+    <script id="main-js" src="scripts/MainScript.js" defer></script>
+    <script id="auth-js" src="scripts/auth.js" defer></script> <!-- Added Auth Script -->
+    <script id="attendance-js" src="scripts/attendance.js" defer></script>
+    <script id="statsTables-js" src="scripts/statsTables.js" defer></script>
+    <script id="sonMac-js" src="scripts/sonMac.js" defer></script>
+    <script id="duello-js" src="scripts/duello.js" defer></script>
+    <script id="teamPicker-js" src="scripts/teamPicker.js" defer></script>
+    <script id="players-js" src="scripts/players.js" defer></script>
+    <script id="performanceGraphs-js" src="scripts/performanceGraphs.js" defer></script>
+    <script id="themeToggle-js" src="scripts/themeToggle.js" defer></script>
 
-    <!-- Firebase SDKs (REMOVED FROM HERE) -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script> -->
-    <!-- <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script> -->
+    <!-- Add this script at the end of body -->
+    <script>
+      // Set your version/hash here
+      const STATIC_VERSION = 'abc123';
+      const staticFiles = [
+        { id: 'main-css', attr: 'href' },
+        { id: 'chartjs', attr: 'src' },
+        { id: 'firebase-app', attr: 'src' },
+        { id: 'firebase-auth', attr: 'src' },
+        { id: 'firebase-db', attr: 'src' },
+        { id: 'firebase-msg', attr: 'src' },
+        { id: 'main-js', attr: 'src' },
+        { id: 'auth-js', attr: 'src' },
+        { id: 'attendance-js', attr: 'src' },
+        { id: 'statsTables-js', attr: 'src' },
+        { id: 'sonMac-js', attr: 'src' },
+        { id: 'duello-js', attr: 'src' },
+        { id: 'teamPicker-js', attr: 'src' },
+        { id: 'players-js', attr: 'src' },
+        { id: 'performanceGraphs-js', attr: 'src' },
+        { id: 'themeToggle-js', attr: 'src' },
+      ];
+      staticFiles.forEach(file => {
+        const el = document.getElementById(file.id);
+        if (el) {
+          el[file.attr] += (el[file.attr].includes('?') ? '&' : '?') + 'v=' + STATIC_VERSION;
+        }
+      });
+    </script>
 
     <script>
       if ('serviceWorker' in navigator) {
@@ -1027,6 +1053,8 @@
         });
       }
     </script>
+
+    <script>window.STATIC_VERSION = 'abc123';</script>
 
 </body>
 </html>
