@@ -11,8 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link id="main-css" rel="stylesheet" href="table-styles.css">
     <script id="chartjs" src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js" defer></script>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2563eb">
 </head>
 <body class="p-4 md:p-8">
   <!-- 
@@ -1001,7 +999,6 @@
     <script id="firebase-app" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js" defer></script>
     <script id="firebase-auth" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js" defer></script> <!-- Added Auth SDK -->
     <script id="firebase-db" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-database-compat.js" defer></script>
-    <script id="firebase-msg" src="https://www.gstatic.com/firebasejs/9.6.7/firebase-messaging-compat.js" defer></script>
 
     <!-- Core Application Logic -->
     <script id="main-js" src="scripts/MainScript.js" defer></script>
@@ -1025,7 +1022,6 @@
         { id: 'firebase-app', attr: 'src' },
         { id: 'firebase-auth', attr: 'src' },
         { id: 'firebase-db', attr: 'src' },
-        { id: 'firebase-msg', attr: 'src' },
         { id: 'main-js', attr: 'src' },
         { id: 'auth-js', attr: 'src' },
         { id: 'attendance-js', attr: 'src' },
@@ -1043,18 +1039,6 @@
           el[file.attr] += (el[file.attr].includes('?') ? '&' : '?') + 'v=' + window.STATIC_VERSION;
         }
       });
-    </script>
-
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('firebase-messaging-sw.js?v=' + window.STATIC_VERSION).then(function(registration) {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          }, function(err) {
-            console.log('ServiceWorker registration failed: ', err);
-          });
-        });
-      }
     </script>
 
 </body>
