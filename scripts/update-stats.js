@@ -667,8 +667,44 @@ async function updateNightAvgStats() {
     // Group by match_date
     const groupedByDate = {};
     results.rows.forEach(row => {
-      const matchDate = row[columnMap['match_date']];
-      if (!groupedByDate[matchDate]) groupedByDate[matchDate] = [];
+      const rawMatchDateValue = row[columnMap['match_date']];
+
+      if (rawMatchDateValue === null || typeof rawMatchDateValue === 'undefined') {
+        console.warn('Skipping row in updateNightAvgStats due to null or undefined match_date:', row);
+        return; 
+      }
+
+      let matchDateKey;
+      // Dates from PostgreSQL DATE type via node-postgres are typically strings like '2023-10-26T00:00:00.000Z'
+      // or just 'YYYY-MM-DD'. We want 'YYYY-MM-DD'.
+      if (typeof rawMatchDateValue === 'string') {
+        // If it's an ISO string with time, split it. Otherwise, assume it might be YYYY-MM-DD already or needs substring.
+        matchDateKey = rawMatchDateValue.split('T')[0];
+         // Ensure it's exactly 10 chars if no 'T' was present but it was longer.
+        if (matchDateKey.length > 10) {
+            matchDateKey = matchDateKey.substring(0,10);
+        }
+      } else if (rawMatchDateValue instanceof Date) {
+        matchDateKey = rawMatchDateValue.toISOString().split('T')[0];
+      } else {
+        // Fallback for other types, try to convert to Date first
+        try {
+          matchDateKey = new Date(rawMatchDateValue).toISOString().split('T')[0];
+        } catch (e) {
+          console.warn(`Could not parse date for key in updateNightAvgStats: ${rawMatchDateValue}`, e);
+          return; 
+        }
+      }
+      
+      // Basic validation for YYYY-MM-DD format
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(matchDateKey)) {
+          console.warn(`Skipping row in updateNightAvgStats due to invalid date key format: ${matchDateKey} from original value: ${rawMatchDateValue}`);
+          return;
+      }
+
+      if (!groupedByDate[matchDateKey]) {
+        groupedByDate[matchDateKey] = [];
+      }
       // Helper function to safely get data and parse it
       const getData = (colName, parseFn = parseFloat, defaultValue = 0) => {
         const index = columnMap[colName.toLowerCase()];
@@ -681,7 +717,7 @@ async function updateNightAvgStats() {
       };
       // Get steam_id directly
       const steamId = row[columnMap['steam_id'.toLowerCase()]];
-      groupedByDate[matchDate].push({
+      groupedByDate[matchDateKey].push({
         steam_id: steamId,
         name: row[columnMap['name'.toLowerCase()]],
         "HLTV 2": getData('hltv_2'),
