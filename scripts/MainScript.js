@@ -555,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
     StatsTables.init(); // Initialize StatsTables module
     SonMac.init(); // Initialize SonMac module
     Duello.init(); // Initialize Duello module
-    adjustNavLayout(); // Set initial navigation visibility
+    adjustNavLayout(); // Set initial navigation visibility - RE-ENABLED
     setupGlobalEventListeners(); // Setup global event listeners
 });
 
@@ -637,7 +637,7 @@ function setupGlobalEventListeners() {
         });
     }
 
-    window.addEventListener('resize', adjustNavLayout); // Responsive nav
+    window.addEventListener('resize', adjustNavLayout); // Responsive nav - RE-ENABLED
 
 }
 
@@ -656,7 +656,7 @@ function handleNavLinkClick(event) {
 
 // Adjust nav layout on resize/load
 function adjustNavLayout() {
-    if (window.innerWidth >= 768) { // Tailwind's md breakpoint is 768px
+    if (window.innerWidth >= 768) { // Tailwind's md breakpoint is 768px - RESTORED
         navLinksContainer.classList.remove('hidden', 'mobile-menu-active');
         menuButton.setAttribute('aria-expanded', 'false');
         iconHamburger.classList.remove('hidden');

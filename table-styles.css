@@ -389,7 +389,7 @@ body.dark-theme #header-home-link h1 {
 }
 /* Ensure hidden class works */
 .hidden {
-   display: none !important; /* Use important to override potential inline styles if needed */
+   display: none; /* Use important to override potential inline styles if needed - REMOVED !important */
 }
 
 /* Simple spinner (used for button) */

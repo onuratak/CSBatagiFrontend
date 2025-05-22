@@ -22,19 +22,19 @@
                          alt="Gaming Group Logo"
                          class="h-10 w-10 mr-2 object-contain"
                          onerror="this.onerror=null; this.src='https://placehold.co/40x40/e0e0e0/333?text=Logo';">
-                    <a id="header-home-link" href="#" data-page-target="home"> <h1 class="text-2xl md:text-3xl font-bold text-blue-700">CS Batağı Gururla Sunar</h1>
+                    <a id="header-home-link" href="#" data-page-target="home"> <h1 style="display: none;" class="md:!block text-2xl md:text-3xl font-bold text-blue-700">CS Batağı Gururla Sunar</h1>
                     </a>
                 </div>
                 
-                <!-- Container for Auth and Theme Toggle -->
-                <div class="flex items-center space-x-4">
-                    <!-- Paste the auth-container here, modified -->
+                <!-- Container for Auth, Theme Toggle, AND Mobile Menu Button -->
+                <div class="flex items-center space-x-1 sm:space-x-2 md:space-x-4"> <!-- Right Group -->
+                    <!-- Auth Container -->
                     <div id="auth-container" class="flex items-center space-x-4">
                       <button id="google-signin-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         Sign in with Google
                       </button>
-                      <div id="user-info" class="hidden items-center space-x-2">
-                        <span id="user-name" class="font-medium"></span>
+                      <div id="user-info" class="hidden flex flex-col items-start space-y-1 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"> <!-- Initially hidden -->
+                        <span id="user-name" class="font-medium"></span> <!-- User name: "CS Batagi" in image -->
                         <button id="signout-btn" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded text-sm">
                           Sign Out
                         </button>
