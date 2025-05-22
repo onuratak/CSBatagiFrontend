@@ -434,7 +434,7 @@ const Attendance = {
         // Removed spinner/button logic - these elements should be removed from HTML
         try {
             // Fetch player list from the local JSON file
-            const response = await fetch('./data/players.json'); 
+            const response = await fetch('./data/players.json?_cb=' + Date.now()); 
             if (!response.ok) {
                 // Handle potential fetch errors (e.g., file not found)
                 throw new Error(`HTTP error! Status: ${response.status} fetching players.json`);
