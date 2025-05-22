@@ -1015,7 +1015,7 @@
     <!-- Add this script at the end of body -->
     <script>
       // Set your version/hash here
-      const STATIC_VERSION = 'abc123';
+      window.STATIC_VERSION = '22052025';
       const staticFiles = [
         { id: 'main-css', attr: 'href' },
         { id: 'chartjs', attr: 'src' },
@@ -1037,7 +1037,7 @@
       staticFiles.forEach(file => {
         const el = document.getElementById(file.id);
         if (el) {
-          el[file.attr] += (el[file.attr].includes('?') ? '&' : '?') + 'v=' + STATIC_VERSION;
+          el[file.attr] += (el[file.attr].includes('?') ? '&' : '?') + 'v=' + window.STATIC_VERSION;
         }
       });
     </script>
@@ -1045,7 +1045,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
-          navigator.serviceWorker.register('firebase-messaging-sw.js').then(function(registration) {
+          navigator.serviceWorker.register('firebase-messaging-sw.js?v=' + window.STATIC_VERSION).then(function(registration) {
             console.log('ServiceWorker registration successful with scope: ', registration.scope);
           }, function(err) {
             console.log('ServiceWorker registration failed: ', err);
@@ -1053,8 +1053,6 @@
         });
       }
     </script>
-
-    <script>window.STATIC_VERSION = 'abc123';</script>
 
 </body>
 </html>
