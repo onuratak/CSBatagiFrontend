@@ -25,7 +25,7 @@ const Duello = {
      */
     fetchDuelloSonMacData: async function() {
         try {
-            const response = await fetch(this.DUELLO_JSON_URL); // Use module constant
+            const response = await fetch(this.DUELLO_JSON_URL + '?_cb=' + Date.now()); // Use module constant
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -64,7 +64,7 @@ const Duello = {
      */
     fetchDuelloSezonData: async function() {
         try {
-            const response = await fetch(this.DUELLO_SEZON_JSON_URL); // Use module constant
+            const response = await fetch(this.DUELLO_SEZON_JSON_URL + '?_cb=' + Date.now()); // Use module constant
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }

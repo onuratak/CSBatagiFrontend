@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Data Fetching and Initialization ---
     async function loadPerformanceData() {
         try {
-            const response = await fetch('data/performance_data.json');
+            const response = await fetch('data/performance_data.json?_cb=' + Date.now());
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }

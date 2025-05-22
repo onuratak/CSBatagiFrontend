@@ -1102,7 +1102,7 @@ const TeamPicker = {
      */
     fetchKabileData: async function() {
         try {
-            const response = await fetch(this.KABILE_JSON_URL);
+            const response = await fetch(this.KABILE_JSON_URL + '?_cb=' + Date.now());
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -1118,7 +1118,7 @@ const TeamPicker = {
      */
     fetchMapsData: async function() {
         try {
-            const response = await fetch(this.MAPS_JSON_URL);
+            const response = await fetch(this.MAPS_JSON_URL + '?_cb=' + Date.now());
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }

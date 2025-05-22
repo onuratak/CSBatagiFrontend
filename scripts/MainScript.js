@@ -6,9 +6,9 @@
 // --- Constants ---
 const APPS_SCRIPT_URL = 'https://royal-flower-aa89.onur1atak.workers.dev/'; // Replace with your actual URL
 const DEFAULT_PAGE = 'home'; 
-const SEASON_AVG_JSON_URL = 'data/season_avg.json?v=' + (window.STATIC_VERSION || '1');
-const LAST10_JSON_URL = 'data/last10.json?v=' + (window.STATIC_VERSION || '1');
-const NIGHT_AVG_JSON_URL = 'data/night_avg.json?v=' + (window.STATIC_VERSION || '1');
+const SEASON_AVG_JSON_URL = 'data/season_avg.json?_cb=' + Date.now();
+const LAST10_JSON_URL = 'data/last10.json?_cb=' + Date.now();
+const NIGHT_AVG_JSON_URL = 'data/night_avg.json?_cb=' + Date.now();
 // const SONMAC_JSON_URL = 'data/sonmac.json'; // MOVED to sonMac.js
 // const DUELLO_JSON_URL = 'data/duello_son_mac.json'; // MOVED to duello.js
 // const DUELLO_SEZON_JSON_URL = 'data/duello_sezon.json'; // MOVED to duello.js

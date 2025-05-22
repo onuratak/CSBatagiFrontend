@@ -19,7 +19,7 @@
   <div class="container mx-auto max-w-7xl"> <header class="relative mb-6">
             <div class="flex justify-between items-center border-b border-gray-300 pb-3">
                 <div class="flex items-center">
-                    <img src="images/BatakLogo.png"
+                    <img id="logo-image" src="images/BatakLogo.png"
                          alt="Gaming Group Logo"
                          class="h-10 w-10 mr-2 object-contain"
                          onerror="this.onerror=null; this.src='https://placehold.co/40x40/e0e0e0/333?text=Logo';">
@@ -1015,9 +1015,11 @@
     <!-- Add this script at the end of body -->
     <script>
       // Set your version/hash here
-      window.STATIC_VERSION = '22052025';
+      // window.STATIC_VERSION = '22052025'; // Removed this line
+      const CACHE_BUSTER = Date.now().toString(); // Added this line
       const staticFiles = [
         { id: 'main-css', attr: 'href' },
+        { id: 'logo-image', attr: 'src' }, // Added logo image
         { id: 'chartjs', attr: 'src' },
         { id: 'firebase-app', attr: 'src' },
         { id: 'firebase-auth', attr: 'src' },
@@ -1036,7 +1038,9 @@
       staticFiles.forEach(file => {
         const el = document.getElementById(file.id);
         if (el) {
-          el[file.attr] += (el[file.attr].includes('?') ? '&' : '?') + 'v=' + window.STATIC_VERSION;
+          // Updated line to correctly use CACHE_BUSTER
+          const baseUrl = el[file.attr].split('?')[0]; 
+          el[file.attr] = baseUrl + '?' + 'v=' + CACHE_BUSTER;
         }
       });
     </script>

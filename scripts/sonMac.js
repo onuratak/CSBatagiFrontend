@@ -15,7 +15,7 @@ const SonMac = {
      */
     fetchSonMacData: async function() {
         try {
-            const response = await fetch(this.SONMAC_JSON_URL); // Use module constant
+            const response = await fetch(this.SONMAC_JSON_URL + '?_cb=' + Date.now()); // Use module constant
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
